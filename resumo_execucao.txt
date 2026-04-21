@@ -1,8 +1,8 @@
 Resumo da execução - Expert Dev 2.0
 ==================================================
 
-Início: 2026-04-20 20:33:10
-Fim: 2026-04-20 20:33:11
+Início: 2026-04-21 20:41:53
+Fim: 2026-04-21 20:41:55
 
 Totais:
  - URLs recebidas: 1
@@ -12,7 +12,7 @@ Totais:
  - Tempo total (s): 1
 
 URLs processadas com sucesso:
- - https://github.com/Dimitri74/Back-End_JMS-WEBSHERE-LIBERTY-JAVA-8--EJB3_ANGULAR/blob/main/README.md
+ - https://github.com/Dimitri74/Expert_DEV/blob/main/RELATORIO_IMPLEMENTACAO.md
 
 URLs com falha:
  - Nenhuma

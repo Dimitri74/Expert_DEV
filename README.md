@@ -1,18 +1,24 @@
 # Expert Dev
 
-Extrai regras de negócio e referências visuais de páginas web, consolida o conteúdo e gera múltiplos formatos de saída (TXT, DOCX, PDF) otimizados para uso com assistentes de código.
+Extrai regras de negócio e referências visuais de páginas web, consolida o conteúdo e gera múltiplos formatos de saída (TXT, DOCX, PDF) otimizados para uso com assistentes de código. Possui módulo integrado de medição de ROI e performance.
 
-## Versão atual: Expert Dev 2.0
+## Versão atual: Expert Dev 2.1
 
-- **Paralelismo**: processa múltiplas URLs simultaneamente (usa cores disponíveis no processador)
-- **Múltiplos formatos**: texto, Word com imagens embarcadas, PDF com imagens embarcadas
-- **Geração de prompt por IA (opcional)**: modo local ou modo IA com API Key
-- **Fallback automático**: se a IA falhar, o sistema volta para geração local
-- **Modo econômico de IA**: limita contexto enviado e reduz tokens para baixar custo
-- **Providers flexíveis**: pronto para OpenAI e Claude/Anthropic
-- **Base unificada de prompt**: o refinamento e o contrato do prompt são compartilhados entre entradas locais (URL/Word) e geração via API
-- **Perfis de prompt**: alternância entre `tecnico` e `executivo`
-- **Estimativa visual IA**: exibe estimativa de tokens e custo aproximado na UI
+- **Cache de Contexto**: Armazenamento local (SQLite) de resultados de processamento para evitar re-download e economizar tokens.
+- **Automação de Workflow**: Detecção inteligente de links no clipboard (Jira/RTC) e notificações no System Tray.
+- **Layout Light por padrão**: A interface agora inicia sempre com o tema claro (light), otimizada para visibilidade em ambientes corporativos.
+- **Módulo de Performance & ROI**: compara o tempo de desenvolvimento entre o rito Scrum tradicional e o uso do ExpertDev.
+- **Dashboard de Tendências**: visualização gráfica da curva de aprendizado e ganho de velocidade (Productivity Gain).
+- **Relatório Executivo**: exportação em PDF consolidando a economia de tempo e ROI da Sprint para apresentações de revisão.
+- **Paralelismo**: processa múltiplas URLs simultaneamente (usa cores disponíveis no processador).
+- **Múltiplos formatos**: texto, Word com imagens embarcadas, PDF com imagens embarcadas.
+- **Geração de prompt por IA (opcional)**: modo local ou modo IA com API Key.
+- **Fallback automático**: se a IA falhar, o sistema volta para geração local.
+- **Modo econômico de IA**: limita contexto enviado e reduz tokens para baixar custo.
+- **Providers flexíveis**: pronto para OpenAI e Claude/Anthropic.
+- **Base unificada de prompt**: o refinamento e o contrato do prompt são compartilhados entre entradas locais (URL/Word) e geração via API.
+- **Perfis de prompt**: alternância entre `tecnico` e `executivo`.
+- **Estimativa visual IA**: exibe estimativa de tokens e custo aproximado na UI.
 - **Java 8**: totalmente compatível
 
 ## Saída gerada
@@ -20,10 +26,31 @@ Extrai regras de negócio e referências visuais de páginas web, consolida o co
 1. `regras_extraidas.txt` — conteúdo bruto consolidado
 2. `imagens_encontradas.txt` — URLs das imagens detectadas
 3. `prompt_para_junie_copilot.txt` — prompt pronto para IA
-4. `contexto_com_imagens.docx` — **documento Word com imagens inline** ← para visualizar com contexto
-5. `contexto_com_imagens.pdf` — **documento PDF com imagens inline** ← para compartilhar
-6. `resumo_execucao.txt` — métricas e dados de execução
-7. `erros_processamento.txt` — detalhes de URLs que falharam (quando houver)
+4. `contexto_com_imagens.docx` — **documento Word com imagens inline**
+5. `contexto_com_imagens.pdf` — **documento PDF com imagens inline**
+6. `RELATORIO_ROI_EXPORTADO.pdf` — **Relatório Executivo de Performance & ROI** (quando exportado)
+7. `resumo_execucao.txt` — métricas e dados de execução
+8. `erros_processamento.txt` — detalhes de URLs que falharam (quando houver)
+
+## Módulo de Performance & ROI
+
+Este módulo permite mensurar o valor real que a ferramenta agrega ao seu workflow de desenvolvimento, agora com automações inteligentes.
+
+### Automações (Workflow) & Otimização
+- **Cache de Contexto**: Se você processar uma URL que já foi analisada anteriormente, o ExpertDev recupera o texto e as imagens instantaneamente do banco de dados local (SQLite). Isso acelera o trabalho e economiza tokens se você estiver usando IA.
+- **Captura via Clipboard**: Ao copiar um link ou ID de tarefa (Jira ou RTC), o ExpertDev identifica automaticamente o número e o título, preenchendo os campos de auditoria para você.
+- **Notificações de Sistema**: Um ícone no System Tray monitora o tempo de desenvolvimento. Se você exceder a estimativa definida no Scrum Poker, o sistema emitirá um alerta visual para lembrá-lo de revisar ou finalizar a tarefa.
+
+### Fluxo de Trabalho
+1. **Planejamento**: No início da sprint, informe o RTC e a estimativa definida no Scrum Poker (em horas ou pontos).
+2. **Execução ExpertDev**: Ao processar a tarefa no sistema, o tempo de início do ExpertDev é registrado automaticamente.
+3. **Fechamento Sensibilizado**: Só finalize a tarefa no ExpertDev (botão "Finalizar (Dev + Teste)") quando concluir o desenvolvimento E os testes.
+4. **Comparação**: O sistema calcula a diferença entre o tempo real gasto no rito tradicional (estimado via Poker) e o tempo com a ferramenta.
+
+### Visualizações
+- **Gráfico de Barras**: Comparativo direto entre Estimativa Poker, Tempo Real Scrum e Tempo ExpertDev para cada tarefa.
+- **Gráfico de Linha (Tendências)**: Mostra a evolução do ganho de produtividade ao longo do tempo.
+- **Botão Exportar ROI**: Gera um PDF profissional com os dados consolidados, ideal para apresentar em Sprint Reviews.
 
 ## Como usar
 
@@ -132,6 +159,7 @@ Na interface, você pode escolher o provider no combo `Provider`.
 
 ## Histórico de versões
 
+- **Expert Dev 2.1** — Cache de Contexto (SQLite) + Layout Light fixo + Módulo de Performance & ROI + Dashboard de Tendências + Exportação de Relatório PDF + Automação de Clipboard e Notificações Tray
 - **Expert Dev 2.0** — modo IA opcional + fallback local + persistência de configuração de geração
 - **VR1.5** — paralelismo + PDF
 - **VR1.4** — Word + PDF
@@ -142,8 +170,7 @@ Na interface, você pode escolher o provider no combo `Provider`.
 
 ## Próximos passos
 
-- VR1.6 — testes unitários em JUnit
-- VR1.7 — autenticação e cookies
-- VR1.8 — exportação para Markdown
+- VR2.2 — Suporte a Agentes Locais (Ollama)
+- VR2.3 — Refinamento de Prompt Iterativo (Chat)
 
 

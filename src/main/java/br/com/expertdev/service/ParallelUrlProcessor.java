@@ -14,10 +14,12 @@ public class ParallelUrlProcessor {
 
     private final int numThreads;
     private final PageProcessor pageProcessor;
+    private final CacheService cacheService;
 
     public ParallelUrlProcessor(ExpertDevConfig config, int numThreads) {
         this.numThreads = numThreads > 0 ? numThreads : 1;
         this.pageProcessor = new PageProcessor(config, new JsoupDocumentFetcher(config));
+        this.cacheService = new CacheService();
     }
 
     public List<ResultadoProcessamento> processar(List<String> urls) {
@@ -53,11 +55,19 @@ public class ParallelUrlProcessor {
         }
 
         public ResultadoProcessamento call() {
+            System.out.println("Verificando cache: " + url);
+            ResultadoProcessamento cached = cacheService.buscarNoCache(url);
+            if (cached != null) {
+                System.out.println("   ✓ Cache encontrado: " + url);
+                return cached;
+            }
+
             System.out.println("Processando: " + url + " [thread: " + Thread.currentThread().getName() + "]");
             ResultadoProcessamento resultado = pageProcessor.processar(url);
 
             if (resultado.isSucesso()) {
                 System.out.println("   ✓ Sucesso: " + url);
+                cacheService.salvarNoCache(resultado);
             } else {
                 System.err.println("   ⚠ Falha: " + url + " - " + resultado.getErro());
             }

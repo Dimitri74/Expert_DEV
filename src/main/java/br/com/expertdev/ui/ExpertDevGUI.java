@@ -1,25 +1,31 @@
 package br.com.expertdev.ui;
 
+import br.com.expertdev.service.*;
 import br.com.expertdev.config.ExpertDevConfig;
 import br.com.expertdev.io.DefaultTextFileWriter;
-import br.com.expertdev.model.ExecucaoConsolidada;
-import br.com.expertdev.model.ResultadoProcessamento;
-import br.com.expertdev.model.RegistroAuditoria;
-import br.com.expertdev.service.ImageDownloader;
-import br.com.expertdev.service.AuditoriaService;
-import br.com.expertdev.service.AiPromptGenerationService;
-import br.com.expertdev.service.LocalPromptGenerationService;
-import br.com.expertdev.service.ParallelUrlProcessor;
-import br.com.expertdev.service.PdfDocumentBuilder;
-import br.com.expertdev.service.PromptGenerationService;
-import br.com.expertdev.service.PromptGenerator;
-import br.com.expertdev.service.ResultConsolidator;
-import br.com.expertdev.service.UrlParser;
-import br.com.expertdev.service.WordDocumentBuilder;
-import br.com.expertdev.service.WordDocumentReader;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.axis.DateAxis;
+import java.text.SimpleDateFormat;
+import br.com.expertdev.model.*;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.TreeMap;
+import java.util.Map;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -36,6 +42,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -99,7 +106,8 @@ public class ExpertDevGUI extends JFrame {
     private JTextArea areaUrls;
     private JLabel labelArquivoWord;
     private JTextArea areaPreviewWord;
-    private JTextArea areaLog;
+    private JPanel painelLogCards;
+    private JScrollPane scrollLog;
     private JTextArea areaPrompt;
     private JProgressBar barraProgresso;
     private JButton btnProcessar;
@@ -120,6 +128,20 @@ public class ExpertDevGUI extends JFrame {
     private JTextField campoUC;
     private JTextArea areaHistorico;
     private AuditoriaService auditoriaService;
+    private PerformanceService performanceService;
+    private ReportService reportService;
+    private ClipboardMonitor clipboardMonitor;
+    private TrayNotificationService trayService;
+    private Timer timerNotificacao;
+    private JTextField campoEstimativaPoker;
+    private JComboBox<String> comboComplexidade;
+    private JPanel painelGrafico;
+    private JPanel painelTendencia;
+    private JFreeChart chartTendenciaAtual;
+    private JLabel lblGanhoProdutividade;
+    private JButton btnIniciarScrum;
+    private JButton btnFinalizarScrum;
+    private JButton btnFinalizarExpertDev;
     private long ultimoRegistroAuditoriaId = -1;
     private String promptComAuditoria = "";  // Para guardar prompt com auditoria
     private String modoGeracaoSelecionado = "LOCAL";
@@ -130,8 +152,11 @@ public class ExpertDevGUI extends JFrame {
 
     public ExpertDevGUI() {
         auditoriaService = new AuditoriaService();
+        performanceService = new PerformanceService(auditoriaService);
+        reportService = new ReportService(performanceService);
+        inicializarServicosWorkflow();
         ExpertDevConfig configUi = ExpertDevConfig.carregar();
-        aplicarTema(configUi.isTemaClaroPadrao());
+        aplicarTema(true); // Sempre inicia no modo Light
         modoGeracaoSelecionado = configUi.getUiModoGeracao().equalsIgnoreCase("IA") ? "IA" : "LOCAL";
         providerIaSelecionado = normalizarProvider(configUi.getAiProvider());
         perfilPromptSelecionado = configUi.getPromptProfile();
@@ -140,6 +165,60 @@ public class ExpertDevGUI extends JFrame {
         preencherConfigIaInicial(configUi);
         atualizarEstadoOpcoesIa();
         setVisible(true);
+    }
+
+    private void inicializarServicosWorkflow() {
+        // Inicializar Clipboard Monitor
+        clipboardMonitor = new ClipboardMonitor((rtc, titulo) -> {
+            SwingUtilities.invokeLater(() -> {
+                if (campoRTC.getText().trim().isEmpty()) {
+                    campoRTC.setText(rtc);
+                    if (titulo != null && !titulo.isEmpty() && campoUC.getText().trim().isEmpty()) {
+                        campoUC.setText(titulo);
+                    }
+                    trayService.notificar("Tarefa Detectada", "RTC " + rtc + " capturado do clipboard.", TrayIcon.MessageType.INFO);
+                }
+            });
+        });
+        new Thread(clipboardMonitor, "ClipboardMonitorThread").start();
+
+        // Inicializar Tray Service
+        Image icone = null;
+        try {
+            icone = carregarImagemRecurso("/icons/ia_icon.png"); // Tenta carregar ícone existente
+            if (icone == null) {
+                // Fallback para uma versão redimensionada da logo se existir
+                BufferedImage logo = carregarImagemLogoPorTema();
+                if (logo != null) icone = logo.getScaledInstance(16, 16, Image.SCALE_SMOOTH);
+            }
+        } catch (Exception e) {}
+        
+        trayService = new TrayNotificationService("ExpertDev v2.1", icone, e -> {
+            setVisible(true);
+            setExtendedState(JFrame.NORMAL);
+            toFront();
+        });
+
+        // Timer para notificações de tempo excedido (verifica a cada 1 minuto)
+        timerNotificacao = new Timer(60000, e -> verificarTempoExcedido());
+        timerNotificacao.start();
+    }
+
+    private void verificarTempoExcedido() {
+        List<MetricaPerformance> metricas = performanceService.listarTodos();
+        for (MetricaPerformance m : metricas) {
+            // Se tem início ExpertDev mas não tem fimExpertDev, está em andamento
+            if (m.getInicioExpertDev() != null && m.getFimExpertDev() == null && m.getEstimativaPoker() > 0) {
+                long minutosDecorridos = java.time.Duration.between(m.getInicioExpertDev(), LocalDateTime.now()).toMinutes();
+                double horasDecorridas = minutosDecorridos / 60.0;
+                
+                if (horasDecorridas > m.getEstimativaPoker()) {
+                    trayService.notificar("Tempo Excedido", 
+                        "A tarefa RTC " + m.getRtcNumero() + " excedeu o tempo estimado no Poker!", 
+                        TrayIcon.MessageType.WARNING);
+                }
+            }
+        }
     }
 
     private void aplicarTema(boolean claro) {
@@ -234,13 +313,14 @@ public class ExpertDevGUI extends JFrame {
         chkTemaClaro.setForeground(COR_TEXTO);
         chkTemaClaro.setFocusPainted(false);
         chkTemaClaro.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        chkTemaClaro.setVisible(false); // Mantendo o código, mas deixando invisível
         chkTemaClaro.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 alternarTema(chkTemaClaro.isSelected());
             }
         });
 
-        JLabel lblVersao = new JLabel("v 2.0");
+        JLabel lblVersao = new JLabel("v 2.1");
         lblVersao.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblVersao.setForeground(COR_DESTAQUE2);
         lblVersao.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -288,7 +368,13 @@ public class ExpertDevGUI extends JFrame {
         abas.addTab("  🌐  Via URLs  ", criarAbaUrls());
         abas.addTab("  📄  Upload Word  ", criarAbaUpload());
         abas.addTab("  📋  Histórico  ", criarAbaHistorico());
-        abas.addChangeListener(e -> atualizarEstimativaIa());
+        abas.addTab("  📊  Performance & ROI  ", criarAbaPerformance());
+        abas.addChangeListener(e -> {
+            atualizarEstimativaIa();
+            if (abas.getSelectedIndex() == 3) {
+                atualizarGraficoPerformance();
+            }
+        });
         painel.add(abas, BorderLayout.CENTER);
 
         painel.add(criarPainelAcoes(), BorderLayout.SOUTH);
@@ -335,6 +421,11 @@ public class ExpertDevGUI extends JFrame {
                 BorderFactory.createLineBorder(COR_BORDA),
                 new EmptyBorder(6, 8, 6, 8)
         ));
+        campoRTC.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { verificarEPrefilPerformance(); }
+            @Override public void removeUpdate(DocumentEvent e) { verificarEPrefilPerformance(); }
+            @Override public void changedUpdate(DocumentEvent e) { verificarEPrefilPerformance(); }
+        });
         gbc.gridx = 1;
         gbc.weightx = 0.4;
         painel.add(campoRTC, gbc);
@@ -513,9 +604,369 @@ public class ExpertDevGUI extends JFrame {
         JButton btnAtualizarHistorico = criarBotaoSecundario("🔄  Atualizar");
         btnAtualizarHistorico.addActionListener(e -> atualizarAbaHistorico());
         botoes.add(btnAtualizarHistorico);
+
+        JButton btnLimparCache = criarBotaoSecundario("🧹  Limpar Cache");
+        btnLimparCache.setToolTipText("Apaga o cache local de URLs processadas para forçar novo download");
+        btnLimparCache.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Deseja realmente limpar o cache de URLs processadas?",
+                    "Limpar Cache", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                new CacheService().limparCache();
+                mostrarMensagem("Cache de processamento limpo com sucesso!");
+            }
+        });
+        botoes.add(Box.createHorizontalStrut(10));
+        botoes.add(btnLimparCache);
+
         painel.add(botoes, BorderLayout.SOUTH);
 
         return painel;
+    }
+
+    private JPanel criarAbaPerformance() {
+        JPanel painel = new JPanel(new BorderLayout(0, 10));
+        painel.setBackground(COR_PAINEL_ALT);
+        painel.setBorder(new EmptyBorder(16, 16, 16, 16));
+
+        // Topo: Entrada de dados
+        JPanel topo = new JPanel(new GridBagLayout());
+        topo.setBackground(COR_PAINEL_ALT);
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        gbc.gridx = 0; gbc.gridy = 0;
+        topo.add(criarRotulo("Estimativa Poker (Horas):"), gbc);
+
+        campoEstimativaPoker = new JTextField(5);
+        campoEstimativaPoker.setBackground(COR_FUNDO);
+        campoEstimativaPoker.setForeground(COR_TEXTO);
+        gbc.gridx = 1;
+        topo.add(campoEstimativaPoker, gbc);
+
+        gbc.gridx = 2;
+        topo.add(criarRotulo("Complexidade:"), gbc);
+
+        comboComplexidade = new JComboBox<>(new String[]{"Baixa", "Média", "Alta"});
+        gbc.gridx = 3;
+        topo.add(comboComplexidade, gbc);
+
+        painel.add(topo, BorderLayout.NORTH);
+
+        // Centro: Gráfico e Dashboard
+        JPanel centro = new JPanel(new GridLayout(1, 2, 10, 0));
+        centro.setBackground(COR_PAINEL_ALT);
+
+        painelGrafico = new JPanel(new BorderLayout());
+        painelGrafico.setBackground(COR_PAINEL);
+        painelGrafico.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(COR_BORDA), "RTC Atual", 0, 0, FONTE_ROTULO, COR_TEXTO));
+        centro.add(painelGrafico);
+
+        painelTendencia = new JPanel(new BorderLayout());
+        painelTendencia.setBackground(COR_PAINEL);
+        painelTendencia.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(COR_BORDA), "Tendência de Aprendizado", 0, 0, FONTE_ROTULO, COR_TEXTO));
+        centro.add(painelTendencia);
+
+        painel.add(centro, BorderLayout.CENTER);
+
+        // Base: Ações e KPI
+        JPanel base = new JPanel(new BorderLayout(10, 0));
+        base.setBackground(COR_PAINEL_ALT);
+
+        JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        botoes.setBackground(COR_PAINEL_ALT);
+
+        btnIniciarScrum = criarBotaoSecundario("Iniciar Scrum");
+        btnIniciarScrum.addActionListener(e -> gerenciarAcaoPerformance("INICIAR_SCRUM"));
+        
+        btnFinalizarScrum = criarBotaoSecundario("Finalizar Scrum");
+        btnFinalizarScrum.addActionListener(e -> gerenciarAcaoPerformance("FINALIZAR_SCRUM"));
+
+        btnFinalizarExpertDev = criarBotaoSecundario("Finalizar ExpertDev");
+        btnFinalizarExpertDev.addActionListener(e -> gerenciarAcaoPerformance("FINALIZAR_EXPERTDEV"));
+
+        JButton btnExportarRelatorio = criarBotaoSecundario("📊 Exportar ROI");
+        btnExportarRelatorio.addActionListener(e -> exportarRelatorioROI());
+
+        botoes.add(btnIniciarScrum);
+        botoes.add(btnFinalizarScrum);
+        botoes.add(btnFinalizarExpertDev);
+        botoes.add(btnExportarRelatorio);
+        base.add(botoes, BorderLayout.WEST);
+
+        lblGanhoProdutividade = criarRotulo("Ganho: 0%");
+        lblGanhoProdutividade.setFont(FONTE_TITULO);
+        lblGanhoProdutividade.setForeground(COR_SUCESSO);
+        base.add(lblGanhoProdutividade, BorderLayout.EAST);
+
+        painel.add(base, BorderLayout.SOUTH);
+
+        // Listener para salvar campos ao perder o foco
+        campoEstimativaPoker.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                salvarDadosPerformanceAtuais();
+            }
+        });
+        comboComplexidade.addActionListener(e -> salvarDadosPerformanceAtuais());
+
+        return painel;
+    }
+
+    private void salvarDadosPerformanceAtuais() {
+        String rtc = campoRTC.getText().trim();
+        if (rtc.isEmpty()) return;
+
+        MetricaPerformance m = performanceService.obterPorRTC(rtc);
+        if (m == null) m = new MetricaPerformance(rtc);
+
+        try {
+            String estStr = campoEstimativaPoker.getText().trim();
+            if (!estStr.isEmpty()) {
+                m.setEstimativaPoker(Double.parseDouble(estStr.replace(",", ".")));
+            }
+        } catch (NumberFormatException e) { }
+        m.setComplexidade((String) comboComplexidade.getSelectedItem());
+        
+        performanceService.salvarOuAtualizar(m);
+        atualizarGraficoPerformance();
+    }
+
+    private void gerenciarAcaoPerformance(String acao) {
+        String rtc = campoRTC.getText().trim();
+        if (rtc.isEmpty()) {
+            mostrarErro("Informe o RTC no topo antes de gerenciar performance.");
+            return;
+        }
+
+        MetricaPerformance m = performanceService.obterPorRTC(rtc);
+        if (m == null) {
+            m = new MetricaPerformance(rtc);
+        }
+
+        try {
+            String estStr = campoEstimativaPoker.getText().trim();
+            if (!estStr.isEmpty()) {
+                m.setEstimativaPoker(Double.parseDouble(estStr.replace(",", ".")));
+            }
+        } catch (NumberFormatException e) {
+            // Ignora
+        }
+        m.setComplexidade((String) comboComplexidade.getSelectedItem());
+
+        LocalDateTime agora = LocalDateTime.now();
+
+        switch (acao) {
+            case "INICIAR_SCRUM":
+                m.setInicioScrum(agora);
+                m.setStatus("DESENVOLVIMENTO_SCRUM");
+                break;
+            case "FINALIZAR_SCRUM":
+                if (m.getInicioScrum() == null) {
+                    mostrarErro("Inicie o Scrum antes de finalizar.");
+                    return;
+                }
+                m.setFimScrum(agora);
+                break;
+            case "FINALIZAR_EXPERTDEV":
+                if (m.getInicioExpertDev() == null) {
+                    mostrarErro("O tempo ExpertDev deve ser iniciado ao processar a tarefa.");
+                    return;
+                }
+                m.setFimExpertDev(agora);
+                m.setStatus("CONCLUIDO");
+                break;
+        }
+
+        performanceService.salvarOuAtualizar(m);
+        atualizarGraficoPerformance();
+    }
+
+    private void verificarEPrefilPerformance() {
+        String rtc = campoRTC.getText().trim();
+        if (rtc.isEmpty()) {
+            if (campoEstimativaPoker != null) campoEstimativaPoker.setText("");
+            if (lblGanhoProdutividade != null) lblGanhoProdutividade.setText("Ganho: 0%");
+            return;
+        }
+
+        MetricaPerformance m = performanceService.obterPorRTC(rtc);
+        if (m != null) {
+            if (campoEstimativaPoker != null) {
+                campoEstimativaPoker.setText(m.getEstimativaPoker() != null ? String.valueOf(m.getEstimativaPoker()) : "");
+            }
+            if (comboComplexidade != null) {
+                comboComplexidade.setSelectedItem(m.getComplexidade() != null ? m.getComplexidade() : "Média");
+            }
+        }
+        if (abas != null && abas.getSelectedIndex() == 3) {
+            atualizarGraficoPerformance();
+            atualizarDashboardTendencia();
+        }
+    }
+
+    private void exportarRelatorioROI() {
+        try {
+            List<MetricaPerformance> metricas = performanceService.listarTodos();
+            if (metricas.isEmpty()) {
+                mostrarAviso("Não há dados de performance para exportar.");
+                return;
+            }
+            String path = reportService.exportarRelatorioExecutivo(metricas, chartTendenciaAtual);
+            mostrarMensagem("Relatório exportado com sucesso!\nCaminho: " + path);
+        } catch (Exception e) {
+            mostrarErro("Erro ao exportar relatório: " + e.getMessage());
+        }
+    }
+
+    private void mostrarAviso(String msg) {
+        JOptionPane.showMessageDialog(this, msg, "Aviso", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private void mostrarMensagem(String msg) {
+        JOptionPane.showMessageDialog(this, msg, "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void atualizarDashboardTendencia() {
+        List<MetricaPerformance> metricas = performanceService.listarTodos();
+        if (metricas.isEmpty()) {
+            painelTendencia.removeAll();
+            painelTendencia.add(new JLabel("Sem dados históricos", SwingConstants.CENTER));
+            painelTendencia.revalidate();
+            return;
+        }
+
+        // Agrupar ganho por data (usando TreeMap para ordenar por data)
+        Map<Date, Double> ganhoPorData = new TreeMap<>();
+
+        for (MetricaPerformance m : metricas) {
+            if (m.getFimExpertDev() != null) {
+                double hExpert = java.time.Duration.between(m.getInicioExpertDev(), m.getFimExpertDev()).toMinutes() / 60.0;
+                double hScrum = 0;
+                if (m.getFimScrum() != null && m.getInicioScrum() != null) {
+                    hScrum = java.time.Duration.between(m.getInicioScrum(), m.getFimScrum()).toMinutes() / 60.0;
+                } else if (m.getEstimativaPoker() != null) {
+                    hScrum = m.getEstimativaPoker();
+                }
+
+                if (hScrum > 0) {
+                    double ganho = ((hScrum - hExpert) / hScrum) * 100;
+                    // Usar data de fim do ExpertDev como referência temporal
+                    Date data = Date.from(m.getFimExpertDev().atZone(ZoneId.systemDefault()).toInstant());
+                    ganhoPorData.put(data, ganho);
+                }
+            }
+        }
+
+        XYSeries series = new XYSeries("Ganho de Produtividade (%)");
+        for (Map.Entry<Date, Double> entry : ganhoPorData.entrySet()) {
+            series.add(entry.getKey().getTime(), entry.getValue());
+        }
+
+        XYSeriesCollection dataset = new XYSeriesCollection(series);
+        JFreeChart chart = ChartFactory.createTimeSeriesChart(
+                "Curva de Aprendizado",
+                "Data de Conclusão",
+                "Ganho (%)",
+                dataset,
+                false, true, false
+        );
+
+        chart.setBackgroundPaint(COR_PAINEL);
+        org.jfree.chart.plot.XYPlot plot = chart.getXYPlot();
+        plot.setBackgroundPaint(COR_FUNDO);
+        plot.setDomainGridlinePaint(COR_BORDA);
+        plot.setRangeGridlinePaint(COR_BORDA);
+
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
+        renderer.setSeriesPaint(0, COR_SUCESSO);
+        renderer.setSeriesStroke(0, new BasicStroke(2.0f));
+        plot.setRenderer(renderer);
+
+        DateAxis axis = (DateAxis) plot.getDomainAxis();
+        axis.setDateFormatOverride(new SimpleDateFormat("dd/MM"));
+
+        chartTendenciaAtual = chart; // Guardar para o relatório PDF
+
+        painelTendencia.removeAll();
+        ChartPanel cp = new ChartPanel(chart);
+        cp.setBackground(COR_PAINEL);
+        painelTendencia.add(cp, BorderLayout.CENTER);
+        painelTendencia.revalidate();
+        painelTendencia.repaint();
+    }
+
+    private void atualizarGraficoPerformance() {
+        String rtc = campoRTC.getText().trim();
+        if (rtc.isEmpty()) return;
+
+        MetricaPerformance m = performanceService.obterPorRTC(rtc);
+        if (m == null) {
+            painelGrafico.removeAll();
+            painelGrafico.add(new JLabel("Sem dados para o RTC " + rtc, SwingConstants.CENTER));
+            painelGrafico.revalidate();
+            return;
+        }
+
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        if (m.getEstimativaPoker() != null) {
+            dataset.addValue(m.getEstimativaPoker(), "Horas", "Estimativa Poker");
+        }
+
+        if (m.getInicioScrum() != null && m.getFimScrum() != null) {
+            long diff = java.time.Duration.between(m.getInicioScrum(), m.getFimScrum()).toMinutes();
+            dataset.addValue(diff / 60.0, "Horas", "Tempo Real Scrum");
+        } else if (m.getInicioScrum() != null) {
+            long diff = java.time.Duration.between(m.getInicioScrum(), LocalDateTime.now()).toMinutes();
+            dataset.addValue(diff / 60.0, "Horas", "Real Scrum (Andamento)");
+        }
+
+        if (m.getInicioExpertDev() != null && m.getFimExpertDev() != null) {
+            long diff = java.time.Duration.between(m.getInicioExpertDev(), m.getFimExpertDev()).toMinutes();
+            dataset.addValue(diff / 60.0, "Horas", "ExpertDev (Dev+Teste)");
+        } else if (m.getInicioExpertDev() != null) {
+            long diff = java.time.Duration.between(m.getInicioExpertDev(), LocalDateTime.now()).toMinutes();
+            dataset.addValue(diff / 60.0, "Horas", "ExpertDev (Andamento)");
+        }
+
+        JFreeChart chart = ChartFactory.createBarChart(
+                "Comparativo de Performance - RTC " + rtc,
+                "Etapa",
+                "Horas",
+                dataset,
+                PlotOrientation.VERTICAL,
+                false, true, false
+        );
+
+        chart.setBackgroundPaint(COR_PAINEL);
+        CategoryPlot plot = chart.getCategoryPlot();
+        plot.setBackgroundPaint(COR_FUNDO);
+        plot.setRangeGridlinePaint(COR_BORDA);
+
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, COR_DESTAQUE);
+        
+        painelGrafico.removeAll();
+        ChartPanel cp = new ChartPanel(chart);
+        cp.setBackground(COR_PAINEL);
+        painelGrafico.add(cp, BorderLayout.CENTER);
+        painelGrafico.revalidate();
+        painelGrafico.repaint();
+
+        if (m.getFimScrum() != null && m.getFimExpertDev() != null) {
+            double hScrum = java.time.Duration.between(m.getInicioScrum(), m.getFimScrum()).toMinutes() / 60.0;
+            double hExpert = java.time.Duration.between(m.getInicioExpertDev(), m.getFimExpertDev()).toMinutes() / 60.0;
+            if (hScrum > 0) {
+                double ganho = ((hScrum - hExpert) / hScrum) * 100;
+                lblGanhoProdutividade.setText(String.format("Ganho: %.1f%%", ganho));
+            }
+        } else if (m.getEstimativaPoker() != null && m.getEstimativaPoker() > 0 && m.getFimExpertDev() != null) {
+             double hExpert = java.time.Duration.between(m.getInicioExpertDev(), m.getFimExpertDev()).toMinutes() / 60.0;
+             double ganho = ((m.getEstimativaPoker() - hExpert) / m.getEstimativaPoker()) * 100;
+             lblGanhoProdutividade.setText(String.format("Ganho Est.: %.1f%%", ganho));
+        }
     }
 
     private void atualizarAbaHistorico() {
@@ -796,18 +1247,157 @@ public class ExpertDevGUI extends JFrame {
         lbl.setBorder(new EmptyBorder(0, 0, 4, 0));
         painel.add(lbl, BorderLayout.NORTH);
 
-        areaLog = new JTextArea();
-        areaLog.setFont(FONTE_MONO);
-        areaLog.setBackground(temaClaroAtivo ? Color.WHITE : new Color(10, 10, 18));
-        areaLog.setForeground(COR_SUCESSO);
-        areaLog.setEditable(false);
-        areaLog.setLineWrap(true);
-        areaLog.setWrapStyleWord(true);
-        areaLog.setBorder(new EmptyBorder(10, 10, 10, 10));
-        areaLog.setText("Pronto para processar.\n");
+        painelLogCards = new JPanel();
+        painelLogCards.setLayout(new BoxLayout(painelLogCards, BoxLayout.Y_AXIS));
+        painelLogCards.setBackground(temaClaroAtivo ? Color.WHITE : new Color(10, 10, 18));
+        
+        scrollLog = new JScrollPane(painelLogCards);
+        scrollLog.setBorder(new LineBorder(COR_BORDA, 1));
+        scrollLog.getVerticalScrollBar().setUnitIncrement(16);
+        
+        // Inicializar com mensagem de pronto
+        adicionarCardLog("Pronto para processar.");
 
-        painel.add(criarScrollPane(areaLog), BorderLayout.CENTER);
+        painel.add(scrollLog, BorderLayout.CENTER);
         return painel;
+    }
+
+    /** Adiciona um card de log ao painel */
+    private void adicionarCardLog(String msg) {
+        if (msg == null || msg.trim().isEmpty()) return;
+        
+        SwingUtilities.invokeLater(() -> {
+            LogCard card = new LogCard(msg);
+            painelLogCards.add(card);
+            painelLogCards.add(Box.createVerticalStrut(4));
+            painelLogCards.revalidate();
+            painelLogCards.repaint();
+            
+            // Scroll para o final
+            JScrollBar vertical = scrollLog.getVerticalScrollBar();
+            vertical.setValue(vertical.getMaximum());
+        });
+    }
+
+    /** Classe para representar um card de log visual */
+    private class LogCard extends JPanel {
+        public LogCard(String msg) {
+            setLayout(new BorderLayout(10, 0));
+            setBorder(new EmptyBorder(8, 12, 8, 12));
+            setBackground(temaClaroAtivo ? new Color(250, 250, 252) : new Color(20, 20, 30));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+            setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            // Identificar status pelo prefixo
+            String texto = msg;
+            Icon icone = null;
+            Color corTexto = COR_TEXTO;
+            
+            if (msg.startsWith("→")) {
+                icone = criarIconeInfo(14);
+                texto = msg.substring(1).trim();
+            } else if (msg.startsWith("✓") || msg.startsWith("✅")) {
+                icone = criarIconeSucesso(14);
+                corTexto = COR_SUCESSO;
+                texto = msg.substring(1).trim();
+            } else if (msg.startsWith("⚠")) {
+                icone = criarIconeAlerta(14);
+                corTexto = new Color(210, 140, 0);
+                texto = msg.substring(1).trim();
+            } else if (msg.startsWith("❌") || msg.startsWith("ERRO:")) {
+                icone = criarIconeErro(14);
+                corTexto = COR_ERRO;
+                texto = msg.replace("❌", "").replace("ERRO:", "").trim();
+            } else {
+                icone = criarIconeInfo(14); // Padrão
+            }
+
+            JLabel lblIcone = new JLabel(icone);
+            add(lblIcone, BorderLayout.WEST);
+
+            JLabel lblTexto = new JLabel(texto);
+            lblTexto.setFont(FONTE_NORMAL);
+            lblTexto.setForeground(corTexto);
+            add(lblTexto, BorderLayout.CENTER);
+            
+            // Adicionar borda inferior sutil
+            setBorder(BorderFactory.createCompoundBorder(
+                new MatteBorder(0, 0, 1, 0, COR_BORDA),
+                new EmptyBorder(8, 12, 8, 12)
+            ));
+        }
+    }
+
+    private Icon criarIconeInfo(int tam) {
+        return new Icon() {
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(COR_DESTAQUE);
+                g2.fillOval(x, y, tam, tam);
+                g2.setColor(Color.WHITE);
+                g2.setFont(new Font("Monospaced", Font.BOLD, tam-2));
+                g2.drawString("i", x + tam/3 + 1, y + tam - 2);
+                g2.dispose();
+            }
+            public int getIconWidth() { return tam; }
+            public int getIconHeight() { return tam; }
+        };
+    }
+
+    private Icon criarIconeSucesso(int tam) {
+        return new Icon() {
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(COR_SUCESSO);
+                g2.fillOval(x, y, tam, tam);
+                g2.setColor(Color.WHITE);
+                g2.setStroke(new BasicStroke(2));
+                g2.drawLine(x+3, y+tam/2, x+tam/2-1, y+tam-4);
+                g2.drawLine(x+tam/2-1, y+tam-4, x+tam-3, y+3);
+                g2.dispose();
+            }
+            public int getIconWidth() { return tam; }
+            public int getIconHeight() { return tam; }
+        };
+    }
+
+    private Icon criarIconeAlerta(int tam) {
+        return new Icon() {
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(255, 180, 0));
+                int[] px = {x + tam/2, x, x + tam};
+                int[] py = {y, y + tam, y + tam};
+                g2.fillPolygon(px, py, 3);
+                g2.setColor(Color.BLACK);
+                g2.setFont(new Font("Monospaced", Font.BOLD, tam-4));
+                g2.drawString("!", x + tam/2 - 2, y + tam - 2);
+                g2.dispose();
+            }
+            public int getIconWidth() { return tam; }
+            public int getIconHeight() { return tam; }
+        };
+    }
+
+    private Icon criarIconeErro(int tam) {
+        return new Icon() {
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(COR_ERRO);
+                g2.fillOval(x, y, tam, tam);
+                g2.setColor(Color.WHITE);
+                g2.setStroke(new BasicStroke(2));
+                g2.drawLine(x+4, y+4, x+tam-4, y+tam-4);
+                g2.drawLine(x+tam-4, y+4, x+4, y+tam-4);
+                g2.dispose();
+            }
+            public int getIconWidth() { return tam; }
+            public int getIconHeight() { return tam; }
+        };
     }
 
     /** Painel com o prompt gerado e botões de ação */
@@ -950,6 +1540,17 @@ public class ExpertDevGUI extends JFrame {
             return;
         }
 
+        // Validação da Estimativa Poker (Obrigatória para ROI)
+        String estPoker = campoEstimativaPoker != null ? campoEstimativaPoker.getText().trim() : "";
+        if (estPoker.isEmpty()) {
+            mostrarErro("Informe a Estimativa Poker (Horas) na aba Performance antes de processar.\nIsso é necessário para o cálculo de ROI.");
+            abas.setSelectedIndex(3); // Alterna para a aba Performance & ROI
+            if (campoEstimativaPoker != null) {
+                campoEstimativaPoker.requestFocusInWindow();
+            }
+            return;
+        }
+
         // Validações
         if (viaUrl) {
             String textoUrls = areaUrls.getText().trim();
@@ -968,7 +1569,10 @@ public class ExpertDevGUI extends JFrame {
         btnProcessar.setEnabled(false);
         btnCopiarPrompt.setEnabled(false);
         btnSalvar.setEnabled(false);
-        areaLog.setText("");
+        
+        painelLogCards.removeAll();
+        adicionarCardLog("Iniciando processamento...");
+        
         areaPrompt.setText("Processando...");
         barraProgresso.setIndeterminate(true);
         barraProgresso.setString("Processando...");
@@ -995,6 +1599,16 @@ public class ExpertDevGUI extends JFrame {
                 RegistroAuditoria regAuditoria = new RegistroAuditoria(rtcNumero, ucCodigo, ucCodigo,
                         modoGeracao, provider, "");
                 ultimoRegistroAuditoriaId = auditoriaService.inserir(regAuditoria);
+
+                // Métricas de performance
+                MetricaPerformance mPerf = performanceService.obterPorRTC(rtcNumero);
+                if (mPerf == null) {
+                    mPerf = new MetricaPerformance(rtcNumero);
+                }
+                if (mPerf.getInicioExpertDev() == null) {
+                    mPerf.setInicioExpertDev(LocalDateTime.now());
+                }
+                performanceService.salvarOuAtualizar(mPerf);
 
                 if (modoUrl) {
                     publish("→ Modo: Via URLs");
@@ -1141,9 +1755,8 @@ public class ExpertDevGUI extends JFrame {
 
             protected void process(List<String> chunks) {
                 for (String msg : chunks) {
-                    areaLog.append(msg + "\n");
+                    adicionarCardLog(msg);
                 }
-                areaLog.setCaretPosition(areaLog.getDocument().getLength());
             }
 
             protected void done() {
@@ -1163,7 +1776,7 @@ public class ExpertDevGUI extends JFrame {
                     btnSalvar.setEnabled(true);
                 } catch (Exception e) {
                     String msg = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-                    areaLog.append("❌ ERRO: " + msg + "\n");
+                    adicionarCardLog("❌ ERRO: " + msg);
                     areaPrompt.setText("Ocorreu um erro durante o processamento.\nVerifique o log.");
                     barraProgresso.setValue(0);
                     barraProgresso.setString("Erro!");
@@ -1210,7 +1823,6 @@ public class ExpertDevGUI extends JFrame {
 
         String urlsTexto = areaUrls != null ? areaUrls.getText() : "";
         String previewTexto = areaPreviewWord != null ? areaPreviewWord.getText() : "";
-        String logTexto = areaLog != null ? areaLog.getText() : "";
         String promptTexto = areaPrompt != null ? areaPrompt.getText() : "";
         String apiKeyTexto = campoApiKey != null ? new String(campoApiKey.getPassword()) : "";
         boolean salvarKey = chkSalvarApiKey != null && chkSalvarApiKey.isSelected();
@@ -1230,9 +1842,6 @@ public class ExpertDevGUI extends JFrame {
         }
         if (areaPreviewWord != null && previewTexto != null && !previewTexto.trim().isEmpty()) {
             areaPreviewWord.setText(previewTexto);
-        }
-        if (areaLog != null) {
-            areaLog.setText(logTexto);
         }
         if (areaPrompt != null) {
             areaPrompt.setText(promptTexto);
@@ -1374,7 +1983,7 @@ public class ExpertDevGUI extends JFrame {
         }
 
         btnTestarConexaoIa.setEnabled(false);
-        areaLog.append("→ Testando conexão com IA...\n");
+        adicionarCardLog("→ Testando conexão com IA...");
 
         SwingWorker<Void, String> worker = new SwingWorker<Void, String>() {
             @Override
@@ -1400,13 +2009,13 @@ public class ExpertDevGUI extends JFrame {
                 btnTestarConexaoIa.setEnabled(true);
                 try {
                     get();
-                    areaLog.append("✓ Conexão com IA validada com sucesso.\n");
+                    adicionarCardLog("✓ Conexão com IA validada com sucesso.");
                     if (salvarApiKeySelecionada && !apiKeyInformada.isEmpty()) {
                         ExpertDevConfig.salvarApiKeyIA(apiKeyInformada);
                     }
                 } catch (Exception e) {
                     String msg = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-                    areaLog.append("⚠ Falha no teste de IA: " + msg + "\n");
+                    adicionarCardLog("⚠ Falha no teste de IA: " + msg);
                     mostrarErro("Falha ao testar IA:\n" + msg);
                 }
             }
@@ -1424,7 +2033,7 @@ public class ExpertDevGUI extends JFrame {
             chkSalvarApiKey.setSelected(false);
         }
         ExpertDevConfig.salvarApiKeyIA("");
-        areaLog.append("→ API Key de IA limpa da interface e da configuração local.\n");
+        adicionarCardLog("→ API Key de IA limpa da interface e da configuração local.");
     }
 
     private Icon carregarLogoProjeto(int largura, int altura) {

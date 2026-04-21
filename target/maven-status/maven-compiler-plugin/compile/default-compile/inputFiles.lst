@@ -3,12 +3,17 @@ C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\servic
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\WordDocumentBuilder.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\config\ExpertDevConfig.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\AiContextReducer.java
+C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\CacheService.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\io\DefaultTextFileWriter.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\ExpertDev_vr1_5.java
+C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\ClipboardMonitor.java
+C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\PerformanceService.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\PromptGenerator.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\AiPromptGenerationService.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\io\TextFileWriter.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\JsoupDocumentFetcher.java
+C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\ReportService.java
+C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\model\MetricaPerformance.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\PromptBlueprintBuilder.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\model\ResultadoProcessamento.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\WordDocumentReader.java
@@ -16,6 +21,7 @@ C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\model\
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\PageProcessor.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\DocumentFetcher.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\PromptGenerationService.java
+C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\TrayNotificationService.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\framework\ScriptAuditoria.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\LocalPromptGenerationService.java
 C:\Users\marcu\workspace\Pessoal\expertDev\src\main\java\br\com\expertdev\service\PromptContextRefiner.java

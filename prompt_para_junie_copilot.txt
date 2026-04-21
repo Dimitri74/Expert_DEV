@@ -7,172 +7,222 @@ Objetivo:
 Analisar o contexto extraido e transformar os requisitos em um plano de implementacao tecnico acionavel.
 
 Resumo intermediario do contexto:
-- Caracteres de regras refinadas: 3918
+- Caracteres de regras refinadas: 6818
 - Caracteres de referencias visuais: 24
 - Principais blocos por relevancia:
-- [score 6] ## 🏗️ Arquitetura
-- [score 5] A arquitetura foi desenvolvida para validar padrões de comunicação assíncrona com Message-Driven Beans em um ambiente empresarial.
-- [score 5] ## 🛠️ Requisitos
-- [score 5] Este projeto é um estudo de caso educacional para demonstração de padrões arquiteturais em Java EE.
-- [score 3] # Projeto SICOB - Teste de JMS com Angular e EJB
-- [score 3] **Finalidade:** Teste e demonstração de JMS com Message-Driven Beans (MDB)
+- [score 6] ## Arquitetura Final
+- [score 4] | `regras_extraidas.txt` | ✅ | ✅ | ✅ |
+- [score 4] 1. **regras_extraidas.txt** — Texto bruto consolidado de todas as URLs
+- [score 4] ### Teste: 2 URLs paralelo
+- [score 4] - VR1.6: Testes unitários (JUnit4/5)
+- [score 4] **Status**: Pronto para produção em projetos de extração de requisitos e consolidação de contexto para assistentes de IA.
 - Objetivo: converter contexto bruto em plano tecnico executavel com perguntas objetivas para lacunas.
 
 Contexto consolidado (regras e requisitos):
 
-URL: https://github.com/Dimitri74/Back-End_JMS-WEBSHERE-LIBERTY-JAVA-8--EJB3_ANGULAR/blob/main/README.md
+URL: https://github.com/Dimitri74/Expert_DEV/blob/main/RELATORIO_IMPLEMENTACAO.md
 
-# Projeto SICOB - Teste de JMS com Angular e EJB
+# Expert Dev - Resumo de Implementação (VR1.1 até VR1.5)
 
-## 📋 Visão Geral
+## Timeline de Evolução
 
-Este repositório contém uma solução completa de estudo de caso para demonstrar a integração entre **Frontend Angular**, **Backend EJB/JPA** e **Mensageria JMS** usando a plataforma **IBM Liberty**.
+### VR1.1 (2024 - MVP com Robustez)
+- ✅ Validação de URLs com saneamento
+- ✅ Tratamento de erro por URL (não quebra lote inteiro)
+- ✅ Deduplicação de imagens
+- ✅ Prompt revisado e consistente
+- ✅ Relatório `resumo_execucao.txt`
+- ✅ Arquivo `erros_processamento.txt`
 
-A arquitetura foi desenvolvida para validar padrões de comunicação assíncrona com Message-Driven Beans em um ambiente empresarial.
+### VR1.3 (2024 - Modularização e Configuração)
+- ✅ Separação em 14+ classes (config, models, services, io)
+- ✅ Suporte a configuração externa via `expertdev.properties`
+- ✅ Interfaces para abstração (DocumentFetcher, TextFileWriter)
+- ✅ **Novo**: Geração de Word (DOCX) com imagens embarcadas
+- ✅ Cache local de imagens para evitar re-downloads
+- ✅ Compatibilidade total com Java 8
 
-## 🏗️ Arquitetura
+### VR1.5 (2024 - Paralelismo + PDF)
+- ✅ **Novo**: Processamento paralelo com ExecutorService
+- ✅ Detecção automática de cores disponíveis (threads = cores - 1)
+- ✅ **Novo**: Geração de PDF com imagens embarcadas
+- ✅ Ambos os formatos (DOCX e PDF) produzem saída "pronta para apresentar"
+- ✅ Rastreabilidade completa em processamento paralelo
+
+## Arquitetura Final
+
+### Pacotes de Código
 
 ```
-┌─────────────────┐
-│ Frontend │
-│ Angular │
-└────────┬────────┘
-│ API REST
-▼
-┌─────────────────────┐
-│ Backend API REST │
-│ EJB / JPA │
-└────────┬────────────┘
-│ Mensagens
-┌─────────────────────────────┐
-│ Message-Driven Bean (MDB) │
-│ (Processamento Assíncrono)│
-└────────┬────────────────────┘
+src/main/java/
+├── ExpertDev.java ..................... Fachada (delega para VR1.5)
+├── ExpertDev_vr1_3.java ............... Versão 1.3 (com Word)
+├── ExpertDev_vr1_5.java ............... Versão 1.5 (paralelo + PDF)
 │
-│ Base de Dados │
-│ (JPA) │
-└─────────────────┘
-▲
-┌────────────────────────────┐
-│ Mensageria JMS │
-│ (Comunicação Assíncrona) │
-└────────────────────────────┘
+└── br/com/expertdev/
+├── config/
+│ └── ExpertDevConfig.java ....... Carrega props (classpath + arquivo)
+├── model/
+│ ├── ExecucaoConsolidada.java ... DTO de saída consolidada
+│ ├── ImagemInfo.java ............ POJO de imagem
+│ └── ResultadoProcessamento.java POJO de resultado por URL
+├── service/
+│ ├── DocumentFetcher.java ....... Interface de download
+│ ├── ImageDownloader.java ....... Download + cache de imagens
+│ ├── JsoupDocumentFetcher.java .. Impl. de download com Jsoup
+│ ├── PageProcessor.java ......... Processa página individual
+│ ├── ParallelUrlProcessor.java .. Orquestra paralelismo (ExecutorService)
+│ ├── PdfDocumentBuilder.java .... Gera PDF com PDFBox
+│ ├── PromptGenerator.java ....... Template de prompt
+│ ├── ResultConsolidator.java .... Consolida resultados finais
+│ ├── UrlParser.java ............ Valida e deduplica URLs
+│ └── WordDocumentBuilder.java ... Gera DOCX com POI
+└── io/
+├── TextFileWriter.java ........ Interface de escrita
+└── DefaultTextFileWriter.java . Impl. de escrita em UTF-8
 
-## 📁 Estrutura dos Projetos
+## Saídas Geradas
 
-### 1️⃣ **Sicob** (Backend)
-**Finalidade:** Teste e demonstração de JMS com Message-Driven Beans (MDB)
+### Por Versão
 
-**Stack Tecnológico:**
-- Java EE / Jakarta EE
-- EJB (Enterprise JavaBeans)
-- JPA (Java Persistence API)
-- JMS (Java Message Service)
-- IBM Liberty (Application Server)
-- Maven (Build)
+| Arquivo | VR1.1 | VR1.3 | VR1.5 |
+|---------|-------|-------|-------|
+| `regras_extraidas.txt` | ✅ | ✅ | ✅ |
+| `imagens_encontradas.txt` | ✅ | ✅ | ✅ |
+| `prompt_para_junie_copilot.txt` | ✅ | ✅ | ✅ |
+| `resumo_execucao.txt` | ✅ | ✅ | ✅ |
+| `erros_processamento.txt` | ✅ | ✅ | ✅ |
+| `contexto_com_imagens.docx` | ❌ | ✅ | ✅ |
+| `contexto_com_imagens.pdf` | ❌ | ❌ | ✅ |
 
-**Componentes Principais:**
-- API REST para operações CRUD
-- Message-Driven Beans para processamento assíncrono
-- Persistência com JPA
-- Integração com JMS para mensageria
+### Conteúdo de Cada Arquivo
 
-**Localização:** `/Sicob`
+1. **regras_extraidas.txt** — Texto bruto consolidado de todas as URLs
+2. **imagens_encontradas.txt** — URLs de imagens (deduplicated globalmente)
+3. **prompt_para_junie_copilot.txt** — Prompt estruturado pronto para IA
+4. **resumo_execucao.txt** — Métricas: total URLs, sucesso/falha, tempo, imagens
+5. **erros_processamento.txt** — (Apenas se houver falhas) Detalhes de erros
+6. **contexto_com_imagens.docx** — Word formatado com texto + imagens inline
+7. **contexto_com_imagens.pdf** — PDF formatado com texto + imagens inline
 
-### 2️⃣ **Sicob-Front** (Frontend)
-**Finalidade:** Interface de usuário para interação com o Backend
+## Funcionalidades Principais
 
-- Angular (Framework Web)
-- TypeScript
-- Angular CLI
-- RxJS (Reactive Programming)
-- HTML5 / CSS3
+### VR1.1+
+- ✅ Validação robusta de URLs
+- ✅ Extração de texto com fallback (article/main → body)
+- ✅ Limpeza de DOM (remove script, nav, footer, etc.)
+- ✅ Extração de imagens com alt text
+- ✅ Normalização e truncamento de conteúdo
+- ✅ Tolerância a falhas (uma URL errada ≠ lote inteiro falha)
+- ✅ Relatório de erros separado
+- ✅ Deduplicação de imagens por URL
 
-- Componentes Angular reutilizáveis
-- Serviços para comunicação REST
-- Formulários de entrada de dados
-- Listagem e visualização de dados
+### VR1.3+
+- ✅ Tudo de VR1.1, mais:
+- ✅ Configuração externa via arquivo `.properties`
+- ✅ Cache local de imagens (evita re-downloads)
+- ✅ Geração de DOCX com imagens embarcadas (Apache POI)
+- ✅ Detecção automática de tipo de imagem (PNG/JPG/GIF)
+- ✅ Separação limpa em classes e pacotes
+- ✅ Interfaces para abstração (testável)
 
-**Localização:** `/Sicob-Front`
+### VR1.5+
+- ✅ Tudo de VR1.3, mais:
+- ✅ **Processamento paralelo** com `ExecutorService`
+- ✅ Detecção automática de cores para ajustar threads
+- ✅ Rastreabilidade completa em paralelo (cada thread identifica seu trabalho)
+- ✅ Geração de PDF com imagens embarcadas (Apache PDFBox)
+- ✅ Suporte a múltiplas URLs em paralelo
+- ✅ Consolidação de resultados mantém ordem de requisição
 
-## 🔄 Fluxo de Comunicação
+## Dependências (Maven)
 
-1. **Frontend (Angular)** → Envia requisições HTTP REST para o Backend
-2. **Backend (API REST)** → Recebe requisições e processa dados com EJB/JPA
-3. **Backend → JMS** → Publica mensagens na fila de mensagens
-4. **Message-Driven Bean (MDB)** → Consome mensagens de forma assíncrona
-5. **MDB → Banco de Dados** → Persiste dados via JPA
-6. **Frontend ← Backend** → Retorna respostas HTTP ao cliente
+```xml
 
-## 🚀 Como Usar
+org.jsoup
+jsoup
+1.18.3
 
-### Backend (Sicob)
+org.apache.poi
+poi-ooxml
+5.2.5
 
+org.apache.pdfbox
+pdfbox
+2.0.30
+
+## Casos de Uso
+
+### Caso 1: Um site com conteúdo
 ```bash
-cd Sicob
-mvn clean install
-mvn liberty:run
+mvn exec:java -Dexec.mainClass="ExpertDev" -Dexec.args="https://example.com"
+**Saída**: 7 arquivos (texto, DOCX, PDF, etc.)
 
-O backend estará disponível em: `http://localhost:9080`
+### Caso 2: Múltiplos sites em paralelo
+mvn exec:java -Dexec.mainClass="ExpertDev" -Dexec.args="https://site1.com, https://site2.com, https://site3.com"
+**Processamento**: 3 threads em paralelo (em máquina com 4+ cores)
+**Saída**: 7 arquivos consolidados
 
-### Frontend (Sicob-Front)
+### Caso 3: Configuração customizada
+Criar `expertdev.properties` com:
+```properties
+timeout.ms=60000
+texto.limite=200000
+output.summary.file=meu_resumo.txt
+**Efeito**: sobrescreve defaults globais
 
-cd Sicob-Front
-npm install
-ng serve
+## Decisões Técnicas
 
-O frontend estará disponível em: `http://localhost:4200`
+### Por que Java 8?
+- Compatibilidade com projetos legados
+- `ExecutorService` nativo (sem necessidade de bibliotecas extra)
+- `Duration` e `Instant` disponíveis no java.time
 
-## 📝 Funcionalidades
+### Por que Apache POI (Word)?
+- Simples, estável, produz DOCX válido
+- Suporta embarcamento de imagens inline
+- Menos dependências que alternativas
 
-### Backend
-- ✅ Gerenciamento de Pedidos (CRUD)
-- ✅ Processamento assíncrono com MDB
-- ✅ Persistência em banco de dados
-- ✅ APIs REST documentadas
+### Por que Apache PDFBox (PDF)?
+- Puro Java, sem C++ nativo
+- Suporta embedar imagens
+- Boa documentação
 
-### Frontend
-- ✅ Formulário de criação de pedidos
-- ✅ Listagem de pedidos
-- ✅ Comunicação em tempo real com backend
-- ✅ Interface responsiva
+### Por que ExecutorService (não threads manuais)?
+- Gerenciamento automático de pool
+- Sincronização simples com `Future`
+- Melhor para evitar resource leaks
 
-## 📚 Conceitos Demonstrados
+## Performance Observada
 
-| Conceito | Descrição |
-|----------|-----------|
-| **JMS (Java Message Service)** | Padrão de mensageria assíncrona |
-| **MDB (Message-Driven Bean)** | Componente EJB que processa mensagens |
-| **REST API** | Comunicação síncrona entre frontend e backend |
-| **JPA** | Mapeamento objeto-relacional |
-| **Angular** | Framework moderno para frontend |
-| **EJB** | Componentes Java Enterprise |
-| **IBM Liberty** | Servidor de aplicações leve |
+### Teste: 2 URLs paralelo
+Tempo VR1.3 (sequencial): ~8 segundos
+Tempo VR1.5 (paralelo): ~5 segundos
+Ganho: 37.5% mais rápido
 
-## 🛠️ Requisitos
+### Cache de imagens
+- Primeira execução: baixa todas as imagens
+- Segunda execução mesma URL: usa cache (quase instantâneo)
 
-- **Java 8+** (recomendado Java 11 ou superior)
-- **Node.js 14+** e **npm 6+**
-- **Maven 3.6+**
-- **Git**
+## Melhorias Futuras
 
-## 📖 Documentação Adicional
+- VR1.6: Testes unitários (JUnit4/5)
+- VR1.7: Autenticação (login/cookies)
+- VR1.8: Exportação para Markdown
+- VR1.9: Integração com APIs de IA
+- VR2.0: Interface web (Spring Boot)
 
-Consulte os READMEs específicos em cada projeto:
+## Conclusão
 
-- [Sicob - Backend README](./Sicob/README.md)
-- [Sicob-Front - Frontend README](./Sicob-Front/README.md)
+O Expert Dev evoluiu de um **MVP simples** (VR1.0) para uma **solução robusta, modular e paralelizável** (VR1.5) em poucas iterações, mantendo:
 
-## 👥 Contribuidores
+- ✅ Compatibilidade com Java 8
+- ✅ Sem quebra de interfaces públicas
+- ✅ Progressão clara de features
+- ✅ Código limpo e testável
+- ✅ Documentação atualizada
 
-Este projeto é um estudo de caso educacional para demonstração de padrões arquiteturais em Java EE.
-
-## 📄 Licença
-
-Este projeto é fornecido como material educacional.
-
-**Versão:** 1.0
-**Última atualização:** 2026-03-02
+**Status**: Pronto para produção em projetos de extração de requisitos e consolidação de contexto para assistentes de IA.
 
 Referências visuais encontradas:
 
@@ -185,8 +235,22 @@ Restrições obrigatórias:
 - Considerar compatibilidade com Java 8 quando mencionado.
 
 Lacunas e pontos para confirmação:
-- Confirmar requisitos de autenticacao/autorizacao.
+- Confirmar persistencia e banco de dados esperados.
 - Validar referencias visuais ausentes ou insuficientes.
+
+Diretrizes obrigatórias de implementação:
+- O desenvolvimento deve seguir as tecnologias, padrões e arquitetura já adotados no projeto existente.
+- Preserve a organização de camadas, convenções de nomes, contratos públicos e estilo predominante da base atual.
+- Adote boas práticas compatíveis com Java 8.
+- Use streams e expressões lambda quando fizer sentido para clareza, legibilidade e manutenção, sem uso excessivo ou desnecessário.
+- Priorize código coeso, legível, testável e aderente às limitações reais de Java 8.
+
+Regra obrigatória de rastreabilidade no código:
+- Ao implementar ou alterar código, inclua os comentários de auditoria no topo do arquivo ou do trecho principal entregue.
+- Use exatamente os identificadores informados no contexto, por exemplo:
+  // RTC: <numero>
+  // UC: <codigo e descricao>
+- Não omita esses comentários na implementação final quando RTC/UC estiverem presentes no prompt.
 
 Formato obrigatório da resposta:
 1. Comece com um plano detalhado por módulos e ordem de prioridade.
