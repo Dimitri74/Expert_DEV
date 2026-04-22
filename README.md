@@ -227,7 +227,6 @@ Na interface, você pode escolher o provider no combo `Provider`.
 
 ## Próximos passos
 
-- VR2.2 — Suporte a Agentes Locais (Ollama)
-- VR2.3 — Refinamento de Prompt Iterativo (Chat)
-
+- VR2.3 — Refinamento e implementação para criaçao de modelos de layout(GID-IBM).
+- evitar redundancia para o prompt.
 
