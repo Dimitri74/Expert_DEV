@@ -328,7 +328,7 @@ public class ExpertDevGUI extends JFrame {
             }
         });
 
-        JLabel lblVersao = new JLabel("v 2.1");
+        JLabel lblVersao = new JLabel("v 2.2");
         lblVersao.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblVersao.setForeground(COR_DESTAQUE2);
         lblVersao.setHorizontalAlignment(SwingConstants.RIGHT);

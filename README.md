@@ -2,7 +2,7 @@
 
 Extrai regras de negócio e referências visuais de páginas web, consolida o conteúdo e gera múltiplos formatos de saída (TXT, DOCX, PDF) otimizados para uso com assistentes de código. Possui módulo integrado de medição de ROI e performance.
 
-## Versão atual: Expert Dev 2.1
+## Versão atual: Expert Dev 2.2
 
 - **Cache de Contexto**: Armazenamento local (SQLite) de resultados de processamento para evitar re-download e economizar tokens.
 - **Automação de Workflow**: Detecção inteligente de links no clipboard (Jira/RTC) e notificações no System Tray.
@@ -80,6 +80,27 @@ Para gerar o JAR executável com todas as dependências embutidas (Fat JAR):
 mvn clean package -DskipTests
 ```
 O arquivo será gerado em `target/expert-dev-2.1.0.jar`.
+
+### Pacote oficial de release (Windows)
+
+Para distribuição a terceiros, use o pacote portátil com `ExpertDev.exe` e runtime embarcado.
+
+1. Garanta que existe uma runtime em `./jre8` (ou informe outro caminho no comando).
+2. Gere o release oficial:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\create-release.ps1
+```
+
+Artefatos gerados:
+- `target/release/ExpertDev-<versao>-win64/`
+- `target/release/ExpertDev-<versao>-win64-portable.zip`
+
+Se sua runtime não estiver em `./jre8`, informe o caminho:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\create-release.ps1 -RuntimePath "C:\Runtime\jre8"
+```
 
 ### Execução com JDK 25+ (SQLite)
 
@@ -177,6 +198,10 @@ Na interface, você pode escolher o provider no combo `Provider`.
 
 ## Histórico de versões
 
+- **Expert Dev 2.2** — Versão Portátil (JRE Embarcada) + Wrapper Executável (.exe) + Melhorias de Distribuição.
+    - Suporte a JRE portátil em `./jre8`.
+    - Geração de `ExpertDev.exe` com ícone nativo via Launch4j.
+    - Script de inicialização inteligente `expert-dev.bat`.
 - **Expert Dev 2.1** — Cache de Contexto (SQLite) + Layout Light fixo + Módulo de Performance & ROI + Dashboard de Tendências + Exportação de Relatório PDF + Automação de Clipboard e Notificações Tray
 - **Expert Dev 2.0** — modo IA opcional + fallback local + persistência de configuração de geração
 - **VR1.5** — paralelismo + PDF
