@@ -231,5 +231,6 @@ Na interface, você pode escolher o provider no combo `Provider`.
 - 2.2.4 — Lockout incremental + integração SMTP para recuperação de senha
 - 2.3.0 — Suporte a Agentes Locais (Ollama)
 - 2.4.0 — Refinamento de Prompt Iterativo (Chat)
-
+- VR2.3 — Refinamento e implementação para criaçao de modelos de layout(GID-IBM)
+- Evitar redundância para o prompt
 
