@@ -16,6 +16,7 @@ public class MetricaPerformance {
     private LocalDateTime fimExpertDev;
     private String complexidade;
     private String status;
+    private Integer sprint;
 
     public MetricaPerformance() {
     }
@@ -96,5 +97,13 @@ public class MetricaPerformance {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Integer getSprint() {
+        return sprint;
+    }
+
+    public void setSprint(Integer sprint) {
+        this.sprint = sprint;
     }
 }

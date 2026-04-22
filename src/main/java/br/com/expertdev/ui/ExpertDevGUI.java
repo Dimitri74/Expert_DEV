@@ -41,6 +41,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.awt.Desktop;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.Instant;
@@ -134,6 +135,7 @@ public class ExpertDevGUI extends JFrame {
     private TrayNotificationService trayService;
     private Timer timerNotificacao;
     private JTextField campoEstimativaPoker;
+    private JTextField campoSprint;
     private JComboBox<String> comboComplexidade;
     private JPanel painelGrafico;
     private JPanel painelTendencia;
@@ -646,10 +648,19 @@ public class ExpertDevGUI extends JFrame {
         topo.add(campoEstimativaPoker, gbc);
 
         gbc.gridx = 2;
+        topo.add(criarRotulo("Sprint:"), gbc);
+
+        campoSprint = new JTextField(5);
+        campoSprint.setBackground(COR_FUNDO);
+        campoSprint.setForeground(COR_TEXTO);
+        gbc.gridx = 3;
+        topo.add(campoSprint, gbc);
+
+        gbc.gridx = 4;
         topo.add(criarRotulo("Complexidade:"), gbc);
 
         comboComplexidade = new JComboBox<>(new String[]{"Baixa", "Média", "Alta"});
-        gbc.gridx = 3;
+        gbc.gridx = 5;
         topo.add(comboComplexidade, gbc);
 
         painel.add(topo, BorderLayout.NORTH);
@@ -709,6 +720,12 @@ public class ExpertDevGUI extends JFrame {
                 salvarDadosPerformanceAtuais();
             }
         });
+        campoSprint.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                salvarDadosPerformanceAtuais();
+            }
+        });
         comboComplexidade.addActionListener(e -> salvarDadosPerformanceAtuais());
 
         return painel;
@@ -727,6 +744,16 @@ public class ExpertDevGUI extends JFrame {
                 m.setEstimativaPoker(Double.parseDouble(estStr.replace(",", ".")));
             }
         } catch (NumberFormatException e) { }
+        
+        try {
+            String sprintStr = campoSprint.getText().trim();
+            if (!sprintStr.isEmpty()) {
+                m.setSprint(Integer.parseInt(sprintStr));
+            } else {
+                m.setSprint(null);
+            }
+        } catch (NumberFormatException e) { }
+
         m.setComplexidade((String) comboComplexidade.getSelectedItem());
         
         performanceService.salvarOuAtualizar(m);
@@ -787,6 +814,7 @@ public class ExpertDevGUI extends JFrame {
         String rtc = campoRTC.getText().trim();
         if (rtc.isEmpty()) {
             if (campoEstimativaPoker != null) campoEstimativaPoker.setText("");
+            if (campoSprint != null) campoSprint.setText("");
             if (lblGanhoProdutividade != null) lblGanhoProdutividade.setText("Ganho: 0%");
             return;
         }
@@ -796,9 +824,17 @@ public class ExpertDevGUI extends JFrame {
             if (campoEstimativaPoker != null) {
                 campoEstimativaPoker.setText(m.getEstimativaPoker() != null ? String.valueOf(m.getEstimativaPoker()) : "");
             }
+            if (campoSprint != null) {
+                campoSprint.setText(m.getSprint() != null ? String.valueOf(m.getSprint()) : "");
+            }
             if (comboComplexidade != null) {
                 comboComplexidade.setSelectedItem(m.getComplexidade() != null ? m.getComplexidade() : "Média");
             }
+        } else {
+            // Limpar se não encontrou registro para este RTC
+            if (campoEstimativaPoker != null) campoEstimativaPoker.setText("");
+            if (campoSprint != null) campoSprint.setText("");
+            if (comboComplexidade != null) comboComplexidade.setSelectedItem("Média");
         }
         if (abas != null && abas.getSelectedIndex() == 3) {
             atualizarGraficoPerformance();
@@ -815,6 +851,16 @@ public class ExpertDevGUI extends JFrame {
             }
             String path = reportService.exportarRelatorioExecutivo(metricas, chartTendenciaAtual);
             mostrarMensagem("Relatório exportado com sucesso!\nCaminho: " + path);
+            
+            // Abrir no browser
+            try {
+                File pdfFile = new File(path);
+                if (Desktop.isDesktopSupported()) {
+                    Desktop.getDesktop().browse(pdfFile.toURI());
+                }
+            } catch (Exception ex) {
+                adicionarCardLog("⚠ Não foi possível abrir o PDF automaticamente: " + ex.getMessage());
+            }
         } catch (Exception e) {
             mostrarErro("Erro ao exportar relatório: " + e.getMessage());
         }
@@ -1551,7 +1597,18 @@ public class ExpertDevGUI extends JFrame {
             return;
         }
 
-        // Validações
+        // Validação da Sprint (Recomendado)
+        String sprintInf = campoSprint != null ? campoSprint.getText().trim() : "";
+        if (sprintInf.isEmpty()) {
+            int resposta = JOptionPane.showConfirmDialog(this, 
+                "O número da Sprint não foi informado. Deseja informar agora para melhor organização do ROI?",
+                "Sprint não informada", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+            if (resposta == JOptionPane.YES_OPTION) {
+                abas.setSelectedIndex(3);
+                if (campoSprint != null) campoSprint.requestFocusInWindow();
+                return;
+            }
+        }
         if (viaUrl) {
             String textoUrls = areaUrls.getText().trim();
             if (textoUrls.isEmpty()) {

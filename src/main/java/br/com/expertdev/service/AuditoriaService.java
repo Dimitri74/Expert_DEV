@@ -65,9 +65,17 @@ public class AuditoriaService {
                     "inicio_expertdev TIMESTAMP," +
                     "fim_expertdev TIMESTAMP," +
                     "complexidade TEXT," +
-                    "status TEXT" +
+                    "status TEXT," +
+                    "sprint INTEGER" +
                     ")";
             stmt.execute(sqlPerformance);
+
+            // Adicionar coluna sprint se não existir (para bancos legados)
+            try {
+                stmt.execute("ALTER TABLE performance_comparativa ADD COLUMN sprint INTEGER");
+            } catch (SQLException e) {
+                // Coluna já existe, ignorar
+            }
             
             String sqlCache = "CREATE TABLE IF NOT EXISTS cache_processamento (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -185,8 +193,8 @@ public class AuditoriaService {
     public long inserirPerformance(MetricaPerformance metrica) {
         String sql = "INSERT INTO performance_comparativa " +
                 "(rtc_numero, estimativa_poker, inicio_scrum, fim_scrum, " +
-                "inicio_expertdev, fim_expertdev, complexidade, status) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                "inicio_expertdev, fim_expertdev, complexidade, status, sprint) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -199,6 +207,7 @@ public class AuditoriaService {
             pstmt.setTimestamp(6, metrica.getFimExpertDev() != null ? Timestamp.valueOf(metrica.getFimExpertDev()) : null);
             pstmt.setString(7, metrica.getComplexidade());
             pstmt.setString(8, metrica.getStatus());
+            if (metrica.getSprint() != null) pstmt.setInt(9, metrica.getSprint()); else pstmt.setNull(9, java.sql.Types.INTEGER);
 
             pstmt.executeUpdate();
 
@@ -216,7 +225,7 @@ public class AuditoriaService {
     public void atualizarPerformance(MetricaPerformance metrica) {
         String sql = "UPDATE performance_comparativa SET " +
                 "estimativa_poker = ?, inicio_scrum = ?, fim_scrum = ?, " +
-                "inicio_expertdev = ?, fim_expertdev = ?, complexidade = ?, status = ? " +
+                "inicio_expertdev = ?, fim_expertdev = ?, complexidade = ?, status = ?, sprint = ? " +
                 "WHERE rtc_numero = ?";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
@@ -229,7 +238,8 @@ public class AuditoriaService {
             pstmt.setTimestamp(5, metrica.getFimExpertDev() != null ? Timestamp.valueOf(metrica.getFimExpertDev()) : null);
             pstmt.setString(6, metrica.getComplexidade());
             pstmt.setString(7, metrica.getStatus());
-            pstmt.setString(8, metrica.getRtcNumero());
+            if (metrica.getSprint() != null) pstmt.setInt(8, metrica.getSprint()); else pstmt.setNull(8, java.sql.Types.INTEGER);
+            pstmt.setString(9, metrica.getRtcNumero());
 
             pstmt.executeUpdate();
 
@@ -257,6 +267,7 @@ public class AuditoriaService {
                     m.setFimExpertDev(rs.getTimestamp("fim_expertdev") != null ? rs.getTimestamp("fim_expertdev").toLocalDateTime() : null);
                     m.setComplexidade(rs.getString("complexidade"));
                     m.setStatus(rs.getString("status"));
+                    m.setSprint(rs.getInt("sprint") != 0 || rs.getObject("sprint") != null ? rs.getInt("sprint") : null);
                     return m;
                 }
             }
@@ -285,6 +296,7 @@ public class AuditoriaService {
                 m.setFimExpertDev(rs.getTimestamp("fim_expertdev") != null ? rs.getTimestamp("fim_expertdev").toLocalDateTime() : null);
                 m.setComplexidade(rs.getString("complexidade"));
                 m.setStatus(rs.getString("status"));
+                m.setSprint(rs.getInt("sprint") != 0 || rs.getObject("sprint") != null ? rs.getInt("sprint") : null);
                 lista.add(m);
             }
         } catch (SQLException e) {
