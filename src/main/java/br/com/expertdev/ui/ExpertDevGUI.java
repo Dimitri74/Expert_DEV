@@ -31,6 +31,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -262,7 +263,7 @@ public class ExpertDevGUI extends JFrame {
 
     private void configurarJanela() {
         setTitle("Expert Dev — Gerador de Contexto para IA");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setSize(1100, 780);
         setMinimumSize(new Dimension(900, 650));
         setLocationRelativeTo(null);
@@ -273,6 +274,14 @@ public class ExpertDevGUI extends JFrame {
         if (logo != null) {
             setIconImage(logo);
         }
+
+        // Adicionar WindowListener para confirmar saída ao clicar X
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                confirmarSaidaExpertDev();
+            }
+        });
     }
 
     // ─── Construção da Interface ───────────────────────────────────────────────
@@ -1630,6 +1639,98 @@ public class ExpertDevGUI extends JFrame {
         wrapper.add(sep, BorderLayout.NORTH);
         wrapper.add(rodape, BorderLayout.CENTER);
         return wrapper;
+    }
+
+    // ─── Diálogo de Confirmação de Saída ────────────────────────────────────
+    private void confirmarSaidaExpertDev() {
+        // Cores para o diálogo
+        Color corFundo = COR_FUNDO;
+        Color corPainel = COR_PAINEL;
+        Color corVerde = new Color(34, 197, 94);      // Verde
+        Color corVermelho = new Color(239, 68, 68);   // Vermelho
+        Color corTexto = COR_TEXTO;
+
+        // Criar painel com mensagem e botões customizados
+        JPanel painelDialogo = new JPanel(new BorderLayout(15, 15));
+        painelDialogo.setBackground(corPainel);
+        painelDialogo.setBorder(new EmptyBorder(25, 25, 25, 25));
+
+        // Mensagem
+        JLabel lblMensagem = new JLabel("Deseja sair do Expert Dev?");
+        lblMensagem.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        lblMensagem.setForeground(corTexto);
+
+        // Painel de botões
+        JPanel painelBotoes = new JPanel(new FlowLayout(FlowLayout.CENTER, 25, 0));
+        painelBotoes.setBackground(corPainel);
+
+        // Botão SIM (Verde com texto preto) - FECHA A APLICAÇÃO
+        JButton btnSim = criarBotaoDialogo("Sim", corVerde);
+
+        // Botão NÃO (Vermelho com texto preto) - PERMANECE NO SISTEMA
+        JButton btnNao = criarBotaoDialogo("Não", corVermelho);
+
+        btnSim.addActionListener(e -> {
+            // SIM = Sair da aplicação (fechar)
+            SwingUtilities.getWindowAncestor(painelDialogo).dispose();
+            ExpertDevGUI.this.dispose();
+            System.exit(0);
+        });
+
+        btnNao.addActionListener(e -> {
+            // NÃO = Permanecer no sistema (apenas fecha o diálogo)
+            SwingUtilities.getWindowAncestor(painelDialogo).dispose();
+        });
+
+        painelBotoes.add(btnSim);
+        painelBotoes.add(btnNao);
+
+        painelDialogo.add(lblMensagem, BorderLayout.CENTER);
+        painelDialogo.add(painelBotoes, BorderLayout.SOUTH);
+
+        // Criar o diálogo
+        JDialog dialogConfirmacao = new JDialog(this, "Confirmação", Dialog.ModalityType.APPLICATION_MODAL);
+        dialogConfirmacao.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialogConfirmacao.setContentPane(painelDialogo);
+        dialogConfirmacao.setSize(450, 200);
+        dialogConfirmacao.setLocationRelativeTo(this);
+        dialogConfirmacao.getContentPane().setBackground(corPainel);
+        dialogConfirmacao.setVisible(true);
+    }
+
+    private JButton criarBotaoDialogo(String texto, Color cor) {
+        JButton botao = new JButton(texto);
+        botao.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        botao.setBackground(cor);
+        botao.setForeground(new Color(15, 23, 42));  // Texto preto
+        botao.setBorder(BorderFactory.createLineBorder(cor, 2));
+        botao.setFocusPainted(false);
+        botao.setContentAreaFilled(true);
+        botao.setOpaque(true);
+        botao.setPreferredSize(new Dimension(150, 45));
+        botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Efeito hover
+        botao.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                botao.setBackground(aumentarBrilhoDialogo(cor, 1.1f));
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                botao.setBackground(cor);
+            }
+        });
+
+        return botao;
+    }
+
+    private Color aumentarBrilhoDialogo(Color cor, float fator) {
+        int r = Math.min(255, (int) (cor.getRed() * fator));
+        int g = Math.min(255, (int) (cor.getGreen() * fator));
+        int b = Math.min(255, (int) (cor.getBlue() * fator));
+        return new Color(r, g, b);
     }
 
     // ─── Lógica de Processamento ───────────────────────────────────────────────

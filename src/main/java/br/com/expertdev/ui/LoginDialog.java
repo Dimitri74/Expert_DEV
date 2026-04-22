@@ -5,9 +5,34 @@ import br.com.expertdev.model.LicenseStatus;
 import br.com.expertdev.service.AuthService;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 
 public class LoginDialog extends JDialog {
+
+    // ─── Cores do projeto (SEM TEMA-DARK) ──────────────────────────────────
+    private static final Color COR_FUNDO = new Color(245, 247, 251);          // Fundo claro
+    private static final Color COR_PAINEL = new Color(255, 255, 255);         // Branco puro
+    private static final Color COR_PAINEL_TOPO = new Color(240, 244, 249);    // Cinzento claro
+    private static final Color COR_AZUL = new Color(79, 70, 229);             // Azul do projeto
+    private static final Color COR_VERMELHO_CLARO = new Color(239, 68, 68);   // Vermelho claro
+    private static final Color COR_AMARELO_CLARO = new Color(245, 158, 11);   // Amarelo claro
+    private static final Color COR_VERDE_CLARO = new Color(34, 197, 94);      // Verde claro
+    private static final Color COR_ROSA_CLARO = new Color(236, 72, 153);      // Rosa claro para Trial
+    private static final Color COR_TEXTO = new Color(15, 23, 42);             // Texto escuro
+    private static final Color COR_TEXTO_SUAVE = new Color(71, 85, 105);      // Texto cinzento
+    private static final Color COR_BORDA = new Color(203, 213, 225);          // Borda cinzenta
+
+    // ─── Fontes ───────────────────────────────────────────────────────────────
+    private static final Font FONTE_TITULO = new Font("Segoe UI", Font.BOLD, 20);
+    private static final Font FONTE_ROTULO = new Font("Segoe UI", Font.BOLD, 12);
+    private static final Font FONTE_NORMAL = new Font("Segoe UI", Font.PLAIN, 12);
+    private static final Font FONTE_BOTAO = new Font("Segoe UI", Font.BOLD, 12);
 
     private final AuthService authService;
     private AuthSession session;
@@ -27,29 +52,43 @@ public class LoginDialog extends JDialog {
     }
 
     private void construir() {
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(0, 0));
+        getContentPane().setBackground(COR_FUNDO);
 
-        JPanel painel = new JPanel(new GridLayout(0, 2, 8, 8));
-        painel.setBorder(BorderFactory.createEmptyBorder(12, 12, 2, 12));
+        // ─── Painel superior com logo e info ───────────────────────────────────
+        JPanel painelTopo = criarPainelTopo();
 
-        txtIdentity = new JTextField();
-        txtSenha = new JPasswordField();
+        // ─── Painel central (campos de entrada) ────────────────────────────────
+        JPanel painel = new JPanel(new GridLayout(0, 2, 20, 15));
+        painel.setBackground(COR_PAINEL);
+        painel.setBorder(new EmptyBorder(30, 40, 30, 40));
 
-        painel.add(new JLabel("Usuario ou email:"));
+        txtIdentity = criarCampoTexto();
+        txtSenha = criarCampoSenha();
+
+        JLabel lblUsuario = new JLabel("Usuário ou email:");
+        lblUsuario.setFont(FONTE_ROTULO);
+        lblUsuario.setForeground(COR_TEXTO);
+
+        JLabel lblSenha = new JLabel("Senha:");
+        lblSenha.setFont(FONTE_ROTULO);
+        lblSenha.setForeground(COR_TEXTO);
+
+        painel.add(lblUsuario);
         painel.add(txtIdentity);
-        painel.add(new JLabel("Senha:"));
+        painel.add(lblSenha);
         painel.add(txtSenha);
 
-        int diasTrial = authService.getDiasRestantesTrial();
-        lblTrial = new JLabel("Trial restante: " + diasTrial + " dia(s)");
-        lblTrial.setBorder(BorderFactory.createEmptyBorder(0, 12, 0, 12));
+        // ─── Painel de botões ──────────────────────────────────────────────────
+        JPanel botoes = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 15));
+        botoes.setBackground(COR_FUNDO);
+        botoes.setBorder(new EmptyBorder(15, 20, 20, 20));
 
-        JPanel botoes = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton btnEntrar = new JButton("Entrar");
-        JButton btnCadastro = new JButton("Cadastrar");
-        JButton btnRecuperar = new JButton("Recuperar acesso");
-        JButton btnTrial = new JButton("Continuar Trial");
-        JButton btnSair = new JButton("Sair");
+        JButton btnCadastro = criarBotao("Cadastrar", COR_AMARELO_CLARO);
+        JButton btnRecuperar = criarBotao("Recuperar senha", COR_VERDE_CLARO);
+        JButton btnTrial = criarBotao("Continuar Trial", COR_ROSA_CLARO);
+        JButton btnEntrar = criarBotao("Entrar", COR_AZUL);
+        JButton btnSair = criarBotao("Sair", COR_VERMELHO_CLARO);
 
         btnEntrar.addActionListener(e -> autenticar());
         btnCadastro.addActionListener(e -> cadastrar());
@@ -63,12 +102,228 @@ public class LoginDialog extends JDialog {
         botoes.add(btnEntrar);
         botoes.add(btnSair);
 
+        add(painelTopo, BorderLayout.NORTH);
         add(painel, BorderLayout.CENTER);
-        add(lblTrial, BorderLayout.NORTH);
         add(botoes, BorderLayout.SOUTH);
 
-        setSize(620, 220);
+        setSize(900, 380);
         setLocationRelativeTo(getOwner());
+        setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+
+        // Adicionar listener para o botão X (fechar)
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                confirmarSaida();
+            }
+        });
+    }
+
+    private void confirmarSaida() {
+        // Criar painel com mensagem e botões customizados
+        JPanel painelDialogo = new JPanel(new BorderLayout(15, 15));
+        painelDialogo.setBackground(COR_PAINEL);
+        painelDialogo.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        // Mensagem
+        JLabel lblMensagem = new JLabel("Deseja sair do Expert Dev?");
+        lblMensagem.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblMensagem.setForeground(COR_TEXTO);
+
+        // Painel de botões
+        JPanel painelBotoes = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        painelBotoes.setBackground(COR_PAINEL);
+
+        JButton btnSim = criarBotao("Sim", COR_VERDE_CLARO);
+        JButton btnNao = criarBotao("Não", COR_VERMELHO_CLARO);
+
+        btnSim.addActionListener(e -> {
+            // SIM = Sair da aplicação (fechar)
+            JDialog dialogPai = (JDialog) SwingUtilities.getWindowAncestor(painelDialogo);
+            if (dialogPai != null) {
+                dialogPai.dispose();
+            }
+            LoginDialog.this.dispose();
+        });
+
+        btnNao.addActionListener(e -> {
+            // NÃO = Permanecer no sistema (apenas fecha o diálogo)
+            JDialog dialogPai = (JDialog) SwingUtilities.getWindowAncestor(painelDialogo);
+            if (dialogPai != null) {
+                dialogPai.dispose();
+            }
+        });
+
+        painelBotoes.add(btnSim);
+        painelBotoes.add(btnNao);
+
+        painelDialogo.add(lblMensagem, BorderLayout.CENTER);
+        painelDialogo.add(painelBotoes, BorderLayout.SOUTH);
+
+        // Criar o diálogo
+        JDialog dialogConfirmacao = new JDialog(this, "Confirmação", ModalityType.APPLICATION_MODAL);
+        dialogConfirmacao.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialogConfirmacao.setContentPane(painelDialogo);
+        dialogConfirmacao.setSize(400, 180);
+        dialogConfirmacao.setLocationRelativeTo(this);
+        dialogConfirmacao.getContentPane().setBackground(COR_PAINEL);
+        dialogConfirmacao.setVisible(true);
+    }
+
+    private JPanel criarPainelTopo() {
+        JPanel painel = new JPanel(new BorderLayout());
+        painel.setBackground(COR_PAINEL_TOPO);
+        painel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COR_BORDA));
+        painel.setPreferredSize(new Dimension(0, 85));
+
+        // Lado esquerdo: logo
+        JLabel lblLogo = criarLabelLogo();
+        JPanel painelLogo = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 12));
+        painelLogo.setBackground(COR_PAINEL_TOPO);
+        painelLogo.add(lblLogo);
+
+        // Lado direito: informação de trial
+        JPanel painelInfo = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 12));
+        painelInfo.setBackground(COR_PAINEL_TOPO);
+
+        int diasTrial = authService.getDiasRestantesTrial();
+        lblTrial = new JLabel("Trial restante: " + diasTrial + " dia(s)");
+        lblTrial.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        lblTrial.setForeground(COR_TEXTO_SUAVE);
+
+        JLabel lblVersao = new JLabel("v2.2.3-BETA");
+        lblVersao.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        lblVersao.setForeground(COR_TEXTO_SUAVE);
+
+        painelInfo.add(lblTrial);
+        painelInfo.add(Box.createHorizontalStrut(15));
+        painelInfo.add(lblVersao);
+
+        painel.add(painelLogo, BorderLayout.WEST);
+        painel.add(painelInfo, BorderLayout.EAST);
+
+        return painel;
+    }
+
+    private JLabel criarLabelLogo() {
+        JLabel label = new JLabel("Expert Dev");
+        label.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        label.setForeground(COR_AZUL);
+
+        try {
+            URL resourceUrl = getClass().getClassLoader().getResource("icons/logo_transparente.png");
+            if (resourceUrl != null) {
+                BufferedImage img = ImageIO.read(resourceUrl);
+                if (img != null) {
+                    Image scaledImg = img.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
+                    label.setIcon(new ImageIcon(scaledImg));
+                    label.setIconTextGap(10);
+                }
+            }
+        } catch (IOException e) {
+            // Se não conseguir carregar a imagem, apenas mostra o texto
+        }
+
+        return label;
+    }
+
+    // ─── Métodos auxiliares para criação de componentes ──────────────────────
+
+    private JTextField criarCampoTexto() {
+        JTextField campo = new JTextField();
+        campo.setFont(FONTE_NORMAL);
+        campo.setBackground(new Color(248, 250, 252));
+        campo.setForeground(COR_TEXTO);
+        campo.setCaretColor(COR_AZUL);
+        campo.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COR_BORDA, 1),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        campo.setPreferredSize(new Dimension(250, 35));
+        return campo;
+    }
+
+    private JPasswordField criarCampoSenha() {
+        JPasswordField campo = new JPasswordField();
+        campo.setFont(FONTE_NORMAL);
+        campo.setBackground(new Color(248, 250, 252));
+        campo.setForeground(COR_TEXTO);
+        campo.setCaretColor(COR_AZUL);
+        campo.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COR_BORDA, 1),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+        campo.setPreferredSize(new Dimension(250, 35));
+        return campo;
+    }
+
+    private JButton criarBotao(String texto, Color cor) {
+        JButton botao = new JButton(texto);
+        botao.setFont(FONTE_BOTAO);
+        botao.setBackground(cor);
+
+        // Determinar cor de texto baseado em contraste
+        Color corTexto = obterCorTextoParaBotao(cor);
+        botao.setForeground(corTexto);
+
+        // Forçar renderização correta
+        botao.setContentAreaFilled(true);
+        botao.setOpaque(true);
+        botao.setBorderPainted(true);
+        botao.setBorder(BorderFactory.createLineBorder(cor, 2));
+        botao.setFocusPainted(false);
+
+        botao.setPreferredSize(new Dimension(140, 40));
+        botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Efeito hover
+        botao.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                botao.setBackground(aumentarBrilho(cor, 1.1f));
+                botao.setForeground(corTexto);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                botao.setBackground(cor);
+                botao.setForeground(corTexto);
+            }
+        });
+
+        return botao;
+    }
+
+    private Color obterCorTextoParaBotao(Color cor) {
+        // Determinar cor de texto baseado no botão
+        // AMARELO e VERDE → Texto PRETO (cores claras)
+        // AZUL, ROSA e VERMELHO → Texto PRETO (como solicitado)
+
+        // Se é amarelo (cadastrar) ou verde (recuperar) → texto preto
+        if (cor.equals(COR_AMARELO_CLARO) || cor.equals(COR_VERDE_CLARO)) {
+            return new Color(15, 23, 42);  // Preto/Cinzento escuro
+        }
+
+        // Se é azul (entrar), rosa (trial) ou vermelho (sair) → texto preto
+        if (cor.equals(COR_AZUL) || cor.equals(COR_ROSA_CLARO) || cor.equals(COR_VERMELHO_CLARO)) {
+            return new Color(15, 23, 42);  // Preto/Cinzento escuro
+        }
+
+        // Fallback: calcular luminância percebida (fórmula WCAG)
+        double luminancia = (0.299 * cor.getRed() + 0.587 * cor.getGreen() + 0.114 * cor.getBlue()) / 255.0;
+        if (luminancia > 0.5) {
+            return new Color(15, 23, 42);  // Preto para cores claras
+        } else {
+            return Color.WHITE;  // Branco para cores escuras
+        }
+    }
+
+
+    private Color aumentarBrilho(Color cor, float fator) {
+        int r = Math.min(255, (int) (cor.getRed() * fator));
+        int g = Math.min(255, (int) (cor.getGreen() * fator));
+        int b = Math.min(255, (int) (cor.getBlue() * fator));
+        return new Color(r, g, b);
     }
 
     // ── Autenticacao ─────────────────────────────────────────────────────────
@@ -150,16 +405,30 @@ public class LoginDialog extends JDialog {
      * Abre modal de renovacao de senha. Retorna null em sucesso, mensagem de erro caso contrario.
      */
     private String abrirModalRenovacaoSenha(String identity) {
-        JPasswordField txtAtual = new JPasswordField();
-        JPasswordField txtNova = new JPasswordField();
-        JPasswordField txtConf = new JPasswordField();
+        JPasswordField txtAtual = criarCampoSenha();
+        JPasswordField txtNova = criarCampoSenha();
+        JPasswordField txtConf = criarCampoSenha();
 
-        JPanel p = new JPanel(new GridLayout(0, 2, 8, 8));
-        p.add(new JLabel("Senha atual:"));      p.add(txtAtual);
-        p.add(new JLabel("Nova senha:"));        p.add(txtNova);
-        p.add(new JLabel("Confirmar nova:"));    p.add(txtConf);
+        JPanel p = new JPanel(new GridLayout(0, 2, 12, 12));
+        p.setBackground(COR_PAINEL);
+        p.setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        int opcao = JOptionPane.showConfirmDialog(this, p, "Renovar senha", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        JLabel[] labels = {
+                criarLabel("Senha atual:"),
+                criarLabel("Nova senha:"),
+                criarLabel("Confirmar nova:")
+        };
+
+        p.add(labels[0]);      p.add(txtAtual);
+        p.add(labels[1]);      p.add(txtNova);
+        p.add(labels[2]);      p.add(txtConf);
+
+        JOptionPane pane = new JOptionPane(p, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+        JDialog dialog = pane.createDialog(this, "Renovar senha");
+        dialog.getContentPane().setBackground(COR_FUNDO);
+        dialog.setVisible(true);
+
+        int opcao = (Integer) pane.getValue();
         if (opcao != JOptionPane.OK_OPTION) {
             return "Cancelado";
         }
@@ -172,7 +441,7 @@ public class LoginDialog extends JDialog {
         );
 
         if (erro != null) {
-            JOptionPane.showMessageDialog(this, erro, "Renovacao de senha", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, erro, "Renovação de senha", JOptionPane.ERROR_MESSAGE);
         }
         return erro;
     }
@@ -202,25 +471,39 @@ public class LoginDialog extends JDialog {
     // ── Cadastro ─────────────────────────────────────────────────────────────
 
     private void cadastrar() {
-        JTextField txtUsuario = new JTextField();
-        JTextField txtEmail = new JTextField();
-        JPasswordField txtNovaSenha = new JPasswordField();
-        JPasswordField txtConfirmacao = new JPasswordField();
+        JTextField txtUsuario = criarCampoTexto();
+        JTextField txtEmail = criarCampoTexto();
+        JPasswordField txtNovaSenha = criarCampoSenha();
+        JPasswordField txtConfirmacao = criarCampoSenha();
 
-        JPanel painel = new JPanel(new GridLayout(0, 2, 8, 8));
-        painel.add(new JLabel("Usuario:"));           painel.add(txtUsuario);
-        painel.add(new JLabel("Email:"));             painel.add(txtEmail);
-        painel.add(new JLabel("Senha:"));             painel.add(txtNovaSenha);
-        painel.add(new JLabel("Confirmar senha:"));   painel.add(txtConfirmacao);
+        JPanel painel = new JPanel(new GridLayout(0, 2, 12, 12));
+        painel.setBackground(COR_PAINEL);
+        painel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
-        int opcao = JOptionPane.showConfirmDialog(this, painel, "Cadastro de credencial",
-                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        JLabel[] labels = {
+                criarLabel("Usuário:"),
+                criarLabel("Email:"),
+                criarLabel("Senha:"),
+                criarLabel("Confirmar senha:")
+        };
+
+        painel.add(labels[0]);           painel.add(txtUsuario);
+        painel.add(labels[1]);           painel.add(txtEmail);
+        painel.add(labels[2]);           painel.add(txtNovaSenha);
+        painel.add(labels[3]);           painel.add(txtConfirmacao);
+
+        JOptionPane pane = new JOptionPane(painel, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+        JDialog dialog = pane.createDialog(this, "Cadastro de credencial");
+        dialog.getContentPane().setBackground(COR_FUNDO);
+        dialog.setVisible(true);
+
+        int opcao = (Integer) pane.getValue();
         if (opcao != JOptionPane.OK_OPTION) return;
 
         String senha = new String(txtNovaSenha.getPassword());
         String confirmacao = new String(txtConfirmacao.getPassword());
         if (!senha.equals(confirmacao)) {
-            JOptionPane.showMessageDialog(this, "A confirmacao da senha nao confere.", "Cadastro", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "A confirmação da senha não confere.", "Cadastro", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -231,9 +514,16 @@ public class LoginDialog extends JDialog {
         }
 
         JOptionPane.showMessageDialog(this,
-                "Usuario cadastrado com sucesso. Use as credenciais para entrar.",
+                "Usuário cadastrado com sucesso. Use as credenciais para entrar.",
                 "Cadastro",
                 JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private JLabel criarLabel(String texto) {
+        JLabel label = new JLabel(texto);
+        label.setFont(FONTE_ROTULO);
+        label.setForeground(COR_TEXTO);
+        return label;
     }
 }
 
