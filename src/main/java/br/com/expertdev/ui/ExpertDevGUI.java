@@ -151,8 +151,16 @@ public class ExpertDevGUI extends JFrame {
     private String perfilPromptSelecionado = "tecnico";
     private boolean salvarApiKeySelecionada;
     private String apiKeyDigitada = "";
+    private final AuthSession authSession;
 
     public ExpertDevGUI() {
+        this(new AuthSession("Local", "", LicenseStatus.PREMIUM, 0));
+    }
+
+    public ExpertDevGUI(AuthSession authSession) {
+        this.authSession = authSession == null
+                ? new AuthSession("Local", "", LicenseStatus.PREMIUM, 0)
+                : authSession;
         auditoriaService = new AuditoriaService();
         performanceService = new PerformanceService(auditoriaService);
         reportService = new ReportService(performanceService);
@@ -328,13 +336,41 @@ public class ExpertDevGUI extends JFrame {
             }
         });
 
-        JLabel lblVersao = new JLabel("v 2.2");
+        JLabel lblVersao = new JLabel("v 2.2.3-BETA");
         lblVersao.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblVersao.setForeground(COR_DESTAQUE2);
         lblVersao.setHorizontalAlignment(SwingConstants.RIGHT);
 
+        JLabel lblLicenca = new JLabel(obterTextoLicenca());
+        lblLicenca.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        lblLicenca.setForeground(obterCorLicenca());
+        lblLicenca.setBorder(new EmptyBorder(0, 8, 0, 8));
+
+        // ── Bloco de usuario: ícone circular + nome ──────────────────────────
+        ImageIcon iconeUsuario = criarIconeUsuarioCircular(36);
+        JLabel lblIconeUsuario = new JLabel(iconeUsuario);
+        lblIconeUsuario.setBorder(new EmptyBorder(0, 0, 0, 4));
+
+        JLabel lblNomeUsuario = new JLabel(authSession.getDisplayName());
+        lblNomeUsuario.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblNomeUsuario.setForeground(COR_TEXTO);
+
+        String emailSessao = authSession.getEmail();
+        String tooltipUsuario = emailSessao != null && !emailSessao.trim().isEmpty()
+                ? authSession.getDisplayName() + "  •  " + emailSessao
+                : authSession.getDisplayName();
+        lblIconeUsuario.setToolTipText(tooltipUsuario);
+        lblNomeUsuario.setToolTipText(tooltipUsuario);
+
+        JPanel painelUsuario = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        painelUsuario.setOpaque(false);
+        painelUsuario.add(lblIconeUsuario);
+        painelUsuario.add(lblNomeUsuario);
+
         direita.add(chkTemaClaro);
         direita.add(lblVersao);
+        direita.add(lblLicenca);
+        direita.add(painelUsuario);
         cabecalho.add(direita, BorderLayout.EAST);
 
         // Linha separadora inferior
@@ -347,6 +383,70 @@ public class ExpertDevGUI extends JFrame {
         wrapper.add(cabecalho, BorderLayout.CENTER);
         wrapper.add(sep, BorderLayout.SOUTH);
         return wrapper;
+    }
+
+    private String obterTextoLicenca() {
+        if (authSession == null) {
+            return "[PREMIUM]";
+        }
+        if (authSession.isPremium()) {
+            return "[PREMIUM]";
+        }
+        if (authSession.isTrial()) {
+            return "[TRIAL " + authSession.getTrialDaysRemaining() + "d]";
+        }
+        return "[EXPIRADO]";
+    }
+
+    private Color obterCorLicenca() {
+        if (authSession == null) {
+            return COR_SUCESSO;
+        }
+        if (authSession.isPremium()) {
+            return COR_SUCESSO;
+        }
+        if (authSession.isTrial()) {
+            return new Color(217, 119, 6);
+        }
+        return COR_ERRO;
+    }
+
+    /**
+     * Gera um ícone circular estilo "avatar" com silhueta de usuário,
+     * desenhado em tempo de execucao sem dependencia de arquivo externo.
+     */
+    private ImageIcon criarIconeUsuarioCircular(int size) {
+        BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = img.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+
+        // Circulo de fundo azul (cor identica ao icone mostrado pelo usuario)
+        g.setColor(new Color(30, 120, 240));
+        g.fillOval(0, 0, size, size);
+
+        // Sombra interna no circulo (degrade sutil)
+        g.setColor(new Color(0, 0, 0, 30));
+        g.fillOval(size / 6, size / 4, size * 2 / 3, size * 3 / 4);
+
+        // Silhueta branca
+        g.setColor(Color.WHITE);
+
+        // Cabeca
+        int headDiam = size * 38 / 100;
+        int headX = (size - headDiam) / 2;
+        int headY = size * 14 / 100;
+        g.fillOval(headX, headY, headDiam, headDiam);
+
+        // Corpo (meio circulo inferior)
+        int bodyW = size * 62 / 100;
+        int bodyH = size * 38 / 100;
+        int bodyX = (size - bodyW) / 2;
+        int bodyY = size * 53 / 100;
+        g.fillArc(bodyX, bodyY, bodyW, bodyH, 0, 180);
+
+        g.dispose();
+        return new ImageIcon(img);
     }
 
     /** Corpo principal — painel esquerdo (entrada) + direito (saída) */
@@ -2678,7 +2778,25 @@ public class ExpertDevGUI extends JFrame {
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                new ExpertDevGUI();
+                ExpertDevConfig config = ExpertDevConfig.carregar();
+                if (!config.isAuthEnabled()) {
+                    new ExpertDevGUI(new AuthSession("Local", "", LicenseStatus.PREMIUM, 0));
+                    return;
+                }
+
+                AuthService authService = new AuthService();
+                LoginDialog loginDialog = new LoginDialog(null, authService);
+                loginDialog.setVisible(true);
+                AuthSession session = loginDialog.getSession();
+                if (session == null || session.getLicenseStatus() == LicenseStatus.EXPIRED) {
+                    JOptionPane.showMessageDialog(null,
+                            "Sem acesso valido. Encerrando o Expert Dev.",
+                            "Acesso",
+                            JOptionPane.WARNING_MESSAGE);
+                    System.exit(0);
+                    return;
+                }
+                new ExpertDevGUI(session);
             }
         });
     }

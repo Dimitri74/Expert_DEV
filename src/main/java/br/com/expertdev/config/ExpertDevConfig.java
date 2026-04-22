@@ -36,6 +36,7 @@ public class ExpertDevConfig {
     private final String aiApiKey;
     private final String uiModoGeracao;
     private final String promptProfile;
+    private final boolean authEnabled;
 
     private ExpertDevConfig(Properties properties) {
         this.timeoutMs = parseInteger(properties, "timeout.ms", 30000);
@@ -68,6 +69,7 @@ public class ExpertDevConfig {
         this.aiApiKey = properties.getProperty("ai.api.key", "").trim();
         this.uiModoGeracao = properties.getProperty("ui.generation.mode", "LOCAL").trim();
         this.promptProfile = properties.getProperty("prompt.profile", "tecnico").trim().toLowerCase();
+        this.authEnabled = parseBoolean(properties, "auth.enabled", true);
     }
 
     public static ExpertDevConfig carregar() {
@@ -103,6 +105,7 @@ public class ExpertDevConfig {
         properties.setProperty("ai.api.key", "");
         properties.setProperty("ui.generation.mode", "LOCAL");
         properties.setProperty("prompt.profile", "tecnico");
+        properties.setProperty("auth.enabled", "true");
         return properties;
     }
 
@@ -360,6 +363,10 @@ public class ExpertDevConfig {
 
     public String getPromptProfile() {
         return ("negocial".equals(promptProfile) || "executivo".equals(promptProfile)) ? "negocial" : "tecnico";
+    }
+
+    public boolean isAuthEnabled() {
+        return authEnabled;
     }
 }
 

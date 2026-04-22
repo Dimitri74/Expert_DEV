@@ -16,7 +16,7 @@ Extrai regras de negócio e referências visuais de páginas web, consolida o co
 | ![JFreeChart](https://img.shields.io/badge/Charts-JFreeChart-1565C0?style=flat-square) | 1.0.19 | Biblioteca de gráficos em Java. | Exibe o dashboard de tendências e comparativos do módulo de Performance & ROI. |
 | ![Jackson](https://img.shields.io/badge/JSON-Jackson-000000?style=flat-square) | 2.17.2 | Biblioteca de serialização/desserialização JSON. | Constrói e interpreta payloads de integração com provedores de IA (OpenAI/Claude). |
 
-## Versão atual: Expert Dev 2.2
+## Versão atual: Expert Dev 2.2.3-BETA
 
 - **Cache de Contexto**: Armazenamento local (SQLite) de resultados de processamento para evitar re-download e economizar tokens.
 - **Automação de Workflow**: Detecção inteligente de links no clipboard (Jira/RTC) e notificações no System Tray.
@@ -212,6 +212,7 @@ Na interface, você pode escolher o provider no combo `Provider`.
 
 ## Histórico de versões
 
+- **Expert Dev 2.2.3-BETA** — Autenticação local + Login/Trial 15 dias + Lockout + Expiração de senha (30 dias) + Aviso de renovação + Ícone de usuário no cabeçalho.
 - **Expert Dev 2.2** — Versão Portátil (JRE Embarcada) + Wrapper Executável (.exe) + Melhorias de Distribuição.
     - Suporte a JRE portátil em `./jre8`.
     - Geração de `ExpertDev.exe` com ícone nativo via Launch4j.
@@ -227,7 +228,8 @@ Na interface, você pode escolher o provider no combo `Provider`.
 
 ## Próximos passos
 
-- VR2.2 — Suporte a Agentes Locais (Ollama)
-- VR2.3 — Refinamento de Prompt Iterativo (Chat)
+- 2.2.4 — Lockout incremental + integração SMTP para recuperação de senha
+- 2.3.0 — Suporte a Agentes Locais (Ollama)
+- 2.4.0 — Refinamento de Prompt Iterativo (Chat)
 
 

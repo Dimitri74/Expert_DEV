@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>br.com.expertdev</groupId>
     <artifactId>expert-dev</artifactId>
-    <version>2.2.0</version>
+    <version>2.2.3-BETA</version>
     <name>Expert Dev</name>
     <description>Extrator de contexto e gerador de prompts para IA</description>
     <properties>

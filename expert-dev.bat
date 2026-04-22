@@ -11,7 +11,7 @@ if not exist "%JAVA_EXE%" (
     echo Tentando usar o Java do sistema como fallback...
     where javaw >nul 2>nul
     if %ERRORLEVEL% EQU 0 (
-        start "" javaw -jar expert-dev-2.2.0.jar
+        start "" javaw -jar expert-dev-2.2.3-BETA.jar
         exit /b
     ) else (
         echo [ERRO] Java nao encontrado no sistema.
@@ -21,7 +21,7 @@ if not exist "%JAVA_EXE%" (
 )
 
 :: Inicia o ExpertDev usando a JRE local
-echo [INFO] Iniciando ExpertDev 2.2 com JRE Local...
-start "" "%JAVA_EXE%" -jar expert-dev-2.2.0.jar
+echo [INFO] Iniciando ExpertDev 2.2.3-BETA com JRE Local...
+start "" "%JAVA_EXE%" -jar expert-dev-2.2.3-BETA.jar
 
 endlocal
