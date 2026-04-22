@@ -2,6 +2,20 @@
 
 Extrai regras de negócio e referências visuais de páginas web, consolida o conteúdo e gera múltiplos formatos de saída (TXT, DOCX, PDF) otimizados para uso com assistentes de código. Possui módulo integrado de medição de ROI e performance.
 
+## Stack tecnológica
+
+| Tecnologia | Versão | O que é | O que faz no projeto |
+| --- | --- | --- | --- |
+| ![Java](https://img.shields.io/badge/Java-8-007396?style=flat-square&logo=openjdk&logoColor=white) | 8 | Linguagem principal da aplicação. | Implementa a lógica de extração, consolidação de contexto, geração de artefatos e integração da UI. |
+| ![Swing](https://img.shields.io/badge/Java-Swing-007396?style=flat-square&logo=openjdk&logoColor=white) | JDK 8 | Toolkit de interface gráfica do Java. | Renderiza a interface desktop, entradas de URL/configuração e painel de execução. |
+| ![Maven](https://img.shields.io/badge/Build-Apache%20Maven-C71A36?style=flat-square&logo=apachemaven&logoColor=white) | Ambiente (3.x) | Ferramenta de build e gerenciamento de dependências. | Compila, empacota JARs, executa plugins (Shade/Launch4j) e padroniza o ciclo de build. |
+| ![Jsoup](https://img.shields.io/badge/Parser-jsoup-2E7D32?style=flat-square) | 1.15.3 | Biblioteca de parsing HTML. | Faz o fetch/parse das páginas web e extrai texto e referências de imagens. |
+| ![Apache POI](https://img.shields.io/badge/Docs-Apache%20POI-D22128?style=flat-square&logo=apache&logoColor=white) | 4.1.2 | Biblioteca para documentos Office. | Gera o `contexto_com_imagens.docx` com conteúdo consolidado e imagens inline. |
+| ![PDFBox](https://img.shields.io/badge/PDF-Apache%20PDFBox-B71C1C?style=flat-square&logo=apache&logoColor=white) | 2.0.27 | Biblioteca para manipulação de PDF. | Gera o `contexto_com_imagens.pdf` e apoia a exportação de saídas em PDF. |
+| ![SQLite JDBC](https://img.shields.io/badge/DB-SQLite%20JDBC-003B57?style=flat-square&logo=sqlite&logoColor=white) | 3.45.1.0 | Driver JDBC para banco SQLite embarcado. | Mantém cache de contexto e dados de execução para acelerar reprocessamentos e reduzir custos. |
+| ![JFreeChart](https://img.shields.io/badge/Charts-JFreeChart-1565C0?style=flat-square) | 1.0.19 | Biblioteca de gráficos em Java. | Exibe o dashboard de tendências e comparativos do módulo de Performance & ROI. |
+| ![Jackson](https://img.shields.io/badge/JSON-Jackson-000000?style=flat-square) | 2.17.2 | Biblioteca de serialização/desserialização JSON. | Constrói e interpreta payloads de integração com provedores de IA (OpenAI/Claude). |
+
 ## Versão atual: Expert Dev 2.2
 
 - **Cache de Contexto**: Armazenamento local (SQLite) de resultados de processamento para evitar re-download e economizar tokens.
