@@ -1,5 +1,6 @@
 package br.com.expertdev.ui;
 
+import br.com.expertdev.config.ExpertDevConfig;
 import br.com.expertdev.model.AuthSession;
 import br.com.expertdev.model.LicenseStatus;
 import br.com.expertdev.service.AuthService;
@@ -35,15 +36,17 @@ public class LoginDialog extends JDialog {
     private static final Font FONTE_BOTAO = new Font("Segoe UI", Font.BOLD, 12);
 
     private final AuthService authService;
+    private final ExpertDevConfig config;
     private AuthSession session;
 
     private JTextField txtIdentity;
     private JPasswordField txtSenha;
     private JLabel lblTrial;
 
-    public LoginDialog(Window owner, AuthService authService) {
+    public LoginDialog(Window owner, AuthService authService, ExpertDevConfig config) {
         super(owner, "Acesso Expert Dev 2.2.3-BETA", ModalityType.APPLICATION_MODAL);
         this.authService = authService;
+        this.config = config;
         construir();
     }
 
@@ -210,27 +213,62 @@ public class LoginDialog extends JDialog {
         label.setFont(new Font("Segoe UI", Font.BOLD, 24));
         label.setForeground(COR_AZUL);
 
-        try {
-            URL resourceUrl = getClass().getClassLoader().getResource("icons/logo_transparente.png");
-            if (resourceUrl != null) {
-                BufferedImage img = ImageIO.read(resourceUrl);
-                if (img != null) {
-                    Image scaledImg = img.getScaledInstance(40, 40, Image.SCALE_SMOOTH);
-                    label.setIcon(new ImageIcon(scaledImg));
-                    label.setIconTextGap(10);
-                }
-            }
-        } catch (IOException e) {
-            // Se não conseguir carregar a imagem, apenas mostra o texto
-        }
+        Icon iconeJava = criarIconeJava(40);
+        label.setIcon(iconeJava);
+        label.setIconTextGap(12);
 
         return label;
+    }
+
+    private Icon criarIconeJava(int tamanho) {
+        return new Icon() {
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // Cores do Java (estilizadas)
+                Color corCafe = new Color(185, 28, 28); // Vermelho escuro
+                Color corVapor = new Color(147, 197, 253, 180); // Azul claro transparente
+
+                // Desenhar a "xícara" (simplificada)
+                g2.setColor(corCafe);
+                int w = (int) (tamanho * 0.6);
+                int h = (int) (tamanho * 0.4);
+                int ox = x + (tamanho - w) / 2;
+                int oy = y + (int) (tamanho * 0.5);
+                g2.fillRoundRect(ox, oy, w, h, 8, 8);
+
+                // Alça
+                g2.setStroke(new BasicStroke(2f));
+                g2.drawArc(ox + w - 5, oy + 5, 10, h - 10, -90, 180);
+
+                // Vapor
+                g2.setColor(corVapor);
+                int vx = x + tamanho / 2;
+                int vy = y + (int) (tamanho * 0.1);
+                for (int i = 0; i < 3; i++) {
+                    int shift = (i - 1) * 6;
+                    g2.drawArc(vx + shift, vy + (i * 4), 6, 10, 0, 180);
+                }
+
+                g2.dispose();
+            }
+
+            @Override
+            public int getIconWidth() { return tamanho; }
+            @Override
+            public int getIconHeight() { return tamanho; }
+        };
     }
 
     // ─── Métodos auxiliares para criação de componentes ──────────────────────
 
     private JTextField criarCampoTexto() {
         JTextField campo = new JTextField();
+        if (config != null) {
+            campo.setText(config.getAuthLastUser());
+        }
         campo.setFont(FONTE_NORMAL);
         campo.setBackground(new Color(248, 250, 252));
         campo.setForeground(COR_TEXTO);
@@ -396,6 +434,9 @@ public class LoginDialog extends JDialog {
                 abrirModalRenovacaoSenha(identity);
             }
         }
+
+        // Salvar último usuário com sucesso
+        ExpertDevConfig.salvarUltimoUsuario(identity);
 
         session = tentativa;
         dispose();

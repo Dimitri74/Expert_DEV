@@ -102,7 +102,7 @@ public class PromptContextRefiner {
         sb.append("- Evitar assumir requisitos nao citados sem sinalizar lacuna.\n");
         sb.append("- Priorizar objetividade, ordem de implementacao e testes.\n");
         if (regras.toLowerCase().contains("java 8")) {
-            sb.append("- Considerar compatibilidade com Java 8 quando mencionado.\n");
+            sb.append("- Considerar compatibilidade tecnológica mencionada no contexto.\n");
         }
         return sb.toString().trim();
     }

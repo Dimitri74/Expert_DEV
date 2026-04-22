@@ -5,7 +5,7 @@ public class PromptBlueprintBuilder {
     public String buildLocalPrompt(PromptContextRefiner.RefinedPromptContext context, String perfilPrompt) {
         String perfil = normalizarPerfil(perfilPrompt);
         StringBuilder sb = new StringBuilder();
-        sb.append("Você é um desenvolvedor sênior com foco em Java 8, Angular e JavaScript.\n\n");
+        sb.append("Você é um desenvolvedor sênior capaz de atuar com Java, Angular, JavaScript e outras tecnologias modernas.\n\n");
         sb.append("Perfil de resposta:\n");
         sb.append("- ").append("negocial".equals(perfil)
                 ? "Negocial (visao de negocio, priorizacao, impacto e riscos)."
@@ -24,11 +24,10 @@ public class PromptBlueprintBuilder {
         sb.append("Lacunas e pontos para confirmação:\n");
         sb.append(context.getLacunas()).append("\n\n");
         sb.append("Diretrizes obrigatórias de implementação:\n");
-        sb.append("- O desenvolvimento deve seguir as tecnologias, padrões e arquitetura já adotados no projeto existente.\n");
+        sb.append("- O desenvolvimento deve seguir rigorosamente as tecnologias, padrões e arquitetura já adotados no projeto existente.\n");
+        sb.append("- Siga a versão da linguagem (ex: Java 7, 8, 11, 17+) e do ecossistema (Node, Angular, etc) detectada no contexto.\n");
         sb.append("- Preserve a organização de camadas, convenções de nomes, contratos públicos e estilo predominante da base atual.\n");
-        sb.append("- Adote boas práticas compatíveis com Java 8.\n");
-        sb.append("- Use streams e expressões lambda quando fizer sentido para clareza, legibilidade e manutenção, sem uso excessivo ou desnecessário.\n");
-        sb.append("- Priorize código coeso, legível, testável e aderente às limitações reais de Java 8.\n\n");
+        sb.append("- Priorize código de alto nível, coeso, legível, testável e aderente às melhores práticas da stack identificada.\n\n");
         sb.append("Regra obrigatória de rastreabilidade no código:\n");
         sb.append("- Ao implementar ou alterar código, inclua os comentários de auditoria no topo do arquivo ou do trecho principal entregue.\n");
         sb.append("- Use exatamente os identificadores informados no contexto, por exemplo:\n");
@@ -38,7 +37,7 @@ public class PromptBlueprintBuilder {
         sb.append("Formato obrigatório da resposta:\n");
         sb.append("1. Comece com um plano detalhado por módulos e ordem de prioridade.\n");
         sb.append("2. Liste impactos, dependências e possíveis efeitos colaterais.\n");
-        sb.append("3. Proponha testes unitários aderentes às tecnologias e versões descritas.\n");
+        sb.append("3. Proponha testes unitários aderentes às tecnologias e versões detectadas.\n");
         sb.append("4. Faça perguntas objetivas apenas onde houver lacunas reais.\n");
         sb.append("5. Não invente stack, dependências ou decisões ausentes no contexto.\n");
         sb.append("6. Use linguagem ").append("negocial".equals(perfil) ? "estrategica e orientada ao negocio" : "objetiva e tecnica")
@@ -56,7 +55,7 @@ public class PromptBlueprintBuilder {
                                     String perfilPrompt) {
         String perfil = normalizarPerfil(perfilPrompt);
         StringBuilder sb = new StringBuilder();
-        sb.append("Gere um PROMPT FINAL de alta qualidade para um desenvolvedor senior com foco em Java 8, Angular e JavaScript.\n\n");
+        sb.append("Gere um PROMPT FINAL de alta qualidade para um desenvolvedor sênior capaz de atuar com Java, Angular, JavaScript e outras tecnologias modernas.\n\n");
         sb.append("Perfil de resposta desejado: ").append(perfil).append(".\n\n");
         sb.append("Objetivo do prompt final:\n");
         sb.append(context.getObjetivo()).append("\n\n");
@@ -73,11 +72,10 @@ public class PromptBlueprintBuilder {
         sb.append("Lacunas detectadas:\n");
         sb.append(context.getLacunas()).append("\n\n");
         sb.append("Diretrizes obrigatórias de implementação:\n");
-        sb.append("- O desenvolvimento deve seguir as tecnologias, padrões e arquitetura já adotados no projeto existente.\n");
+        sb.append("- O desenvolvimento deve seguir rigorosamente as tecnologias, padrões e arquitetura já adotados no projeto existente.\n");
+        sb.append("- Siga a versão da linguagem (ex: Java 7, 8, 11, 17+) e do ecossistema (Node, Angular, etc) detectada no contexto.\n");
         sb.append("- Preserve a organização de camadas, convenções de nomes, contratos públicos e estilo predominante da base atual.\n");
-        sb.append("- Adote boas práticas compatíveis com Java 8.\n");
-        sb.append("- Use streams e expressões lambda quando fizer sentido para clareza, legibilidade e manutenção, sem uso excessivo ou desnecessário.\n");
-        sb.append("- Priorize código coeso, legível, testável e aderente às limitações reais de Java 8.\n\n");
+        sb.append("- Priorize código de alto nível, coeso, legível, testável e aderente às melhores práticas da stack identificada.\n\n");
         sb.append("Regra obrigatória de rastreabilidade no código:\n");
         sb.append("- Ao implementar ou alterar código, inclua os comentários de auditoria no topo do arquivo ou do trecho principal entregue.\n");
         sb.append("- Use exatamente os identificadores informados no contexto, por exemplo:\n");

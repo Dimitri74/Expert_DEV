@@ -1,228 +1,60 @@
-Você é um desenvolvedor sênior com foco em Java 8, Angular e JavaScript.
+Você é um desenvolvedor sênior capaz de atuar com Java, Angular, JavaScript e outras tecnologias modernas.
 
 Perfil de resposta:
-- Tecnico (detalhamento de implementacao, contratos e testes).
+- Negocial (visao de negocio, priorizacao, impacto e riscos).
 
 Objetivo:
 Analisar o contexto extraido e transformar os requisitos em um plano de implementacao tecnico acionavel.
 
 Resumo intermediario do contexto:
-- Caracteres de regras refinadas: 6818
+- Caracteres de regras refinadas: 965
 - Caracteres de referencias visuais: 24
 - Principais blocos por relevancia:
-- [score 6] ## Arquitetura Final
-- [score 4] | `regras_extraidas.txt` | ✅ | ✅ | ✅ |
-- [score 4] 1. **regras_extraidas.txt** — Texto bruto consolidado de todas as URLs
-- [score 4] ### Teste: 2 URLs paralelo
-- [score 4] - VR1.6: Testes unitários (JUnit4/5)
-- [score 4] **Status**: Pronto para produção em projetos de extração de requisitos e consolidação de contexto para assistentes de IA.
+- [score 1] ## Tecnologias Utilizadas
+- [score 1] ## Como Executar
+- [score 1] ## Exemplo de Saída
 - Objetivo: converter contexto bruto em plano tecnico executavel com perguntas objetivas para lacunas.
 
 Contexto consolidado (regras e requisitos):
 
-URL: https://github.com/Dimitri74/Expert_DEV/blob/main/RELATORIO_IMPLEMENTACAO.md
+URL: https://github.com/unipds-projetos/modulo1-fundamentos-java-extra-cardapio/blob/main/README.md
 
-# Expert Dev - Resumo de Implementação (VR1.1 até VR1.5)
+Observação: Recuperado do cache em 2026-04-22 18:17:11.0
 
-## Timeline de Evolução
+# Cardápio
 
-### VR1.1 (2024 - MVP com Robustez)
-- ✅ Validação de URLs com saneamento
-- ✅ Tratamento de erro por URL (não quebra lote inteiro)
-- ✅ Deduplicação de imagens
-- ✅ Prompt revisado e consistente
-- ✅ Relatório `resumo_execucao.txt`
-- ✅ Arquivo `erros_processamento.txt`
+Este é um projeto simples em Java que demonstra como utilizar a biblioteca Gson para converter um objeto que representa um item de cardápio em uma string JSON.
 
-### VR1.3 (2024 - Modularização e Configuração)
-- ✅ Separação em 14+ classes (config, models, services, io)
-- ✅ Suporte a configuração externa via `expertdev.properties`
-- ✅ Interfaces para abstração (DocumentFetcher, TextFileWriter)
-- ✅ **Novo**: Geração de Word (DOCX) com imagens embarcadas
-- ✅ Cache local de imagens para evitar re-downloads
-- ✅ Compatibilidade total com Java 8
+## Tecnologias Utilizadas
 
-### VR1.5 (2024 - Paralelismo + PDF)
-- ✅ **Novo**: Processamento paralelo com ExecutorService
-- ✅ Detecção automática de cores disponíveis (threads = cores - 1)
-- ✅ **Novo**: Geração de PDF com imagens embarcadas
-- ✅ Ambos os formatos (DOCX e PDF) produzem saída "pronta para apresentar"
-- ✅ Rastreabilidade completa em processamento paralelo
+* **Java:** Linguagem de programação principal.
+* **Gradle:** Ferramenta de automação de compilação.
+* **Gson:** Biblioteca do Google para trabalhar com JSON em Java.
 
-## Arquitetura Final
+## Como Executar
 
-### Pacotes de Código
+Você pode construir e executar o projeto utilizando o Gradle Wrapper fornecido.
 
-```
-src/main/java/
-├── ExpertDev.java ..................... Fachada (delega para VR1.5)
-├── ExpertDev_vr1_3.java ............... Versão 1.3 (com Word)
-├── ExpertDev_vr1_5.java ............... Versão 1.5 (paralelo + PDF)
-│
-└── br/com/expertdev/
-├── config/
-│ └── ExpertDevConfig.java ....... Carrega props (classpath + arquivo)
-├── model/
-│ ├── ExecucaoConsolidada.java ... DTO de saída consolidada
-│ ├── ImagemInfo.java ............ POJO de imagem
-│ └── ResultadoProcessamento.java POJO de resultado por URL
-├── service/
-│ ├── DocumentFetcher.java ....... Interface de download
-│ ├── ImageDownloader.java ....... Download + cache de imagens
-│ ├── JsoupDocumentFetcher.java .. Impl. de download com Jsoup
-│ ├── PageProcessor.java ......... Processa página individual
-│ ├── ParallelUrlProcessor.java .. Orquestra paralelismo (ExecutorService)
-│ ├── PdfDocumentBuilder.java .... Gera PDF com PDFBox
-│ ├── PromptGenerator.java ....... Template de prompt
-│ ├── ResultConsolidator.java .... Consolida resultados finais
-│ ├── UrlParser.java ............ Valida e deduplica URLs
-│ └── WordDocumentBuilder.java ... Gera DOCX com POI
-└── io/
-├── TextFileWriter.java ........ Interface de escrita
-└── DefaultTextFileWriter.java . Impl. de escrita em UTF-8
-
-## Saídas Geradas
-
-### Por Versão
-
-| Arquivo | VR1.1 | VR1.3 | VR1.5 |
-|---------|-------|-------|-------|
-| `regras_extraidas.txt` | ✅ | ✅ | ✅ |
-| `imagens_encontradas.txt` | ✅ | ✅ | ✅ |
-| `prompt_para_junie_copilot.txt` | ✅ | ✅ | ✅ |
-| `resumo_execucao.txt` | ✅ | ✅ | ✅ |
-| `erros_processamento.txt` | ✅ | ✅ | ✅ |
-| `contexto_com_imagens.docx` | ❌ | ✅ | ✅ |
-| `contexto_com_imagens.pdf` | ❌ | ❌ | ✅ |
-
-### Conteúdo de Cada Arquivo
-
-1. **regras_extraidas.txt** — Texto bruto consolidado de todas as URLs
-2. **imagens_encontradas.txt** — URLs de imagens (deduplicated globalmente)
-3. **prompt_para_junie_copilot.txt** — Prompt estruturado pronto para IA
-4. **resumo_execucao.txt** — Métricas: total URLs, sucesso/falha, tempo, imagens
-5. **erros_processamento.txt** — (Apenas se houver falhas) Detalhes de erros
-6. **contexto_com_imagens.docx** — Word formatado com texto + imagens inline
-7. **contexto_com_imagens.pdf** — PDF formatado com texto + imagens inline
-
-## Funcionalidades Principais
-
-### VR1.1+
-- ✅ Validação robusta de URLs
-- ✅ Extração de texto com fallback (article/main → body)
-- ✅ Limpeza de DOM (remove script, nav, footer, etc.)
-- ✅ Extração de imagens com alt text
-- ✅ Normalização e truncamento de conteúdo
-- ✅ Tolerância a falhas (uma URL errada ≠ lote inteiro falha)
-- ✅ Relatório de erros separado
-- ✅ Deduplicação de imagens por URL
-
-### VR1.3+
-- ✅ Tudo de VR1.1, mais:
-- ✅ Configuração externa via arquivo `.properties`
-- ✅ Cache local de imagens (evita re-downloads)
-- ✅ Geração de DOCX com imagens embarcadas (Apache POI)
-- ✅ Detecção automática de tipo de imagem (PNG/JPG/GIF)
-- ✅ Separação limpa em classes e pacotes
-- ✅ Interfaces para abstração (testável)
-
-### VR1.5+
-- ✅ Tudo de VR1.3, mais:
-- ✅ **Processamento paralelo** com `ExecutorService`
-- ✅ Detecção automática de cores para ajustar threads
-- ✅ Rastreabilidade completa em paralelo (cada thread identifica seu trabalho)
-- ✅ Geração de PDF com imagens embarcadas (Apache PDFBox)
-- ✅ Suporte a múltiplas URLs em paralelo
-- ✅ Consolidação de resultados mantém ordem de requisição
-
-## Dependências (Maven)
-
-```xml
-
-org.jsoup
-jsoup
-1.18.3
-
-org.apache.poi
-poi-ooxml
-5.2.5
-
-org.apache.pdfbox
-pdfbox
-2.0.30
-
-## Casos de Uso
-
-### Caso 1: Um site com conteúdo
+**Linux/macOS:**
 ```bash
-mvn exec:java -Dexec.mainClass="ExpertDev" -Dexec.args="https://example.com"
-**Saída**: 7 arquivos (texto, DOCX, PDF, etc.)
+./gradlew run
+```
 
-### Caso 2: Múltiplos sites em paralelo
-mvn exec:java -Dexec.mainClass="ExpertDev" -Dexec.args="https://site1.com, https://site2.com, https://site3.com"
-**Processamento**: 3 threads em paralelo (em máquina com 4+ cores)
-**Saída**: 7 arquivos consolidados
+**Windows:**
+.\gradlew.bat run
 
-### Caso 3: Configuração customizada
-Criar `expertdev.properties` com:
-```properties
-timeout.ms=60000
-texto.limite=200000
-output.summary.file=meu_resumo.txt
-**Efeito**: sobrescreve defaults globais
+## Exemplo de Saída
 
-## Decisões Técnicas
+Ao executar a classe `Main`, a seguinte string JSON será impressa no console:
 
-### Por que Java 8?
-- Compatibilidade com projetos legados
-- `ExecutorService` nativo (sem necessidade de bibliotecas extra)
-- `Duration` e `Instant` disponíveis no java.time
-
-### Por que Apache POI (Word)?
-- Simples, estável, produz DOCX válido
-- Suporta embarcamento de imagens inline
-- Menos dependências que alternativas
-
-### Por que Apache PDFBox (PDF)?
-- Puro Java, sem C++ nativo
-- Suporta embedar imagens
-- Boa documentação
-
-### Por que ExecutorService (não threads manuais)?
-- Gerenciamento automático de pool
-- Sincronização simples com `Future`
-- Melhor para evitar resource leaks
-
-## Performance Observada
-
-### Teste: 2 URLs paralelo
-Tempo VR1.3 (sequencial): ~8 segundos
-Tempo VR1.5 (paralelo): ~5 segundos
-Ganho: 37.5% mais rápido
-
-### Cache de imagens
-- Primeira execução: baixa todas as imagens
-- Segunda execução mesma URL: usa cache (quase instantâneo)
-
-## Melhorias Futuras
-
-- VR1.6: Testes unitários (JUnit4/5)
-- VR1.7: Autenticação (login/cookies)
-- VR1.8: Exportação para Markdown
-- VR1.9: Integração com APIs de IA
-- VR2.0: Interface web (Spring Boot)
-
-## Conclusão
-
-O Expert Dev evoluiu de um **MVP simples** (VR1.0) para uma **solução robusta, modular e paralelizável** (VR1.5) em poucas iterações, mantendo:
-
-- ✅ Compatibilidade com Java 8
-- ✅ Sem quebra de interfaces públicas
-- ✅ Progressão clara de features
-- ✅ Código limpo e testável
-- ✅ Documentação atualizada
-
-**Status**: Pronto para produção em projetos de extração de requisitos e consolidação de contexto para assistentes de IA.
+```json
+{
+"id": 1,
+"nome": "Refresco do Chaves",
+"descricao": "Suco de limão que parece tamarindo e tem gosto de groselha",
+"categoria": "BEBIDAS",
+"preco": 2.99
+}
 
 Referências visuais encontradas:
 
@@ -232,18 +64,17 @@ Restrições obrigatórias:
 - Manter aderencia ao contexto extraido.
 - Evitar assumir requisitos nao citados sem sinalizar lacuna.
 - Priorizar objetividade, ordem de implementacao e testes.
-- Considerar compatibilidade com Java 8 quando mencionado.
 
 Lacunas e pontos para confirmação:
+- Confirmar requisitos de autenticacao/autorizacao.
 - Confirmar persistencia e banco de dados esperados.
 - Validar referencias visuais ausentes ou insuficientes.
 
 Diretrizes obrigatórias de implementação:
-- O desenvolvimento deve seguir as tecnologias, padrões e arquitetura já adotados no projeto existente.
+- O desenvolvimento deve seguir rigorosamente as tecnologias, padrões e arquitetura já adotados no projeto existente.
+- Siga a versão da linguagem (ex: Java 7, 8, 11, 17+) e do ecossistema (Node, Angular, etc) detectada no contexto.
 - Preserve a organização de camadas, convenções de nomes, contratos públicos e estilo predominante da base atual.
-- Adote boas práticas compatíveis com Java 8.
-- Use streams e expressões lambda quando fizer sentido para clareza, legibilidade e manutenção, sem uso excessivo ou desnecessário.
-- Priorize código coeso, legível, testável e aderente às limitações reais de Java 8.
+- Priorize código de alto nível, coeso, legível, testável e aderente às melhores práticas da stack identificada.
 
 Regra obrigatória de rastreabilidade no código:
 - Ao implementar ou alterar código, inclua os comentários de auditoria no topo do arquivo ou do trecho principal entregue.
@@ -255,7 +86,7 @@ Regra obrigatória de rastreabilidade no código:
 Formato obrigatório da resposta:
 1. Comece com um plano detalhado por módulos e ordem de prioridade.
 2. Liste impactos, dependências e possíveis efeitos colaterais.
-3. Proponha testes unitários aderentes às tecnologias e versões descritas.
+3. Proponha testes unitários aderentes às tecnologias e versões detectadas.
 4. Faça perguntas objetivas apenas onde houver lacunas reais.
 5. Não invente stack, dependências ou decisões ausentes no contexto.
-6. Use linguagem objetiva e tecnica, pronta para execução.
+6. Use linguagem estrategica e orientada ao negocio, pronta para execução.

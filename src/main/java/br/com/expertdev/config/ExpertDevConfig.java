@@ -37,6 +37,7 @@ public class ExpertDevConfig {
     private final String uiModoGeracao;
     private final String promptProfile;
     private final boolean authEnabled;
+    private final String authLastUser;
 
     private ExpertDevConfig(Properties properties) {
         this.timeoutMs = parseInteger(properties, "timeout.ms", 30000);
@@ -70,6 +71,7 @@ public class ExpertDevConfig {
         this.uiModoGeracao = properties.getProperty("ui.generation.mode", "LOCAL").trim();
         this.promptProfile = properties.getProperty("prompt.profile", "tecnico").trim().toLowerCase();
         this.authEnabled = parseBoolean(properties, "auth.enabled", true);
+        this.authLastUser = properties.getProperty("auth.last.user", "").trim();
     }
 
     public static ExpertDevConfig carregar() {
@@ -106,6 +108,7 @@ public class ExpertDevConfig {
         properties.setProperty("ui.generation.mode", "LOCAL");
         properties.setProperty("prompt.profile", "tecnico");
         properties.setProperty("auth.enabled", "true");
+        properties.setProperty("auth.last.user", "");
         return properties;
     }
 
@@ -257,6 +260,12 @@ public class ExpertDevConfig {
         salvarPropriedades(properties, "Expert Dev configuration");
     }
 
+    public static void salvarUltimoUsuario(String identity) {
+        Properties properties = carregarPropriedadesCompletas();
+        properties.setProperty("auth.last.user", identity == null ? "" : identity.trim());
+        salvarPropriedades(properties, "Expert Dev configuration");
+    }
+
     private static void salvarPropriedades(Properties properties, String comentario) {
         try (OutputStream outputStream = new FileOutputStream(CONFIG_FILE_NAME)) {
             properties.store(outputStream, comentario);
@@ -367,6 +376,10 @@ public class ExpertDevConfig {
 
     public boolean isAuthEnabled() {
         return authEnabled;
+    }
+
+    public String getAuthLastUser() {
+        return authLastUser;
     }
 }
 

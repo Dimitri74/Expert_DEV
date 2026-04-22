@@ -33,7 +33,6 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.QuadCurve2D;
@@ -127,6 +126,11 @@ public class ExpertDevGUI extends JFrame {
     private File arquivoWordSelecionado;
     private boolean temaClaroAtivo;
     private JTextField campoRTC;
+    private JPopupMenu popupSugestoesRtc;
+    private JList<String> listaSugestoesRtc;
+    private Timer timerSugestoesRtc;
+    private boolean atualizandoRtcProgramaticamente;
+    private static final int RTC_AUTOCOMPLETE_DEBOUNCE_MS = 220;
     private JTextField campoUC;
     private JTextArea areaHistorico;
     private AuditoriaService auditoriaService;
@@ -183,8 +187,9 @@ public class ExpertDevGUI extends JFrame {
         clipboardMonitor = new ClipboardMonitor((rtc, titulo) -> {
             SwingUtilities.invokeLater(() -> {
                 if (campoRTC.getText().trim().isEmpty()) {
-                    campoRTC.setText(rtc);
-                    if (titulo != null && !titulo.isEmpty() && campoUC.getText().trim().isEmpty()) {
+                    definirCampoRtcProgramaticamente(rtc);
+                    verificarEPrefilPerformance();
+                     if (titulo != null && !titulo.isEmpty() && campoUC.getText().trim().isEmpty()) {
                         campoUC.setText(titulo);
                     }
                     trayService.notificar("Tarefa Detectada", "RTC " + rtc + " capturado do clipboard.", TrayIcon.MessageType.INFO);
@@ -216,7 +221,7 @@ public class ExpertDevGUI extends JFrame {
     }
 
     private void verificarTempoExcedido() {
-        List<MetricaPerformance> metricas = performanceService.listarTodos();
+        List<MetricaPerformance> metricas = performanceService.listarTodosPorUsuario(obterUsuarioSessao());
         for (MetricaPerformance m : metricas) {
             // Se tem início ExpertDev mas não tem fimExpertDev, está em andamento
             if (m.getInicioExpertDev() != null && m.getFimExpertDev() == null && m.getEstimativaPoker() > 0) {
@@ -420,6 +425,258 @@ public class ExpertDevGUI extends JFrame {
         return COR_ERRO;
     }
 
+    private String obterUsuarioSessao() {
+        if (authSession == null) {
+            return "Visitante";
+        }
+        String username = authSession.getDisplayName();
+        if (username == null || username.trim().isEmpty()) {
+            return "Visitante";
+        }
+        return username.trim();
+    }
+
+    private String obterEmailSessao() {
+        if (authSession == null || authSession.getEmail() == null) {
+            return "";
+        }
+        return authSession.getEmail().trim();
+    }
+
+    private void configurarAutocompleteRtc() {
+        timerSugestoesRtc = new Timer(RTC_AUTOCOMPLETE_DEBOUNCE_MS, e -> atualizarSugestoesRtc());
+        timerSugestoesRtc.setRepeats(false);
+
+        popupSugestoesRtc = new JPopupMenu();
+        popupSugestoesRtc.setBorder(BorderFactory.createLineBorder(COR_BORDA));
+
+        listaSugestoesRtc = new JList<String>();
+        listaSugestoesRtc.setFont(FONTE_NORMAL);
+        listaSugestoesRtc.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        listaSugestoesRtc.setBackground(COR_PAINEL);
+        listaSugestoesRtc.setForeground(COR_TEXTO);
+        listaSugestoesRtc.setSelectionBackground(COR_DESTAQUE);
+        listaSugestoesRtc.setSelectionForeground(Color.WHITE);
+
+        // Renderer customizado para cores de status
+        listaSugestoesRtc.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                String val = (value != null) ? value.toString() : "";
+
+                if (val.startsWith("[PENDENTE]")) {
+                    label.setForeground(new Color(255, 180, 0)); // Laranja/Amarelo para Pendente
+                } else if (val.startsWith("[CONCLUÍDO]")) {
+                    label.setForeground(COR_SUCESSO); // Verde para Concluído
+                }
+
+                if (isSelected) {
+                    label.setBackground(COR_DESTAQUE);
+                    label.setForeground(Color.WHITE);
+                } else {
+                    label.setBackground(COR_PAINEL);
+                }
+                label.setBorder(new EmptyBorder(4, 8, 4, 8));
+                return label;
+            }
+        });
+
+        JScrollPane scroll = new JScrollPane(listaSugestoesRtc);
+        scroll.setBorder(BorderFactory.createEmptyBorder());
+        scroll.setPreferredSize(new Dimension(Math.max(260, campoRTC.getPreferredSize().width), 150));
+        popupSugestoesRtc.add(scroll);
+
+        listaSugestoesRtc.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent e) {
+                aplicarRtcSelecionado();
+            }
+        });
+
+        campoRTC.addKeyListener(new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyPressed(java.awt.event.KeyEvent e) {
+                if (popupSugestoesRtc == null || !popupSugestoesRtc.isVisible()) {
+                    if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN && isAbaPerformanceSelecionada()) {
+                        solicitarAtualizacaoSugestoesRtc();
+                        e.consume();
+                    }
+                    return;
+                }
+
+                int idx = listaSugestoesRtc.getSelectedIndex();
+                int tamanho = listaSugestoesRtc.getModel().getSize();
+                switch (e.getKeyCode()) {
+                    case java.awt.event.KeyEvent.VK_DOWN:
+                        if (tamanho > 0) {
+                            listaSugestoesRtc.setSelectedIndex(Math.min(idx + 1, tamanho - 1));
+                            listaSugestoesRtc.ensureIndexIsVisible(listaSugestoesRtc.getSelectedIndex());
+                        }
+                        e.consume();
+                        break;
+                    case java.awt.event.KeyEvent.VK_UP:
+                        if (tamanho > 0) {
+                            listaSugestoesRtc.setSelectedIndex(Math.max(idx - 1, 0));
+                            listaSugestoesRtc.ensureIndexIsVisible(listaSugestoesRtc.getSelectedIndex());
+                        }
+                        e.consume();
+                        break;
+                    case java.awt.event.KeyEvent.VK_ENTER:
+                        aplicarRtcSelecionado();
+                        e.consume();
+                        break;
+                    case java.awt.event.KeyEvent.VK_ESCAPE:
+                        ocultarPopupSugestoesRtc();
+                        e.consume();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
+        campoRTC.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                solicitarAtualizacaoSugestoesRtc();
+            }
+
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                // Pequeno delay para permitir cliques no popup antes de fechar
+                Timer timerFechar = new Timer(200, evt -> {
+                    if (popupSugestoesRtc != null && !popupSugestoesRtc.isFocusOwner() && !listaSugestoesRtc.isFocusOwner()) {
+                        ocultarPopupSugestoesRtc();
+                    }
+                });
+                timerFechar.setRepeats(false);
+                timerFechar.start();
+            }
+        });
+    }
+
+    private void atualizarSugestoesRtc() {
+        if (campoRTC == null || popupSugestoesRtc == null || listaSugestoesRtc == null) {
+            return;
+        }
+
+        if (!isAbaPerformanceSelecionada() || !campoRTC.isFocusOwner() || atualizandoRtcProgramaticamente) {
+            // Se o popup já está visível, não ocultar agressivamente se o foco estiver nele ou na lista
+            if (popupSugestoesRtc.isVisible() && (popupSugestoesRtc.isFocusOwner() || listaSugestoesRtc.isFocusOwner())) {
+                return;
+            }
+            ocultarPopupSugestoesRtc();
+            return;
+        }
+
+        String filtro = campoRTC.getText() == null ? "" : campoRTC.getText().trim();
+        List<String> sugestoes = performanceService.sugerirRtcsPorUsuario(obterUsuarioSessao(), filtro, 30);
+        if (sugestoes.isEmpty()) {
+            ocultarPopupSugestoesRtc();
+            return;
+        }
+
+        listaSugestoesRtc.setListData(sugestoes.toArray(new String[0]));
+        listaSugestoesRtc.setSelectedIndex(0);
+
+        if (!popupSugestoesRtc.isVisible()) {
+            // Configurações para evitar que o popup roube o foco mas permita interação
+            popupSugestoesRtc.setFocusable(false);
+            popupSugestoesRtc.show(campoRTC, 0, campoRTC.getHeight());
+        }
+    }
+
+    private void aplicarRtcSelecionado() {
+        if (listaSugestoesRtc == null) {
+            return;
+        }
+        String rtcSelecionado = listaSugestoesRtc.getSelectedValue();
+        if (rtcSelecionado == null || rtcSelecionado.trim().isEmpty()) {
+            return;
+        }
+
+        // Remover prefixos [PENDENTE] ou [CONCLUÍDO] antes de setar no campo
+        String rtcLimpo = rtcSelecionado;
+        if (rtcLimpo.startsWith("[PENDENTE] ")) {
+            rtcLimpo = rtcLimpo.substring("[PENDENTE] ".length());
+        } else if (rtcLimpo.startsWith("[CONCLUÍDO] ")) {
+            rtcLimpo = rtcLimpo.substring("[CONCLUÍDO] ".length());
+        }
+
+        definirCampoRtcProgramaticamente(rtcLimpo);
+        ocultarPopupSugestoesRtc();
+        verificarEPrefilPerformance();
+        buscarEVincularCasoDeUso(rtcLimpo);
+    }
+
+    private void buscarEVincularCasoDeUso(String rtc) {
+        if (rtc == null || rtc.trim().isEmpty()) return;
+
+        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
+            @Override
+            protected String doInBackground() throws Exception {
+                List<RegistroAuditoria> historico = auditoriaService.obterPorRTC(rtc);
+                for (RegistroAuditoria reg : historico) {
+                    String cod = reg.getUcCodigo();
+                    String desc = reg.getUcDescricao();
+                    if (cod != null && !cod.trim().isEmpty()) {
+                        if (desc != null && !desc.trim().isEmpty()) {
+                            return cod + " - " + desc;
+                        }
+                        return cod;
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    String uc = get();
+                    if (uc != null && campoUC != null) {
+                        campoUC.setText(uc);
+                    }
+                } catch (Exception e) {}
+            }
+        };
+        worker.execute();
+    }
+
+    private void solicitarAtualizacaoSugestoesRtc() {
+        if (!isAbaPerformanceSelecionada()) {
+            ocultarPopupSugestoesRtc();
+            return;
+        }
+
+        if (timerSugestoesRtc == null) {
+            atualizarSugestoesRtc();
+            return;
+        }
+        timerSugestoesRtc.restart();
+    }
+    private void ocultarPopupSugestoesRtc() {
+        if (timerSugestoesRtc != null) {
+            timerSugestoesRtc.stop();
+        }
+        if (popupSugestoesRtc != null) {
+            popupSugestoesRtc.setVisible(false);
+        }
+    }
+
+    private void definirCampoRtcProgramaticamente(String rtc) {
+        atualizandoRtcProgramaticamente = true;
+        try {
+            campoRTC.setText(rtc == null ? "" : rtc);
+        } finally {
+            atualizandoRtcProgramaticamente = false;
+        }
+    }
+
+    private boolean isAbaPerformanceSelecionada() {
+        return abas != null && abas.getSelectedIndex() == 3;
+    }
+
     /**
      * Gera um ícone circular estilo "avatar" com silhueta de usuário,
      * desenhado em tempo de execucao sem dependencia de arquivo externo.
@@ -490,7 +747,12 @@ public class ExpertDevGUI extends JFrame {
             atualizarEstimativaIa();
             if (abas.getSelectedIndex() == 3) {
                 atualizarGraficoPerformance();
-            }
+                if (campoRTC != null && campoRTC.isFocusOwner()) {
+                    solicitarAtualizacaoSugestoesRtc();
+                }
+            } else {
+                ocultarPopupSugestoesRtc();
+             }
         });
         painel.add(abas, BorderLayout.CENTER);
 
@@ -539,10 +801,18 @@ public class ExpertDevGUI extends JFrame {
                 new EmptyBorder(6, 8, 6, 8)
         ));
         campoRTC.getDocument().addDocumentListener(new DocumentListener() {
-            @Override public void insertUpdate(DocumentEvent e) { verificarEPrefilPerformance(); }
-            @Override public void removeUpdate(DocumentEvent e) { verificarEPrefilPerformance(); }
-            @Override public void changedUpdate(DocumentEvent e) { verificarEPrefilPerformance(); }
-        });
+            @Override public void insertUpdate(DocumentEvent e) { aoAlterarCampoRtc(); }
+            @Override public void removeUpdate(DocumentEvent e) { aoAlterarCampoRtc(); }
+            @Override public void changedUpdate(DocumentEvent e) { aoAlterarCampoRtc(); }
+
+            private void aoAlterarCampoRtc() {
+                verificarEPrefilPerformance();
+                if (!atualizandoRtcProgramaticamente) {
+                    solicitarAtualizacaoSugestoesRtc();
+                }
+            }
+         });
+         configurarAutocompleteRtc();
         gbc.gridx = 1;
         gbc.weightx = 0.4;
         painel.add(campoRTC, gbc);
@@ -619,8 +889,9 @@ public class ExpertDevGUI extends JFrame {
             public void actionPerformed(ActionEvent e) {
                 areaUrls.setText("");
                 if (campoRTC != null) {
-                    campoRTC.setText("");
-                }
+                    definirCampoRtcProgramaticamente("");
+                    verificarEPrefilPerformance();
+                 }
                 if (campoUC != null) {
                     campoUC.setText("");
                 }
@@ -804,12 +1075,15 @@ public class ExpertDevGUI extends JFrame {
         botoes.setBackground(COR_PAINEL_ALT);
 
         btnIniciarScrum = criarBotaoSecundario("Iniciar Scrum");
+        btnIniciarScrum.setToolTipText("Inicia cronômetro do Scrum. ExpertDev já foi iniciado automaticamente ao processar.");
         btnIniciarScrum.addActionListener(e -> gerenciarAcaoPerformance("INICIAR_SCRUM"));
         
         btnFinalizarScrum = criarBotaoSecundario("Finalizar Scrum");
+        btnFinalizarScrum.setToolTipText("Finaliza cronômetro do Scrum manualmente (fecha automaticamente ao finalizar ExpertDev).");
         btnFinalizarScrum.addActionListener(e -> gerenciarAcaoPerformance("FINALIZAR_SCRUM"));
 
         btnFinalizarExpertDev = criarBotaoSecundario("Finalizar ExpertDev");
+        btnFinalizarExpertDev.setToolTipText("Finaliza ExpertDev, Scrum (se ativo) e marca tarefa como CONCLUIDO. Exibe economia se foi mais rápido que estimado.");
         btnFinalizarExpertDev.addActionListener(e -> gerenciarAcaoPerformance("FINALIZAR_EXPERTDEV"));
 
         JButton btnExportarRelatorio = criarBotaoSecundario("📊 Exportar ROI");
@@ -850,8 +1124,13 @@ public class ExpertDevGUI extends JFrame {
         String rtc = campoRTC.getText().trim();
         if (rtc.isEmpty()) return;
 
-        MetricaPerformance m = performanceService.obterPorRTC(rtc);
-        if (m == null) m = new MetricaPerformance(rtc);
+        String authUsername = obterUsuarioSessao();
+        String authEmail = obterEmailSessao();
+
+        MetricaPerformance m = performanceService.obterPorRTCeUsuario(rtc, authUsername);
+        if (m == null) m = new MetricaPerformance(rtc, authUsername, authEmail);
+        m.setAuthUsername(authUsername);
+        m.setAuthEmail(authEmail);
 
         try {
             String estStr = campoEstimativaPoker.getText().trim();
@@ -882,10 +1161,15 @@ public class ExpertDevGUI extends JFrame {
             return;
         }
 
-        MetricaPerformance m = performanceService.obterPorRTC(rtc);
+        String authUsername = obterUsuarioSessao();
+        String authEmail = obterEmailSessao();
+
+        MetricaPerformance m = performanceService.obterPorRTCeUsuario(rtc, authUsername);
         if (m == null) {
-            m = new MetricaPerformance(rtc);
+            m = new MetricaPerformance(rtc, authUsername, authEmail);
         }
+        m.setAuthUsername(authUsername);
+        m.setAuthEmail(authEmail);
 
         try {
             String estStr = campoEstimativaPoker.getText().trim();
@@ -899,30 +1183,51 @@ public class ExpertDevGUI extends JFrame {
 
         LocalDateTime agora = LocalDateTime.now();
 
-        switch (acao) {
-            case "INICIAR_SCRUM":
-                m.setInicioScrum(agora);
-                m.setStatus("DESENVOLVIMENTO_SCRUM");
-                break;
-            case "FINALIZAR_SCRUM":
-                if (m.getInicioScrum() == null) {
-                    mostrarErro("Inicie o Scrum antes de finalizar.");
-                    return;
-                }
-                m.setFimScrum(agora);
-                break;
-            case "FINALIZAR_EXPERTDEV":
-                if (m.getInicioExpertDev() == null) {
-                    mostrarErro("O tempo ExpertDev deve ser iniciado ao processar a tarefa.");
-                    return;
-                }
-                m.setFimExpertDev(agora);
-                m.setStatus("CONCLUIDO");
-                break;
-        }
+         switch (acao) {
+             case "INICIAR_SCRUM":
+                 m.setInicioScrum(agora);
+                 m.setStatus("DESENVOLVIMENTO_SCRUM");
+                 break;
+             case "FINALIZAR_SCRUM":
+                 if (m.getInicioScrum() == null) {
+                     mostrarErro("Inicie o Scrum antes de finalizar.");
+                     return;
+                 }
+                 m.setFimScrum(agora);
+                 break;
+             case "FINALIZAR_EXPERTDEV":
+                 // ExpertDev deve ter sido iniciado automaticamente ao processar
+                 if (m.getInicioExpertDev() == null) {
+                     mostrarErro("O tempo ExpertDev deve ter sido iniciado ao processar a tarefa.");
+                     return;
+                 }
+                 m.setFimExpertDev(agora);
 
-        performanceService.salvarOuAtualizar(m);
-        atualizarGraficoPerformance();
+                 // Finalizar Scrum se ainda não foi finalizado
+                 if (m.getInicioScrum() != null && m.getFimScrum() == null) {
+                     m.setFimScrum(agora);
+                 }
+
+                 // Calcular economia e exibir aviso se foi mais rápido que estimado
+                 double horasExpert = java.time.Duration.between(m.getInicioExpertDev(), m.getFimExpertDev()).toMinutes() / 60.0;
+                 double horasEstimadas = m.getEstimativaPoker() != null ? m.getEstimativaPoker() : 0;
+
+                 if (horasEstimadas > 0 && horasExpert < horasEstimadas) {
+                     double economia = horasEstimadas - horasExpert;
+                     double percEconomia = (economia / horasEstimadas) * 100;
+                     mostrarMensagem(String.format("🎉 Excelente!\n\nVocê foi mais rápido que o estimado:\n" +
+                             "Estimativa: %.2f h\n" +
+                             "Realizado: %.2f h\n" +
+                             "Economia: %.2f h (%.1f%%)",
+                             horasEstimadas, horasExpert, economia, percEconomia));
+                 }
+
+                 m.setStatus("CONCLUIDO");
+                 break;
+         }
+
+         performanceService.salvarOuAtualizar(m);
+         atualizarGraficoPerformance();
     }
 
     private void verificarEPrefilPerformance() {
@@ -934,7 +1239,7 @@ public class ExpertDevGUI extends JFrame {
             return;
         }
 
-        MetricaPerformance m = performanceService.obterPorRTC(rtc);
+        MetricaPerformance m = performanceService.obterPorRTCeUsuario(rtc, obterUsuarioSessao());
         if (m != null) {
             if (campoEstimativaPoker != null) {
                 campoEstimativaPoker.setText(m.getEstimativaPoker() != null ? String.valueOf(m.getEstimativaPoker()) : "");
@@ -959,7 +1264,7 @@ public class ExpertDevGUI extends JFrame {
 
     private void exportarRelatorioROI() {
         try {
-            List<MetricaPerformance> metricas = performanceService.listarTodos();
+            List<MetricaPerformance> metricas = performanceService.listarTodosPorUsuario(obterUsuarioSessao());
             if (metricas.isEmpty()) {
                 mostrarAviso("Não há dados de performance para exportar.");
                 return;
@@ -990,7 +1295,7 @@ public class ExpertDevGUI extends JFrame {
     }
 
     private void atualizarDashboardTendencia() {
-        List<MetricaPerformance> metricas = performanceService.listarTodos();
+        List<MetricaPerformance> metricas = performanceService.listarTodosPorUsuario(obterUsuarioSessao());
         if (metricas.isEmpty()) {
             painelTendencia.removeAll();
             painelTendencia.add(new JLabel("Sem dados históricos", SwingConstants.CENTER));
@@ -1062,7 +1367,7 @@ public class ExpertDevGUI extends JFrame {
         String rtc = campoRTC.getText().trim();
         if (rtc.isEmpty()) return;
 
-        MetricaPerformance m = performanceService.obterPorRTC(rtc);
+        MetricaPerformance m = performanceService.obterPorRTCeUsuario(rtc, obterUsuarioSessao());
         if (m == null) {
             painelGrafico.removeAll();
             painelGrafico.add(new JLabel("Sem dados para o RTC " + rtc, SwingConstants.CENTER));
@@ -1134,7 +1439,7 @@ public class ExpertDevGUI extends JFrame {
         SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
             @Override
             protected String doInBackground() throws Exception {
-                java.util.List<RegistroAuditoria> registros = auditoriaService.obterTodos();
+                java.util.List<RegistroAuditoria> registros = auditoriaService.obterTodosPorUsuario(obterUsuarioSessao());
                 if (registros.isEmpty()) {
                     return "(nenhum registro encontrado)";
                 }
@@ -1620,12 +1925,12 @@ public class ExpertDevGUI extends JFrame {
         rodape.setBackground(COR_PAINEL);
         rodape.setBorder(new EmptyBorder(6, 16, 6, 16));
 
-        JLabel lblStatus = new JLabel("Expert Dev  •  Java 8 Core  •  Apache POI + JSoup + PDFBox");
+        JLabel lblStatus = new JLabel("Expert Dev  •  Enterprise Ready  •  Apache POI + JSoup + PDFBox");
         lblStatus.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblStatus.setForeground(COR_TEXTO_SUAVE);
         rodape.add(lblStatus, BorderLayout.WEST);
 
-        JLabel lblAssinatura = new JLabel("Idealizado e Desenvolvido por Marcus Dimitri");
+        JLabel lblAssinatura = new JLabel(" Marcus Dimitri");
         lblAssinatura.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblAssinatura.setForeground(COR_DESTAQUE2);
         lblAssinatura.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -1856,19 +2161,23 @@ public class ExpertDevGUI extends JFrame {
                 String ucCodigo = campoUC != null ? campoUC.getText().trim() : "";
                 String modoGeracao = modoGeracaoSelecionado;
                 String provider = providerIaSelecionado;
+                String authUsername = obterUsuarioSessao();
+                String authEmail = obterEmailSessao();
 
                 publish("→ RTC: " + (rtcNumero.isEmpty() ? "(não informado)" : rtcNumero));
                 publish("→ UC: " + (ucCodigo.isEmpty() ? "(não informado)" : ucCodigo));
 
                 RegistroAuditoria regAuditoria = new RegistroAuditoria(rtcNumero, ucCodigo, ucCodigo,
-                        modoGeracao, provider, "");
+                        modoGeracao, provider, "", authUsername, authEmail);
                 ultimoRegistroAuditoriaId = auditoriaService.inserir(regAuditoria);
 
                 // Métricas de performance
-                MetricaPerformance mPerf = performanceService.obterPorRTC(rtcNumero);
+                MetricaPerformance mPerf = performanceService.obterPorRTCeUsuario(rtcNumero, authUsername);
                 if (mPerf == null) {
-                    mPerf = new MetricaPerformance(rtcNumero);
+                    mPerf = new MetricaPerformance(rtcNumero, authUsername, authEmail);
                 }
+                mPerf.setAuthUsername(authUsername);
+                mPerf.setAuthEmail(authEmail);
                 if (mPerf.getInicioExpertDev() == null) {
                     mPerf.setInicioExpertDev(LocalDateTime.now());
                 }
@@ -2656,7 +2965,6 @@ public class ExpertDevGUI extends JFrame {
         Graphics2D g2 = img.createGraphics();
         try {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
             Color azul = temaClaroAtivo ? new Color(37, 99, 235) : new Color(125, 211, 252);
             Color vermelho = temaClaroAtivo ? new Color(220, 38, 38) : new Color(248, 113, 113);
@@ -2773,7 +3081,7 @@ public class ExpertDevGUI extends JFrame {
         return new ImageIcon(img);
     }
 
-    // ─── Helpers de UI ────────────────────────────────────────────────────────
+    // Helpers de UI
 
     private JLabel criarRotulo(String texto) {
         JLabel lbl = new JLabel(texto);
@@ -2868,6 +3176,7 @@ public class ExpertDevGUI extends JFrame {
         });
     }
 
+
     // ─── Entry Point ──────────────────────────────────────────────────────────
 
     public static void lancar() {
@@ -2886,7 +3195,7 @@ public class ExpertDevGUI extends JFrame {
                 }
 
                 AuthService authService = new AuthService();
-                LoginDialog loginDialog = new LoginDialog(null, authService);
+                LoginDialog loginDialog = new LoginDialog(null, authService, config);
                 loginDialog.setVisible(true);
                 AuthSession session = loginDialog.getSession();
                 if (session == null || session.getLicenseStatus() == LicenseStatus.EXPIRED) {

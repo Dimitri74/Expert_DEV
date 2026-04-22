@@ -19,6 +19,8 @@ public class RegistroAuditoria {
     private String urlsOuArquivo;
     private String status;
     private String promptGerado;
+    private String authUsername;
+    private String authEmail;
 
     // Construtores
     public RegistroAuditoria() {
@@ -34,6 +36,14 @@ public class RegistroAuditoria {
         this.provider = provider;
         this.urlsOuArquivo = urlsOuArquivo;
         this.status = "INICIADO";
+    }
+
+    public RegistroAuditoria(String rtcNumero, String ucCodigo, String ucDescricao,
+                             String modoGeracao, String provider, String urlsOuArquivo,
+                             String authUsername, String authEmail) {
+        this(rtcNumero, ucCodigo, ucDescricao, modoGeracao, provider, urlsOuArquivo);
+        this.authUsername = authUsername;
+        this.authEmail = authEmail;
     }
 
     // Getters e Setters
@@ -117,15 +127,33 @@ public class RegistroAuditoria {
         this.promptGerado = promptGerado;
     }
 
+    public String getAuthUsername() {
+        return authUsername;
+    }
+
+    public void setAuthUsername(String authUsername) {
+        this.authUsername = authUsername;
+    }
+
+    public String getAuthEmail() {
+        return authEmail;
+    }
+
+    public void setAuthEmail(String authEmail) {
+        this.authEmail = authEmail;
+    }
+
     @Override
     public String toString() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return String.format("[%s] RTC %s | %s (%s) | %s",
+        String usuario = (authUsername == null || authUsername.trim().isEmpty()) ? "Desconhecido" : authUsername;
+        return String.format("[%s] RTC %s | %s (%s) | %s | Usuário: %s",
                 dataProcessamento.format(fmt),
                 rtcNumero,
                 ucCodigo,
                 ucDescricao,
-                status);
+                status,
+                usuario);
     }
 }
 

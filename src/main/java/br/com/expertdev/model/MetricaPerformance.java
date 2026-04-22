@@ -17,6 +17,8 @@ public class MetricaPerformance {
     private String complexidade;
     private String status;
     private Integer sprint;
+    private String authUsername;
+    private String authEmail;
 
     public MetricaPerformance() {
     }
@@ -24,6 +26,12 @@ public class MetricaPerformance {
     public MetricaPerformance(String rtcNumero) {
         this.rtcNumero = rtcNumero;
         this.status = "PENDENTE";
+    }
+
+    public MetricaPerformance(String rtcNumero, String authUsername, String authEmail) {
+        this(rtcNumero);
+        this.authUsername = authUsername;
+        this.authEmail = authEmail;
     }
 
     // Getters e Setters
@@ -105,5 +113,21 @@ public class MetricaPerformance {
 
     public void setSprint(Integer sprint) {
         this.sprint = sprint;
+    }
+
+    public String getAuthUsername() {
+        return authUsername;
+    }
+
+    public void setAuthUsername(String authUsername) {
+        this.authUsername = authUsername;
+    }
+
+    public String getAuthEmail() {
+        return authEmail;
+    }
+
+    public void setAuthEmail(String authEmail) {
+        this.authEmail = authEmail;
     }
 }

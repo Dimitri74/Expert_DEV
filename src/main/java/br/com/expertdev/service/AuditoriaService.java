@@ -51,7 +51,9 @@ public class AuditoriaService {
                     "provider TEXT," +
                     "urls_ou_arquivo TEXT," +
                     "status TEXT," +
-                    "prompt_gerado TEXT" +
+                    "prompt_gerado TEXT," +
+                    "auth_username TEXT," +
+                    "auth_email TEXT" +
                     ")";
 
             stmt.execute(sql);
@@ -66,7 +68,9 @@ public class AuditoriaService {
                     "fim_expertdev TIMESTAMP," +
                     "complexidade TEXT," +
                     "status TEXT," +
-                    "sprint INTEGER" +
+                    "sprint INTEGER," +
+                    "auth_username TEXT," +
+                    "auth_email TEXT" +
                     ")";
             stmt.execute(sqlPerformance);
 
@@ -76,7 +80,29 @@ public class AuditoriaService {
             } catch (SQLException e) {
                 // Coluna já existe, ignorar
             }
-            
+
+            // Migração para rastreabilidade por usuário
+            try {
+                stmt.execute("ALTER TABLE auditoria_processamento ADD COLUMN auth_username TEXT");
+            } catch (SQLException e) {
+                // Coluna já existe, ignorar
+            }
+            try {
+                stmt.execute("ALTER TABLE auditoria_processamento ADD COLUMN auth_email TEXT");
+            } catch (SQLException e) {
+                // Coluna já existe, ignorar
+            }
+            try {
+                stmt.execute("ALTER TABLE performance_comparativa ADD COLUMN auth_username TEXT");
+            } catch (SQLException e) {
+                // Coluna já existe, ignorar
+            }
+            try {
+                stmt.execute("ALTER TABLE performance_comparativa ADD COLUMN auth_email TEXT");
+            } catch (SQLException e) {
+                // Coluna já existe, ignorar
+            }
+
             String sqlCache = "CREATE TABLE IF NOT EXISTS cache_processamento (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "url TEXT UNIQUE NOT NULL," +
@@ -104,8 +130,8 @@ public class AuditoriaService {
     public long inserir(RegistroAuditoria registro) {
         String sql = "INSERT INTO auditoria_processamento " +
                 "(rtc_numero, uc_codigo, uc_descricao, data_processamento, " +
-                "modo_geracao, provider, urls_ou_arquivo, status, prompt_gerado) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "modo_geracao, provider, urls_ou_arquivo, status, prompt_gerado, auth_username, auth_email) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -119,6 +145,8 @@ public class AuditoriaService {
             pstmt.setString(7, registro.getUrlsOuArquivo());
             pstmt.setString(8, registro.getStatus());
             pstmt.setString(9, registro.getPromptGerado());
+            pstmt.setString(10, registro.getAuthUsername());
+            pstmt.setString(11, registro.getAuthEmail());
 
             pstmt.executeUpdate();
 
@@ -193,8 +221,8 @@ public class AuditoriaService {
     public long inserirPerformance(MetricaPerformance metrica) {
         String sql = "INSERT INTO performance_comparativa " +
                 "(rtc_numero, estimativa_poker, inicio_scrum, fim_scrum, " +
-                "inicio_expertdev, fim_expertdev, complexidade, status, sprint) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "inicio_expertdev, fim_expertdev, complexidade, status, sprint, auth_username, auth_email) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -208,6 +236,8 @@ public class AuditoriaService {
             pstmt.setString(7, metrica.getComplexidade());
             pstmt.setString(8, metrica.getStatus());
             if (metrica.getSprint() != null) pstmt.setInt(9, metrica.getSprint()); else pstmt.setNull(9, java.sql.Types.INTEGER);
+            pstmt.setString(10, metrica.getAuthUsername());
+            pstmt.setString(11, metrica.getAuthEmail());
 
             pstmt.executeUpdate();
 
@@ -223,9 +253,17 @@ public class AuditoriaService {
     }
 
     public void atualizarPerformance(MetricaPerformance metrica) {
-        String sql = "UPDATE performance_comparativa SET " +
+        boolean possuiUsuario = metrica.getAuthUsername() != null && !metrica.getAuthUsername().trim().isEmpty();
+        String sql = possuiUsuario
+                ? "UPDATE performance_comparativa SET " +
                 "estimativa_poker = ?, inicio_scrum = ?, fim_scrum = ?, " +
-                "inicio_expertdev = ?, fim_expertdev = ?, complexidade = ?, status = ?, sprint = ? " +
+                "inicio_expertdev = ?, fim_expertdev = ?, complexidade = ?, status = ?, sprint = ?, " +
+                "auth_username = ?, auth_email = ? " +
+                "WHERE rtc_numero = ? AND auth_username = ?"
+                : "UPDATE performance_comparativa SET " +
+                "estimativa_poker = ?, inicio_scrum = ?, fim_scrum = ?, " +
+                "inicio_expertdev = ?, fim_expertdev = ?, complexidade = ?, status = ?, sprint = ?, " +
+                "auth_username = ?, auth_email = ? " +
                 "WHERE rtc_numero = ?";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
@@ -239,7 +277,12 @@ public class AuditoriaService {
             pstmt.setString(6, metrica.getComplexidade());
             pstmt.setString(7, metrica.getStatus());
             if (metrica.getSprint() != null) pstmt.setInt(8, metrica.getSprint()); else pstmt.setNull(8, java.sql.Types.INTEGER);
-            pstmt.setString(9, metrica.getRtcNumero());
+            pstmt.setString(9, metrica.getAuthUsername());
+            pstmt.setString(10, metrica.getAuthEmail());
+            pstmt.setString(11, metrica.getRtcNumero());
+            if (possuiUsuario) {
+                pstmt.setString(12, metrica.getAuthUsername());
+            }
 
             pstmt.executeUpdate();
 
@@ -249,7 +292,7 @@ public class AuditoriaService {
     }
 
     public MetricaPerformance buscarPerformancePorRTC(String rtcNumero) {
-        String sql = "SELECT * FROM performance_comparativa WHERE rtc_numero = ?";
+        String sql = "SELECT * FROM performance_comparativa WHERE rtc_numero = ? ORDER BY id DESC LIMIT 1";
 
         try (Connection conn = DriverManager.getConnection(DB_URL);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -257,22 +300,30 @@ public class AuditoriaService {
             pstmt.setString(1, rtcNumero);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    MetricaPerformance m = new MetricaPerformance();
-                    m.setId(rs.getLong("id"));
-                    m.setRtcNumero(rs.getString("rtc_numero"));
-                    m.setEstimativaPoker(rs.getDouble("estimativa_poker"));
-                    m.setInicioScrum(rs.getTimestamp("inicio_scrum") != null ? rs.getTimestamp("inicio_scrum").toLocalDateTime() : null);
-                    m.setFimScrum(rs.getTimestamp("fim_scrum") != null ? rs.getTimestamp("fim_scrum").toLocalDateTime() : null);
-                    m.setInicioExpertDev(rs.getTimestamp("inicio_expertdev") != null ? rs.getTimestamp("inicio_expertdev").toLocalDateTime() : null);
-                    m.setFimExpertDev(rs.getTimestamp("fim_expertdev") != null ? rs.getTimestamp("fim_expertdev").toLocalDateTime() : null);
-                    m.setComplexidade(rs.getString("complexidade"));
-                    m.setStatus(rs.getString("status"));
-                    m.setSprint(rs.getInt("sprint") != 0 || rs.getObject("sprint") != null ? rs.getInt("sprint") : null);
-                    return m;
+                    return mapearMetricaPerformance(rs);
                 }
             }
         } catch (SQLException e) {
             System.err.println("Erro ao buscar performance: " + e.getMessage());
+        }
+        return null;
+    }
+
+    public MetricaPerformance buscarPerformancePorRTCeUsuario(String rtcNumero, String authUsername) {
+        String sql = "SELECT * FROM performance_comparativa WHERE rtc_numero = ? AND auth_username = ? ORDER BY id DESC LIMIT 1";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, rtcNumero);
+            pstmt.setString(2, authUsername);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapearMetricaPerformance(rs);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao buscar performance por usuário: " + e.getMessage());
         }
         return null;
     }
@@ -286,21 +337,29 @@ public class AuditoriaService {
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
-                MetricaPerformance m = new MetricaPerformance();
-                m.setId(rs.getLong("id"));
-                m.setRtcNumero(rs.getString("rtc_numero"));
-                m.setEstimativaPoker(rs.getDouble("estimativa_poker"));
-                m.setInicioScrum(rs.getTimestamp("inicio_scrum") != null ? rs.getTimestamp("inicio_scrum").toLocalDateTime() : null);
-                m.setFimScrum(rs.getTimestamp("fim_scrum") != null ? rs.getTimestamp("fim_scrum").toLocalDateTime() : null);
-                m.setInicioExpertDev(rs.getTimestamp("inicio_expertdev") != null ? rs.getTimestamp("inicio_expertdev").toLocalDateTime() : null);
-                m.setFimExpertDev(rs.getTimestamp("fim_expertdev") != null ? rs.getTimestamp("fim_expertdev").toLocalDateTime() : null);
-                m.setComplexidade(rs.getString("complexidade"));
-                m.setStatus(rs.getString("status"));
-                m.setSprint(rs.getInt("sprint") != 0 || rs.getObject("sprint") != null ? rs.getInt("sprint") : null);
-                lista.add(m);
+                lista.add(mapearMetricaPerformance(rs));
             }
         } catch (SQLException e) {
             System.err.println("Erro ao listar performance: " + e.getMessage());
+        }
+        return lista;
+    }
+
+    public List<MetricaPerformance> listarPerformancePorUsuario(String authUsername) {
+        List<MetricaPerformance> lista = new ArrayList<>();
+        String sql = "SELECT * FROM performance_comparativa WHERE auth_username = ? ORDER BY id DESC";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, authUsername);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapearMetricaPerformance(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao listar performance por usuário: " + e.getMessage());
         }
         return lista;
     }
@@ -343,6 +402,25 @@ public class AuditoriaService {
             }
         } catch (SQLException e) {
             System.err.println("Erro ao listar auditoria: " + e.getMessage());
+        }
+        return registros;
+    }
+
+    public List<RegistroAuditoria> obterTodosPorUsuario(String authUsername) {
+        List<RegistroAuditoria> registros = new ArrayList<>();
+        String sql = "SELECT * FROM auditoria_processamento WHERE auth_username = ? ORDER BY data_processamento DESC LIMIT 100";
+
+        try (Connection conn = DriverManager.getConnection(DB_URL);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, authUsername);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    registros.add(mapearResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Erro ao listar auditoria por usuário: " + e.getMessage());
         }
         return registros;
     }
@@ -393,6 +471,23 @@ public class AuditoriaService {
     /**
      * Helper para mapear ResultSet em RegistroAuditoria.
      */
+    private MetricaPerformance mapearMetricaPerformance(ResultSet rs) throws SQLException {
+        MetricaPerformance m = new MetricaPerformance();
+        m.setId(rs.getLong("id"));
+        m.setRtcNumero(rs.getString("rtc_numero"));
+        m.setEstimativaPoker(rs.getDouble("estimativa_poker"));
+        m.setInicioScrum(rs.getTimestamp("inicio_scrum") != null ? rs.getTimestamp("inicio_scrum").toLocalDateTime() : null);
+        m.setFimScrum(rs.getTimestamp("fim_scrum") != null ? rs.getTimestamp("fim_scrum").toLocalDateTime() : null);
+        m.setInicioExpertDev(rs.getTimestamp("inicio_expertdev") != null ? rs.getTimestamp("inicio_expertdev").toLocalDateTime() : null);
+        m.setFimExpertDev(rs.getTimestamp("fim_expertdev") != null ? rs.getTimestamp("fim_expertdev").toLocalDateTime() : null);
+        m.setComplexidade(rs.getString("complexidade"));
+        m.setStatus(rs.getString("status"));
+        m.setSprint(rs.getInt("sprint") != 0 || rs.getObject("sprint") != null ? rs.getInt("sprint") : null);
+        m.setAuthUsername(rs.getString("auth_username"));
+        m.setAuthEmail(rs.getString("auth_email"));
+        return m;
+    }
+
     private RegistroAuditoria mapearResultSet(ResultSet rs) throws SQLException {
         RegistroAuditoria reg = new RegistroAuditoria();
         reg.setId(rs.getLong("id"));
@@ -410,6 +505,8 @@ public class AuditoriaService {
         reg.setUrlsOuArquivo(rs.getString("urls_ou_arquivo"));
         reg.setStatus(rs.getString("status"));
         reg.setPromptGerado(rs.getString("prompt_gerado"));
+        reg.setAuthUsername(rs.getString("auth_username"));
+        reg.setAuthEmail(rs.getString("auth_email"));
 
         return reg;
     }

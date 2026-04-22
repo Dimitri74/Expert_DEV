@@ -162,7 +162,8 @@ public class ReportService {
 
                     drawTableRow(contentStream, MARGIN, y, width - 2 * MARGIN, 
                         m.getSprint() != null ? String.valueOf(m.getSprint()) : "-",
-                        m.getRtcNumero(), 
+                        obterUsuarioRelatorio(m.getAuthUsername()),
+                        m.getRtcNumero(),
                         String.format("%.1f h", hScrum), 
                         String.format("%.1f h", hExpert), 
                         String.format("%.1f h", ganho));
@@ -207,13 +208,15 @@ public class ReportService {
         cs.setNonStrokingColor(COLOR_PRIMARY);
         cs.newLineAtOffset(x + 5, y + 5);
         cs.showText("Sprint");
-        cs.newLineAtOffset(50, 0);
+        cs.newLineAtOffset(40, 0);
         cs.showText("ID Tarefa (RTC)");
-        cs.newLineAtOffset(150, 0);
+        cs.newLineAtOffset(95, 0);
+        cs.showText("Usuario");
+        cs.newLineAtOffset(130, 0);
         cs.showText("Est. Scrum");
-        cs.newLineAtOffset(100, 0);
+        cs.newLineAtOffset(75, 0);
         cs.showText("ExpertDev");
-        cs.newLineAtOffset(100, 0);
+        cs.newLineAtOffset(75, 0);
         cs.showText("Economia");
         cs.endText();
 
@@ -224,19 +227,21 @@ public class ReportService {
         cs.stroke();
     }
 
-    private void drawTableRow(PDPageContentStream cs, float x, float y, float width, String sprint, String rtc, String scrum, String expert, String ganho) throws IOException {
+    private void drawTableRow(PDPageContentStream cs, float x, float y, float width, String sprint, String usuario, String rtc, String scrum, String expert, String ganho) throws IOException {
         cs.beginText();
         cs.setFont(PDType1Font.HELVETICA, 10);
         cs.setNonStrokingColor(Color.BLACK);
         cs.newLineAtOffset(x + 5, y);
         cs.showText(sprint);
-        cs.newLineAtOffset(50, 0);
+        cs.newLineAtOffset(40, 0);
         cs.showText(rtc);
-        cs.newLineAtOffset(150, 0);
+        cs.newLineAtOffset(95, 0);
+        cs.showText(usuario);
+        cs.newLineAtOffset(130, 0);
         cs.showText(scrum);
-        cs.newLineAtOffset(100, 0);
+        cs.newLineAtOffset(75, 0);
         cs.showText(expert);
-        cs.newLineAtOffset(100, 0);
+        cs.newLineAtOffset(75, 0);
         cs.setNonStrokingColor(COLOR_SUCCESS);
         cs.showText(ganho);
         cs.endText();
@@ -246,6 +251,14 @@ public class ReportService {
         cs.moveTo(x, y - 5);
         cs.lineTo(x + width, y - 5);
         cs.stroke();
+    }
+
+    private String obterUsuarioRelatorio(String authUsername) {
+        if (authUsername == null || authUsername.trim().isEmpty()) {
+            return "Visitante";
+        }
+        String nome = authUsername.trim();
+        return nome.length() > 18 ? nome.substring(0, 18) + "..." : nome;
     }
 
     private byte[] toByteArray(InputStream is) throws IOException {
