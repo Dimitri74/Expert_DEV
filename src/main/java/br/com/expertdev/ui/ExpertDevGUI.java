@@ -259,6 +259,12 @@ public class ExpertDevGUI extends JFrame {
         setMinimumSize(new Dimension(900, 650));
         setLocationRelativeTo(null);
         getContentPane().setBackground(COR_FUNDO);
+
+        // Define a logo do projeto como ícone da janela (ícone do .jar ao rodar)
+        BufferedImage logo = carregarImagemLogoPorTema();
+        if (logo != null) {
+            setIconImage(logo);
+        }
     }
 
     // ─── Construção da Interface ───────────────────────────────────────────────

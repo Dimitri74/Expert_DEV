@@ -54,6 +54,17 @@ Este módulo permite mensurar o valor real que a ferramenta agrega ao seu workfl
 
 ## Como usar
 
+### 1. Usando o JAR Executável (Recomendado)
+Para facilitar o uso sem necessidade de uma IDE, agora o Expert Dev pode ser executado diretamente como um arquivo JAR.
+
+1. Baixe ou gere o arquivo `expert-dev-2.1.0.jar` (localizado na pasta `target/`).
+2. **Duplo clique**: Em sistemas configurados, basta dar um duplo clique no arquivo `.jar`. O sistema iniciará com a logo oficial como ícone da janela.
+3. **Via Terminal/PowerShell**:
+   ```powershell
+   java -jar expert-dev-2.1.0.jar
+   ```
+
+### 2. Execução via IDE (Desenvolvimento)
 1. Abra o projeto no IntelliJ Ultimate.
 2. Execute a classe `ExpertDev` (ou use `run.bat`).
 3. Cole as URLs do site quando solicitado, **separadas por vírgula**.
@@ -62,6 +73,13 @@ Exemplo:
 ```
 Cole as URL(s) do site (separadas por vírgula): https://example.com, https://www.site.com
 ```
+
+### Geração do JAR (Build)
+Para gerar o JAR executável com todas as dependências embutidas (Fat JAR):
+```powershell
+mvn clean package -DskipTests
+```
+O arquivo será gerado em `target/expert-dev-2.1.0.jar`.
 
 ### Execução com JDK 25+ (SQLite)
 
