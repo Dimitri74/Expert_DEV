@@ -1930,7 +1930,7 @@ public class ExpertDevGUI extends JFrame {
         lblStatus.setForeground(COR_TEXTO_SUAVE);
         rodape.add(lblStatus, BorderLayout.WEST);
 
-        JLabel lblAssinatura = new JLabel(" Marcus Dimitri");
+        JLabel lblAssinatura = new JLabel(" A solution engineered by Marcus Dimitri");
         lblAssinatura.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblAssinatura.setForeground(COR_DESTAQUE2);
         lblAssinatura.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -2086,7 +2086,21 @@ public class ExpertDevGUI extends JFrame {
 
     private void iniciarProcessamento() {
         int abaSelecionada = abas.getSelectedIndex();
-        boolean viaUrl = abaSelecionada == 0;
+        // Se a aba Performance & ROI (3) está ativa, detecta automaticamente o modo
+        // com base no que foi preenchido (URL ou Word)
+        boolean viaUrl;
+        if (abaSelecionada == 3) {
+            boolean temUrls = areaUrls != null && !areaUrls.getText().trim().isEmpty();
+            boolean temWord = arquivoWordSelecionado != null && arquivoWordSelecionado.exists();
+            if (!temUrls && !temWord) {
+                mostrarErro("Informe URLs (aba 'Via URLs') ou selecione um arquivo Word (aba 'Upload Word') antes de gerar o prompt.");
+                return;
+            }
+            // Preferência: Word se disponível, senão URL
+            viaUrl = temUrls && !temWord;
+        } else {
+            viaUrl = abaSelecionada == 0;
+        }
 
         // Validação crítica: RTC obrigatório para rastreabilidade/auditoria
         String rtcInformado = campoRTC != null ? campoRTC.getText().trim() : "";

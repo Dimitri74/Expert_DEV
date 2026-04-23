@@ -1,18 +1,18 @@
 Resumo da execução - Expert Dev 2.0
 ==================================================
 
-Início: 2026-04-22 16:39:58
-Fim: 2026-04-22 16:39:59
+Início: 2026-04-22 22:18:57
+Fim: 2026-04-22 22:18:59
 
 Totais:
  - URLs recebidas: 1
  - URLs com sucesso: 1
  - URLs com falha: 0
- - Imagens únicas coletadas: 0
- - Tempo total (s): 0
+ - Imagens únicas coletadas: 5
+ - Tempo total (s): 2
 
 URLs processadas com sucesso:
- - https://github.com/unipds-projetos/modulo1-fundamentos-java-extra-cardapio/blob/main/README.md
+ - https://github.com/Dimitri74/Portifolio-UNIPDS/blob/main/README.md
 
 URLs com falha:
  - Nenhuma

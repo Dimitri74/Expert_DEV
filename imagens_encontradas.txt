@@ -1,0 +1,12 @@
+
+--- Imagens encontradas na página: https://github.com/Dimitri74/Portifolio-UNIPDS/blob/main/README.md ---
+Imagem: https://img.shields.io/github/last-commit/Dimitri74/Portifolio-UNIPDS?style=flat-square&color=4695EB
+   Descrição: GitHub last commit
+Imagem: https://img.shields.io/badge/license-MIT-green?style=flat-square
+   Descrição: License
+Imagem: https://img.shields.io/badge/Java-21%20LTS-ED8B00?style=flat-square&logo=openjdk
+   Descrição: Java
+Imagem: https://img.shields.io/badge/status-Em%20Produção-success?style=flat-square
+   Descrição: Status
+Imagem: https://img.shields.io/badge/GitHub-Dimitri74-181717?style=for-the-badge&logo=github
+   Descrição: GitHub

@@ -10,9 +10,7 @@ import javax.swing.border.EmptyBorder;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 
 public class LoginDialog extends JDialog {
 
@@ -34,6 +32,7 @@ public class LoginDialog extends JDialog {
     private static final Font FONTE_ROTULO = new Font("Segoe UI", Font.BOLD, 12);
     private static final Font FONTE_NORMAL = new Font("Segoe UI", Font.PLAIN, 12);
     private static final Font FONTE_BOTAO = new Font("Segoe UI", Font.BOLD, 12);
+    private static final int TAMANHO_LOGO_LOGIN = 74;
 
     private final AuthService authService;
     private final ExpertDevConfig config;
@@ -109,7 +108,8 @@ public class LoginDialog extends JDialog {
         add(painel, BorderLayout.CENTER);
         add(botoes, BorderLayout.SOUTH);
 
-        setSize(900, 380);
+        setSize(900, 430);
+        setMinimumSize(new Dimension(900, 430));
         setLocationRelativeTo(getOwner());
         setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
@@ -177,7 +177,7 @@ public class LoginDialog extends JDialog {
         JPanel painel = new JPanel(new BorderLayout());
         painel.setBackground(COR_PAINEL_TOPO);
         painel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COR_BORDA));
-        painel.setPreferredSize(new Dimension(0, 85));
+        painel.setPreferredSize(new Dimension(0, 112));
 
         // Lado esquerdo: logo
         JLabel lblLogo = criarLabelLogo();
@@ -213,11 +213,135 @@ public class LoginDialog extends JDialog {
         label.setFont(new Font("Segoe UI", Font.BOLD, 24));
         label.setForeground(COR_AZUL);
 
-        Icon iconeJava = criarIconeJava(40);
-        label.setIcon(iconeJava);
-        label.setIconTextGap(12);
+        Icon logoLogin = carregarIconeLogoLogin(TAMANHO_LOGO_LOGIN, TAMANHO_LOGO_LOGIN);
+        label.setIcon(logoLogin != null ? logoLogin : criarIconeJava(40));
+        label.setIconTextGap(10);
 
         return label;
+    }
+
+    private Icon carregarIconeLogoLogin(int larguraAlvo, int alturaAlvo) {
+        BufferedImage original = carregarImagemRecurso("/icons/logo_login.png");
+        if (original == null) {
+            return null;
+        }
+        BufferedImage recortada = recortarAreaUtilLogo(original);
+        BufferedImage redimensionada = redimensionarComQualidade(recortada, larguraAlvo, alturaAlvo);
+        return new ImageIcon(redimensionada);
+    }
+
+    private BufferedImage recortarAreaUtilLogo(BufferedImage imagem) {
+        int minX = imagem.getWidth();
+        int minY = imagem.getHeight();
+        int maxX = -1;
+        int maxY = -1;
+
+        for (int y = 0; y < imagem.getHeight(); y++) {
+            for (int x = 0; x < imagem.getWidth(); x++) {
+                int argb = imagem.getRGB(x, y);
+                int alpha = (argb >>> 24) & 0xFF;
+                int r = (argb >>> 16) & 0xFF;
+                int g = (argb >>> 8) & 0xFF;
+                int b = argb & 0xFF;
+
+                // Ignora fundo totalmente transparente e pixels quase pretos do canvas.
+                if (alpha < 20 || (r + g + b) < 24) {
+                    continue;
+                }
+
+                if (x < minX) minX = x;
+                if (y < minY) minY = y;
+                if (x > maxX) maxX = x;
+                if (y > maxY) maxY = y;
+            }
+        }
+
+        if (maxX < minX || maxY < minY) {
+            return imagem;
+        }
+
+        int largura = maxX - minX + 1;
+        int altura = maxY - minY + 1;
+        int margemX = Math.max(2, (int) Math.round(largura * 0.06));
+        int margemY = Math.max(2, (int) Math.round(altura * 0.06));
+
+        int x0 = Math.max(0, minX - margemX);
+        int y0 = Math.max(0, minY - margemY);
+        int x1 = Math.min(imagem.getWidth() - 1, maxX + margemX);
+        int y1 = Math.min(imagem.getHeight() - 1, maxY + margemY);
+
+        return imagem.getSubimage(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+    }
+
+    private BufferedImage carregarImagemRecurso(String caminho) {
+        try (InputStream stream = LoginDialog.class.getResourceAsStream(caminho)) {
+            if (stream == null) {
+                return null;
+            }
+            return ImageIO.read(stream);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private BufferedImage redimensionarComQualidade(BufferedImage original, int larguraAlvo, int alturaAlvo) {
+        int larguraOriginal = original.getWidth();
+        int alturaOriginal = original.getHeight();
+        if (larguraOriginal <= 0 || alturaOriginal <= 0) {
+            return original;
+        }
+
+        double escala = Math.min((double) larguraAlvo / larguraOriginal, (double) alturaAlvo / alturaOriginal);
+        int novaLargura = Math.max(1, (int) Math.round(larguraOriginal * escala));
+        int novaAltura = Math.max(1, (int) Math.round(alturaOriginal * escala));
+
+        BufferedImage imagemEscalada = escalarEmMultiplasEtapas(original, novaLargura, novaAltura);
+
+        BufferedImage destino = new BufferedImage(larguraAlvo, alturaAlvo, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = destino.createGraphics();
+        aplicarHintsQualidade(g2);
+        g2.setComposite(AlphaComposite.Clear);
+        g2.fillRect(0, 0, larguraAlvo, alturaAlvo);
+        g2.setComposite(AlphaComposite.SrcOver);
+
+        int x = (larguraAlvo - novaLargura) / 2;
+        int y = (alturaAlvo - novaAltura) / 2;
+        g2.drawImage(imagemEscalada, x, y, null);
+        g2.dispose();
+        return destino;
+    }
+
+    private BufferedImage escalarEmMultiplasEtapas(BufferedImage original, int larguraFinal, int alturaFinal) {
+        int larguraAtual = original.getWidth();
+        int alturaAtual = original.getHeight();
+        BufferedImage atual = original;
+
+        while (larguraAtual / 2 >= larguraFinal && alturaAtual / 2 >= alturaFinal) {
+            larguraAtual = Math.max(larguraFinal, larguraAtual / 2);
+            alturaAtual = Math.max(alturaFinal, alturaAtual / 2);
+            atual = escalarImagem(atual, larguraAtual, alturaAtual);
+        }
+
+        if (larguraAtual != larguraFinal || alturaAtual != alturaFinal) {
+            atual = escalarImagem(atual, larguraFinal, alturaFinal);
+        }
+        return atual;
+    }
+
+    private BufferedImage escalarImagem(BufferedImage origem, int largura, int altura) {
+        BufferedImage destino = new BufferedImage(largura, altura, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = destino.createGraphics();
+        aplicarHintsQualidade(g2);
+        g2.drawImage(origem, 0, 0, largura, altura, null);
+        g2.dispose();
+        return destino;
+    }
+
+    private void aplicarHintsQualidade(Graphics2D g2) {
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
     }
 
     private Icon criarIconeJava(int tamanho) {
