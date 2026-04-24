@@ -119,6 +119,22 @@ mvn clean package -DskipTests
 java -jar target/expert-dev-2.4.0-BETA.jar
 ```
 
+### Geração do pacote distribuível portátil
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\create-release.ps1
+```
+
+Saídas esperadas:
+- `target\release\ExpertDev-<versao>-win64`
+- `target\release\ExpertDev-<versao>-win64-portable.zip`
+
+Variações úteis:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\create-release.ps1 -RuntimePath "C:\caminho\jre8" -IncludeJar
+powershell -ExecutionPolicy Bypass -File .\scripts\create-release.ps1 -SkipBuild
+```
+
 ### Validação Word B2.3
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\validate-word-b23.ps1 -DocxPath "C:\caminho\arquivo.docx" -DocPath "C:\caminho\arquivo.doc"
