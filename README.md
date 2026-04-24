@@ -1,274 +1,171 @@
 # Expert Dev
 
-Extrai regras de negócio e referências visuais de páginas web, consolida o conteúdo e gera múltiplos formatos de saída (TXT, DOCX, PDF) otimizados para uso com assistentes de código. Possui módulo integrado de medição de ROI e performance.
-Agora também aceita upload Word `.doc` e `.docx` na GUI, com tentativa de conversão de `.doc` para `.docx` quando houver LibreOffice.
-Na aba Upload Word, é possível adicionar múltiplos arquivos (seletor e drag-and-drop) e processar a fila em lote.
+Aplicação desktop Java 8 para extrair contexto de URLs e documentos Word, consolidar regras e referências visuais e gerar artefatos prontos para uso com assistentes de código.
 
-## Stack tecnológica
+## Documentação oficial
 
-| Tecnologia | Versão | O que é | O que faz no projeto |
-| --- | --- | --- | --- |
-| ![Java](https://img.shields.io/badge/Java-8-007396?style=flat-square&logo=openjdk&logoColor=white) | 8 | Linguagem principal da aplicação. | Implementa a lógica de extração, consolidação de contexto, geração de artefatos e integração da UI. |
-| ![Swing](https://img.shields.io/badge/Java-Swing-007396?style=flat-square&logo=openjdk&logoColor=white) | JDK 8 | Toolkit de interface gráfica do Java. | Renderiza a interface desktop, entradas de URL/configuração e painel de execução. |
-| ![Maven](https://img.shields.io/badge/Build-Apache%20Maven-C71A36?style=flat-square&logo=apachemaven&logoColor=white) | Ambiente (3.x) | Ferramenta de build e gerenciamento de dependências. | Compila, empacota JARs, executa plugins (Shade/Launch4j) e padroniza o ciclo de build. |
-| ![Jsoup](https://img.shields.io/badge/Parser-jsoup-2E7D32?style=flat-square) | 1.15.3 | Biblioteca de parsing HTML. | Faz o fetch/parse das páginas web e extrai texto e referências de imagens. |
-| ![Apache POI](https://img.shields.io/badge/Docs-Apache%20POI-D22128?style=flat-square&logo=apache&logoColor=white) | 4.1.2 | Biblioteca para documentos Office. | Gera o `contexto_com_imagens.docx` com conteúdo consolidado e imagens inline. |
-| ![PDFBox](https://img.shields.io/badge/PDF-Apache%20PDFBox-B71C1C?style=flat-square&logo=apache&logoColor=white) | 2.0.27 | Biblioteca para manipulação de PDF. | Gera o `contexto_com_imagens.pdf` e apoia a exportação de saídas em PDF. |
-| ![SQLite JDBC](https://img.shields.io/badge/DB-SQLite%20JDBC-003B57?style=flat-square&logo=sqlite&logoColor=white) | 3.45.1.0 | Driver JDBC para banco SQLite embarcado. | Mantém cache de contexto e dados de execução para acelerar reprocessamentos e reduzir custos. |
-| ![JFreeChart](https://img.shields.io/badge/Charts-JFreeChart-1565C0?style=flat-square) | 1.0.19 | Biblioteca de gráficos em Java. | Exibe o dashboard de tendências e comparativos do módulo de Performance & ROI. |
-| ![Jackson](https://img.shields.io/badge/JSON-Jackson-000000?style=flat-square) | 2.17.2 | Biblioteca de serialização/desserialização JSON. | Constrói e interpreta payloads de integração com provedores de IA (OpenAI/Claude). |
+- `README.md` — visão geral do produto, arquitetura, build e operação.
+- `quickstart.md` — passo a passo curto para rodar e usar a aplicação.
+- `DOCUMENTACAO_CONSOLIDADA.md` — resumos e histórico dos demais documentos do repositório.
 
-## Versão atual: Expert Dev 2.4.0-BETA
+## O que o projeto entrega
 
-- **Cache de Contexto**: Armazenamento local (SQLite) de resultados de processamento para evitar re-download e economizar tokens.
-- **Automação de Workflow**: Detecção inteligente de links no clipboard (Jira/RTC) e notificações no System Tray.
-- **Layout Light por padrão**: A interface agora inicia sempre com o tema claro (light), otimizada para visibilidade em ambientes corporativos.
-- **Módulo de Performance & ROI**: compara o tempo de desenvolvimento entre o rito Scrum tradicional e o uso do ExpertDev.
-- **Dashboard de Tendências**: visualização gráfica da curva de aprendizado e ganho de velocidade (Productivity Gain).
-- **Relatório Executivo**: exportação em PDF consolidando a economia de tempo e ROI da Sprint para apresentações de revisão.
-- **Paralelismo**: processa múltiplas URLs simultaneamente (usa cores disponíveis no processador).
-- **Múltiplos formatos**: texto, Word com imagens embarcadas, PDF com imagens embarcadas.
-- **Geração de prompt por IA (opcional)**: modo local ou modo IA com API Key.
-- **Fallback automático**: se a IA falhar, o sistema volta para geração local.
-- **Modo econômico de IA**: limita contexto enviado e reduz tokens para baixar custo.
-- **Providers flexíveis**: pronto para OpenAI e Claude/Anthropic.
-- **Base unificada de prompt**: o refinamento e o contrato do prompt são compartilhados entre entradas locais (URL/Word) e geração via API.
-- **Perfis de prompt**: alternância entre `tecnico` e `executivo`.
-- **Estimativa visual IA**: exibe estimativa de tokens e custo aproximado na UI.
-- **Java 8**: totalmente compatível
+- extração de contexto a partir de URLs
+- upload de arquivos Word `.doc` e `.docx`
+- consolidação de texto, imagens e regras
+- geração de `prompt_para_junie_copilot.txt`
+- geração de `regras_extraidas.txt` e `imagens_encontradas.txt`
+- exportação para `contexto_com_imagens.docx` e `contexto_com_imagens.pdf`
+- cache local em SQLite
+- modo local ou IA com fallback automático
+- módulo `Performance & ROI`
+- aba `Assistente Pro`
+- pipeline IBM/GID com leitura Word, classificação, extração semântica e consolidação por RTC
 
-## Saída gerada
+## Stack principal
 
-1. `regras_extraidas.txt` — conteúdo bruto consolidado
-2. `imagens_encontradas.txt` — URLs das imagens detectadas
-3. `prompt_para_junie_copilot.txt` — prompt pronto para IA
-4. `contexto_com_imagens.docx` — **documento Word com imagens inline**
-5. `contexto_com_imagens.pdf` — **documento PDF com imagens inline**
-6. `RELATORIO_ROI_EXPORTADO.pdf` — **Relatório Executivo de Performance & ROI** (quando exportado)
-7. `resumo_execucao.txt` — métricas e dados de execução
-8. `erros_processamento.txt` — detalhes de URLs que falharam (quando houver)
+| Tecnologia | Versão | Uso no projeto |
+| --- | --- | --- |
+| Java | 8 | Base da aplicação desktop e dos serviços |
+| Swing | JDK 8 | Interface gráfica principal |
+| Maven | 3.x | Build, empacotamento e plugins |
+| Jsoup | 1.15.3 | Parsing HTML |
+| Apache POI | 4.1.2 | Leitura e geração de arquivos Word |
+| PDFBox | 2.0.27 | Geração e leitura de PDF |
+| SQLite JDBC | 3.45.1.0 | Persistência local e cache |
+| Jackson | 2.17.2 | Integrações JSON |
+| JFreeChart | 1.0.19 | Dashboard e gráficos de ROI |
 
-## Módulo de Performance & ROI
+## Estrutura funcional
 
-Este módulo permite mensurar o valor real que a ferramenta agrega ao seu workflow de desenvolvimento, agora com automações inteligentes.
+### Entradas
+- URLs individuais ou múltiplas
+- Word `.docx`
+- Word legado `.doc`, com conversão via LibreOffice quando disponível e fallback de leitura direta quando necessário
 
-### Automações (Workflow) & Otimização
-- **Cache de Contexto**: Se você processar uma URL que já foi analisada anteriormente, o ExpertDev recupera o texto e as imagens instantaneamente do banco de dados local (SQLite). Isso acelera o trabalho e economiza tokens se você estiver usando IA.
-- **Captura via Clipboard**: Ao copiar um link ou ID de tarefa (Jira ou RTC), o ExpertDev identifica automaticamente o número e o título, preenchendo os campos de auditoria para você.
-- **Notificações de Sistema**: Um ícone no System Tray monitora o tempo de desenvolvimento. Se você exceder a estimativa definida no Scrum Poker, o sistema emitirá um alerta visual para lembrá-lo de revisar ou finalizar a tarefa.
+### Saídas
+1. `regras_extraidas.txt`
+2. `imagens_encontradas.txt`
+3. `prompt_para_junie_copilot.txt`
+4. `contexto_com_imagens.docx`
+5. `contexto_com_imagens.pdf`
+6. `resumo_execucao.txt`
+7. `erros_processamento.txt` (quando houver falhas)
+8. relatórios de ROI exportados em PDF, quando aplicável
 
-### Fluxo de Trabalho
-1. **Planejamento**: No início da sprint, informe o RTC e a estimativa definida no Scrum Poker (em horas ou pontos).
-2. **Execução ExpertDev**: Ao processar a tarefa no sistema, o tempo de início do ExpertDev é registrado automaticamente.
-3. **Fechamento Sensibilizado**: Só finalize a tarefa no ExpertDev (botão "Finalizar (Dev + Teste)") quando concluir o desenvolvimento E os testes.
-4. **Comparação**: O sistema calcula a diferença entre o tempo real gasto no rito tradicional (estimado via Poker) e o tempo com a ferramenta.
+## Módulos importantes
 
-### Visualizações
-- **Gráfico de Barras**: Comparativo direto entre Estimativa Poker, Tempo Real Scrum e Tempo ExpertDev para cada tarefa.
-- **Gráfico de Linha (Tendências)**: Mostra a evolução do ganho de produtividade ao longo do tempo.
-- **Botão Exportar ROI**: Gera um PDF profissional com os dados consolidados, ideal para apresentar em Sprint Reviews.
+### Núcleo principal
+Responsável pela extração, limpeza, consolidação de contexto e geração de prompt.
 
-## Como usar
+### Upload Word
+- suporta múltiplos arquivos
+- faz leitura de texto e imagens
+- extrai texto de parágrafos e tabelas
+- usa fallback para `.doc` legado
 
-### 1. Usando o JAR Executável (Recomendado)
-Para facilitar o uso sem necessidade de uma IDE, agora o Expert Dev pode ser executado diretamente como um arquivo JAR.
+### Assistente Pro
+Fornece apoio ao fluxo de desenvolvimento com:
+- abertura de arquivo/linha na IDE
+- geração de prompt estruturado
+- checklists por categoria
+- histórico e evolução do fluxo Pro
 
-1. Baixe ou gere o arquivo `expert-dev-2.4.0-BETA.jar` (localizado na pasta `target/`).
-2. **Duplo clique**: Em sistemas configurados, basta dar um duplo clique no arquivo `.jar`. O sistema iniciará com a logo oficial como ícone da janela.
-3. **Via Terminal/PowerShell**:
-   ```powershell
-   java -jar expert-dev-2.4.0-BETA.jar
-   ```
+### Performance & ROI
+Permite comparar estimativa tradicional x tempo real com a ferramenta e exportar relatórios executivos.
 
-### 2. Execução via IDE (Desenvolvimento)
-1. Abra o projeto no IntelliJ Ultimate.
-2. Execute a classe `ExpertDev` (ou use `run.bat`).
-3. Cole as URLs do site quando solicitado, **separadas por vírgula**, ou use upload Word (`.doc`/`.docx`) na GUI.
+### Pipeline IBM / GID
+Fluxo especializado para documentos IBM:
+- `B2`: leitura de Word
+- `B3`: classificação e filtro de ruído
+- `B4`: extração semântica por tipo
+- `G2`: consolidação por RTC e dependências
 
-Exemplo:
-```
-Cole as URL(s) do site (separadas por vírgula): https://example.com, https://www.site.com
-```
+## Como executar
 
-### Geração do JAR (Build)
-Para gerar o JAR executável com todas as dependências embutidas (Fat JAR):
+### Pela IDE
+1. Abra o projeto no IntelliJ.
+2. Execute a classe `ExpertDev`.
+3. Use a GUI para URLs, upload Word ou módulos auxiliares.
+
+### Pelo terminal
 ```powershell
+java -jar target/expert-dev-2.4.0-BETA.jar
+```
+
+### Build
+```powershell
+mvn clean compile
 mvn clean package -DskipTests
 ```
-O arquivo será gerado em `target/expert-dev-2.4.0-BETA.jar`.
 
-### Validacao Word B2.3 (.doc/.docx)
+## Execuções úteis
 
-Use o script de matriz de validacao:
-
+### Validar ingestão Word
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\validate-word-b23.ps1 -DocxPath "C:\caminho\arquivo.docx" -DocPath "C:\caminho\arquivo.doc"
 ```
 
-Detalhes em `docs/b2.3-validacao-word.md`.
-
-### B3 - Classificacao de layout IBM + filtro de ruido
-
-Para validar classificacao de tipos IBM em lote:
-
+### Rodar probe B3
 ```powershell
-mvn -f "C:\Users\marcu\workspace\Pessoal\expertDev\pom.xml" -DskipTests exec:java "-Dexec.mainClass=br.com.expertdev.gid.service.IBMB3Probe" "-Dexec.args=C:\caminho\arquivo1.doc C:\caminho\arquivo2.doc"
+mvn -DskipTests exec:java "-Dexec.mainClass=br.com.expertdev.gid.service.IBMB3Probe" "-Dexec.args=C:\caminho\arquivo1.doc C:\caminho\arquivo2.docx"
 ```
 
-Detalhes em `docs/b3-classificacao-ruido.md`.
-
-### B4 - Extracao semantica por tipo IBM
-
-Para validar extracao semantica por tipo classificado:
-
+### Rodar probe B4
 ```powershell
-mvn -f "C:\Users\marcu\workspace\Pessoal\expertDev\pom.xml" -DskipTests exec:java "-Dexec.mainClass=br.com.expertdev.gid.service.IBMB4Probe" "-Dexec.args=C:\caminho\doc1.doc C:\caminho\doc2.doc"
+mvn -DskipTests exec:java "-Dexec.mainClass=br.com.expertdev.gid.service.IBMB4Probe" "-Dexec.args=C:\caminho\doc1.doc C:\caminho\doc2.doc"
 ```
 
-Detalhes em `docs/b4-extracao-semantica.md`.
-
-### Pacote oficial de release (Windows)
-
-Para distribuição a terceiros, use o pacote portátil com `ExpertDev.exe` e runtime embarcado.
-
-1. Garanta que existe uma runtime em `./jre8` (ou informe outro caminho no comando).
-2. Gere o release oficial:
-
+### Rodar probe G2
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\create-release.ps1
+mvn -DskipTests exec:java "-Dexec.mainClass=br.com.expertdev.gid.service.IBMG2Probe" "-Dexec.args=C:\arquivo1.doc C:\arquivo2.doc C:\arquivo3.doc"
 ```
 
-Artefatos gerados:
-- `target/release/ExpertDev-<versao>-win64/`
-- `target/release/ExpertDev-<versao>-win64-portable.zip`
+## Configuração
 
-Se sua runtime não estiver em `./jre8`, informe o caminho:
+Arquivo principal: `expertdev.properties`
 
+Configurações comuns:
+- timeout e limites de texto
+- tema da UI
+- modo de geração de prompt
+- parâmetros de IA
+- conversão de `.doc`
+- autenticação local
+
+### API Key por variável de ambiente
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\create-release.ps1 -RuntimePath "C:\Runtime\jre8"
+$env:EXPERTDEV_AI_API_KEY="sua_chave_aqui"
 ```
 
-### Execução com JDK 25+ (SQLite)
+## Ambiente corporativo restrito
 
-Ao usar JDK 25+ pode aparecer aviso de acesso nativo do SQLite JDBC.
-Para evitar o warning no IntelliJ, adicione em **Run Configuration > VM options**:
+Build usando repositório corporativo:
+```powershell
+mvn -Dcorp.offline=true clean test
+```
+
+Build usando fallback local em `lib/`:
+```powershell
+mvn -Dcorp.offline=true -Dcorp.lib.fallback=true clean test
+```
+
+Detalhes operacionais e governança de JARs foram consolidados em `DOCUMENTACAO_CONSOLIDADA.md`.
+
+## Compatibilidade
+
+- desenvolvimento preferencial com Java 8
+- em JDK 25+, o SQLite JDBC pode exigir:
 
 ```text
 --enable-native-access=ALL-UNNAMED
 ```
 
+## Situação atual da documentação
 
-Para desenvolvimento padrão do projeto, prefira JDK 8.
-No `run.bat`, se `JAVA8_HOME` estiver definido, ele será usado automaticamente.
+A documentação histórica de etapas, sprints, checklists, quick references e notas técnicas foi condensada em `DOCUMENTACAO_CONSOLIDADA.md`.
 
-## Processamento paralelo
-
-A VR1.5 usa automaticamente:
-```
-número de threads = cores disponíveis - 1
-```
-
-Isso acelera o processamento de múltiplas URLs sem comprometer a estabilidade.
-
-## Configuração opcional
-
-## Operacao em ambiente corporativo restrito
-
-- Guia operacional: `README_CORP_OFFLINE.md`
-- Checklist de governanca de JARs: `docs/checklist-atualizacao-jars.md`
-
-Build corporativo restrito (sem fallback local):
-
-```powershell
-mvn -Dcorp.offline=true clean test
-```
-
-Build corporativo com fallback local (`lib/`) habilitado:
-
-```powershell
-mvn -Dcorp.offline=true -Dcorp.lib.fallback=true clean test
-```
-
-Crie um arquivo `expertdev.properties` na raiz do projeto para sobrescrever padrões:
-
-```properties
-timeout.ms=45000
-texto.limite=150000
-output.summary.file=meu_resumo.txt
-
-# Tema UI
-ui.theme.light.default=true
-
-# Modo de geração de prompt
-ui.generation.mode=LOCAL
-
-# Word legado (.doc)
-word.doc.conversion.enabled=true
-word.libreoffice.path=
-word.doc.conversion.timeout.sec=45
-word.doc.fallback.to.direct.read=true
-
-# IA opcional (Expert Dev 2.0)
-ai.enabled=false
-ai.provider=openai
-ai.endpoint=https://api.openai.com/v1/chat/completions
-ai.model=gpt-4o-mini
-ai.timeout.ms=30000
-ai.max.tokens=700
-ai.max.context.chars=12000
-ai.temperature=0.1
-ai.economy.mode=true
-ai.api.key=
-prompt.profile=tecnico
-```
-
-### API Key por variável de ambiente (recomendado)
-
-```powershell
-$env:EXPERTDEV_AI_API_KEY="sua_chave_aqui"
-```
-
-Na UI, selecione `IA`, informe a chave (ou use a variável de ambiente), clique em `Testar IA` e depois em `Gerar Prompt`.
-
-### Providers suportados
-
-- `openai` → endpoint padrão `https://api.openai.com/v1/chat/completions`
-- `claude` → endpoint padrão `https://api.anthropic.com/v1/messages`
-
-Na interface, você pode escolher o provider no combo `Provider`.
-
-### Perfil do prompt
-
-- `tecnico` → foco em implementação detalhada, contratos e testes
-- `executivo` → foco em priorização, riscos e visão estratégica
-
-### Segurança recomendada
-
-- deixe `ai.api.key=` vazio no arquivo
-- prefira variável de ambiente
-- use o botão `Limpar` na UI para apagar a chave salva localmente
-
-## Histórico de versões
-
-- **Expert Dev 2.4.0-BETA** — Autenticação local + Login/Trial 15 dias + Lockout + Expiração de senha (30 dias) + Aviso de renovação + Ícone de usuário no cabeçalho.
-- **Expert Dev 2.2** — Versão Portátil (JRE Embarcada) + Wrapper Executável (.exe) + Melhorias de Distribuição.
-    - Suporte a JRE portátil em `./jre8`.
-    - Geração de `ExpertDev.exe` com ícone nativo via Launch4j.
-    - Script de inicialização inteligente `expert-dev.bat`.
-- **Expert Dev 2.1** — Cache de Contexto (SQLite) + Layout Light fixo + Módulo de Performance & ROI + Dashboard de Tendências + Exportação de Relatório PDF + Automação de Clipboard e Notificações Tray
-- **Expert Dev 2.0** — modo IA opcional + fallback local + persistência de configuração de geração
-- **VR1.5** — paralelismo + PDF
-- **VR1.4** — Word + PDF
-- **VR1.3** — Word com imagens embarcadas
-- **VR1.2** — resumo de execução
-- **VR1.1** — tolerância a falhas por URL
-- **VR1.0** — MVP básico
-
-## Próximos passos
-
-- 2.2.4 — Lockout incremental + integração SMTP para recuperação de senha
-- 2.3.0 — Suporte a Agentes Locais (Ollama)
-- 2.4.0 — Refinamento de Prompt Iterativo (Chat)
-- VR2.3 — Refinamento e implementação para criaçao de modelos de layout(GID-IBM)
-- Evitar redundância para o prompt
-
+Se você está começando agora:
+1. leia este `README.md`
+2. siga `quickstart.md`
+3. consulte `DOCUMENTACAO_CONSOLIDADA.md` apenas para contexto histórico, técnico ou gerencial mais detalhado

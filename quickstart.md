@@ -1,162 +1,115 @@
 # Quickstart - Expert Dev
 
-Guia rapido para abrir, navegar na interface Swing e entender cada funcao principal.
+Guia rápido para executar a aplicação e usar os fluxos principais sem navegar pela documentação histórica.
 
-## 1) O que o Expert Dev faz
+## Documentação que você realmente precisa
 
-O Expert Dev coleta contexto de URLs (ou de um arquivo Word), consolida o conteudo e gera:
+1. `README.md` — visão geral, build, stack e módulos.
+2. `quickstart.md` — este passo a passo de uso.
+3. `DOCUMENTACAO_CONSOLIDADA.md` — histórico e resumos técnicos das demais notas.
 
-- `prompt_para_junie_copilot.txt`
-- `regras_extraidas.txt`
-- `imagens_encontradas.txt`
-- `resumo_execucao.txt`
-- `erros_processamento.txt` (quando houver falhas)
-- `contexto_com_imagens.docx`
-- `contexto_com_imagens.pdf`
+## 1) Como executar
 
-## 2) Como executar
-
-### Opcao A - IntelliJ
-
+### Opção A — IntelliJ
 1. Abra o projeto.
 2. Execute a classe `ExpertDev`.
-3. A interface Swing abre no modo grafico.
+3. Aguarde a abertura da interface Swing.
 
-### Opcao B - Script local
-
-```bat
-run.bat
+### Opção B — JAR
+```powershell
+java -jar target/expert-dev-2.4.0-BETA.jar
 ```
 
-O script usa Maven para compilar e executar `ExpertDev`.
-
-### Opcao C - Maven direto
-
+### Opção C — Maven
 ```powershell
 mvn clean compile exec:java -Dexec.mainClass="ExpertDev"
 ```
 
-## 3) Navegacao da interface
+## 2) O que a aplicação gera
 
-A tela esta dividida em 3 partes:
+- `prompt_para_junie_copilot.txt`
+- `regras_extraidas.txt`
+- `imagens_encontradas.txt`
+- `contexto_com_imagens.docx`
+- `contexto_com_imagens.pdf`
+- `resumo_execucao.txt`
+- `erros_processamento.txt` quando houver falhas
 
-- **Cabecalho**: logo, alternancia de tema (`Fundo branco`) e versao.
-- **Coluna esquerda (Entrada)**: abas de captura + configuracoes + botao de processamento.
-- **Coluna direita (Saida)**: log de execucao e prompt gerado.
+## 3) Fluxos principais da interface
 
-## 4) Abas de entrada
+### Aba `Via URLs`
+Use quando o contexto estiver em páginas web.
 
-### 4.1 Aba `Via URLs`
+Passos:
+1. cole uma ou mais URLs;
+2. escolha `Modo` (`LOCAL` ou IA);
+3. escolha o `Perfil`;
+4. clique em `Gerar Prompt`.
 
-Para coletar contexto de paginas web.
+### Aba `Upload Word`
+Use quando o contexto estiver em `.doc` ou `.docx`.
 
-Funcoes:
-- Campo de texto para colar uma ou mais URLs (uma por linha ou separadas por virgula).
-- Botao `Limpar` para apagar as URLs.
+Passos:
+1. adicione um ou mais arquivos;
+2. selecione um item da lista para conferir a prévia, quando aplicável;
+3. ajuste `Modo`, `Provider` e `Perfil` se necessário;
+4. clique em `Gerar Prompt`.
 
-Quando usar:
-- Documentacao online
-- Wikis internas
-- Repositorios e paginas tecnicas
+### Aba `Assistente Pro`
+Use para apoio ao fluxo de implementação.
 
-### 4.2 Aba `Upload Word`
+Ações principais:
+- `Abrir na IDE`
+- `Copiar Prompt`
+- `Aplicar Checklist`
 
-Para usar contexto vindo de um arquivo `.docx`.
+### Aba `Performance & ROI`
+Use para comparar esforço estimado x esforço real e exportar relatórios executivos.
 
-Funcoes:
-- Botao `Selecionar` para escolher o arquivo.
-- Preview do texto extraido para validacao rapida.
+## 4) Configuração rápida
 
-Quando usar:
-- Regras de negocio internas
-- Documentos sem fonte web publica
+### Modo de geração
+- `LOCAL`: sem chamada externa
+- `IA`: usa provider configurado
 
-## 5) Painel de configuracao (esquerda, abaixo das abas)
-
-### `Modo`
-
-- `LOCAL`: gera prompt sem chamar API externa.
-- `IA`: gera prompt via provider de IA.
-
-### `Provider`
-
+### Providers suportados
 - `openai`
 - `claude`
 
-### `Perfil`
-
-- `tecnico`: linguagem detalhada de implementacao, contratos, edge cases e testes.
-- `executivo`: foco em visao de negocio, prioridades, riscos e comunicacao para decisao.
-
-### `API Key`
-
-- Campo para chave da IA.
-- Botao `Limpar`: remove a chave da tela e da configuracao local.
-- Checkbox `Salvar chave localmente`: persiste a chave no arquivo de configuracao local.
-- Botao `Testar IA`: valida conexao antes de processar.
-
-### `Estimativa IA`
-
-Mostra estimativa de tokens e custo aproximado para o contexto atual.
-
-## 6) Acao principal
-
-### Botao `Gerar Prompt`
-
-Executa o pipeline completo:
-
-1. Leitura da entrada (URLs ou Word)
-2. Processamento e consolidacao
-3. Geracao de Word e PDF com imagens
-4. Geracao do prompt final
-5. Gravacao dos arquivos de saida
-
-Se o modo IA falhar, o sistema tenta fallback para modo local automaticamente.
-
-## 7) Painel de saida (direita)
-
-### `Log de Execucao`
-
-Exibe progresso em tempo real:
-- quantidade de URLs
-- etapa atual
-- avisos e erros
-- resumo final
-
-### `Prompt Gerado`
-
-Mostra o prompt final.
-
-Funcoes:
-- `Copiar`: copia o prompt para area de transferencia.
-- `Salvar Arquivos`: informa que os arquivos ja sao salvos automaticamente no processamento.
-
-## 8) Tema claro/escuro
-
-- O checkbox `Fundo branco` troca entre tema claro e escuro.
-- O projeto suporta logo por tema em `src/main/resources/icons`.
-- Padrao configuravel: `ui.theme.light.default=true` no `expertdev.properties`.
-
-## 9) Modo CLI (legado)
-
-A classe `ExpertDev` aceita `--cli` para usar o fluxo legado em linha de comando:
-
+### API Key por variável de ambiente
 ```powershell
-mvn -q exec:java -Dexec.mainClass="ExpertDev" -Dexec.args="--cli"
+$env:EXPERTDEV_AI_API_KEY="sua_chave_aqui"
 ```
 
-## 10) Troubleshooting rapido
+## 5) Comandos úteis
 
-- Sem resposta de IA: confirme `API Key`, provider e endpoint.
-- Prompt vazio: verifique se a entrada tem conteudo valido (URL acessivel ou Word legivel).
-- Layout estranho: alterne tema e reabra a aplicacao para recarregar recursos visuais.
+### Build completo
+```powershell
+mvn clean package -DskipTests
+```
 
-## 11) Checklist de uso diario
+### Validar Word
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\validate-word-b23.ps1 -DocxPath "C:\caminho\arquivo.docx" -DocPath "C:\caminho\arquivo.doc"
+```
 
-1. Escolher entrada (`Via URLs` ou `Upload Word`)
-2. Escolher `Modo` (LOCAL ou IA)
-3. Escolher `Perfil` (`tecnico` ou `executivo`)
-4. (Opcional IA) informar chave e `Testar IA`
-5. Clicar `Gerar Prompt`
-6. Copiar prompt e usar os arquivos gerados
+### Probe G2
+```powershell
+mvn -DskipTests exec:java "-Dexec.mainClass=br.com.expertdev.gid.service.IBMG2Probe" "-Dexec.args=C:\arquivo1.doc C:\arquivo2.doc"
+```
 
+## 6) Troubleshooting rápido
+
+- Prompt vazio: valide se a URL responde ou se o Word possui texto legível.
+- Erro com `.doc`: confira configuração de conversão e fallback no `expertdev.properties`.
+- Provider IA falhando: revise chave, endpoint e timeout.
+- Preview confuso com múltiplos arquivos: selecione o arquivo correto na lista antes de processar.
+
+## 7) Quando usar o consolidado
+
+Abra `DOCUMENTACAO_CONSOLIDADA.md` quando você precisar de:
+- histórico das etapas Pro e G2;
+- resumos executivos antigos;
+- detalhes de B2, B3, B4 e G2;
+- governança de `lib/`;
+- visão consolidada dos documentos legados.
