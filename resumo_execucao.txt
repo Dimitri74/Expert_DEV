@@ -1,20 +1,18 @@
-Resumo da execução - Expert Dev 2.4.0-BETA
+Resumo da execução - Expert Dev 2.4.1-BETA
 ==================================================
 
-Início: 2026-04-23 21:41:25
-Fim: 2026-04-23 21:41:26
+Início: 2026-04-24 17:57:19
+Fim: 2026-04-24 17:57:21
 
 Totais:
- - URLs recebidas: 3
- - URLs com sucesso: 3
+ - URLs recebidas: 1
+ - URLs com sucesso: 1
  - URLs com falha: 0
- - Imagens únicas coletadas: 0
+ - Imagens únicas coletadas: 10
  - Tempo total (s): 1
 
 URLs processadas com sucesso:
- - upload://SIPCS_Msg_Sistema.doc
  - upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc
- - upload://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc
 
 URLs com falha:
  - Nenhuma

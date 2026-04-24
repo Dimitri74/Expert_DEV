@@ -86,6 +86,8 @@ public class PdfDocumentBuilder {
     private void adicionarSecaoUrl(PDDocument document, ResultadoProcessamento resultado) throws IOException {
         PDPage page = new PDPage();
         document.addPage(page);
+        List<ImagemInfo> imagens = resultado.getImagens();
+        boolean modoDiVisual = isModoDiVisual(resultado, imagens);
 
         try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
             float yPosition = page.getMediaBox().getHeight() - 50;
@@ -110,13 +112,19 @@ public class PdfDocumentBuilder {
 
             // Texto extraído
             String texto = resultado.getTextoExtraido();
-            if (texto != null && !texto.trim().isEmpty()) {
+            if (texto != null && !texto.trim().isEmpty() && !modoDiVisual) {
                 String textoTruncado = texto.length() > 500 ? texto.substring(0, 500) + "..." : texto;
                 yPosition = escreverTextoMultilinha(contentStream, textoTruncado, page, yPosition);
+            } else if (modoDiVisual) {
+                contentStream.setFont(PDType1Font.HELVETICA_OBLIQUE, 10);
+                contentStream.beginText();
+                contentStream.newLineAtOffset(50, yPosition);
+                contentStream.showText(sanitizarTextoPdf("Modo DI: priorizando imagens e conteúdo visual relevante ao front."));
+                contentStream.endText();
+                yPosition -= 20;
             }
 
             // Imagens
-            List<ImagemInfo> imagens = resultado.getImagens();
             if (imagens != null && !imagens.isEmpty()) {
                 yPosition -= 20;
                 contentStream.setFont(PDType1Font.HELVETICA_BOLD, 12);
@@ -219,8 +227,10 @@ public class PdfDocumentBuilder {
             contentStream.setFont(PDType1Font.HELVETICA, 8);
             contentStream.beginText();
             contentStream.newLineAtOffset(75, yPosition);
-            String urlTruncada = urlImagem.length() > 60 ? urlImagem.substring(0, 60) + "..." : urlImagem;
-            contentStream.showText(sanitizarTextoPdf(urlTruncada));
+            if (urlImagem != null && !urlImagem.startsWith("embedded://")) {
+                String urlTruncada = urlImagem.length() > 60 ? urlImagem.substring(0, 60) + "..." : urlImagem;
+                contentStream.showText(sanitizarTextoPdf(urlTruncada));
+            }
             contentStream.endText();
             yPosition -= 15;
 
@@ -229,6 +239,19 @@ public class PdfDocumentBuilder {
         }
 
         return yPosition;
+    }
+
+    private boolean isModoDiVisual(ResultadoProcessamento resultado, List<ImagemInfo> imagens) {
+        if (resultado == null || imagens == null || imagens.isEmpty()) {
+            return false;
+        }
+        String url = resultado.getUrl() == null ? "" : resultado.getUrl().toLowerCase();
+        String obs = resultado.getObservacao() == null ? "" : resultado.getObservacao().toLowerCase();
+        String texto = resultado.getTextoExtraido() == null ? "" : resultado.getTextoExtraido().toLowerCase();
+        return url.contains("integracao_di")
+                || url.contains("_di_")
+                || texto.contains("documento de interface")
+                || obs.contains("integracao_di");
     }
 
     private String sanitizarTextoPdf(String texto) {

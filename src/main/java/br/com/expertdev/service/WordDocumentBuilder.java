@@ -68,6 +68,7 @@ public class WordDocumentBuilder {
         String url = resultado.getUrl();
         String texto = resultado.getTextoExtraido();
         List<ImagemInfo> imagens = resultado.getImagens();
+        boolean modoDiVisual = isModoDiVisual(resultado, imagens);
 
         // URL como seção
         XWPFParagraph urlPara = document.createParagraph();
@@ -88,12 +89,19 @@ public class WordDocumentBuilder {
         }
 
         // Texto extraído
-        if (texto != null && !texto.trim().isEmpty()) {
+        if (texto != null && !texto.trim().isEmpty() && !modoDiVisual) {
             XWPFParagraph textoPara = document.createParagraph();
             XWPFRun textoRun = textoPara.createRun();
             String textoTruncado = texto.length() > 500 ? texto.substring(0, 500) + "..." : texto;
             textoRun.setText(textoTruncado);
             textoRun.setFontSize(11);
+        } else if (modoDiVisual) {
+            XWPFParagraph modoPara = document.createParagraph();
+            XWPFRun modoRun = modoPara.createRun();
+            modoRun.setText("Modo DI: priorizando imagens e conteúdo visual relevante ao front.");
+            modoRun.setItalic(true);
+            modoRun.setFontSize(10);
+            modoRun.setColor("666666");
         }
 
         // Imagens
@@ -163,14 +171,29 @@ public class WordDocumentBuilder {
             XWPFParagraph urlImgPara = document.createParagraph();
             urlImgPara.setIndentationLeft(720);
             XWPFRun urlImgRun = urlImgPara.createRun();
-            urlImgRun.setText(urlImagem);
-            urlImgRun.setFontSize(8);
-            urlImgRun.setColor("999999");
+            if (urlImagem != null && !urlImagem.startsWith("embedded://")) {
+                urlImgRun.setText(urlImagem);
+                urlImgRun.setFontSize(8);
+                urlImgRun.setColor("999999");
+            }
 
             document.createParagraph();
         } catch (Exception e) {
             System.err.println("⚠ Erro ao adicionar imagem ao documento: " + e.getMessage());
         }
+    }
+
+    private boolean isModoDiVisual(ResultadoProcessamento resultado, List<ImagemInfo> imagens) {
+        if (resultado == null || imagens == null || imagens.isEmpty()) {
+            return false;
+        }
+        String url = resultado.getUrl() == null ? "" : resultado.getUrl().toLowerCase();
+        String obs = resultado.getObservacao() == null ? "" : resultado.getObservacao().toLowerCase();
+        String texto = resultado.getTextoExtraido() == null ? "" : resultado.getTextoExtraido().toLowerCase();
+        return url.contains("integracao_di")
+                || url.contains("_di_")
+                || texto.contains("documento de interface")
+                || obs.contains("integracao_di");
     }
 
     private String detectarTipoMime(byte[] bytes) {

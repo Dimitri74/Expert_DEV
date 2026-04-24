@@ -24,6 +24,13 @@ public class ImageDownloader {
 
     public byte[] downloadImage(String urlString) {
         try {
+            if (urlString != null && urlString.startsWith("embedded://")) {
+                byte[] embedded = WordDocumentReader.getEmbeddedImageBytes(urlString);
+                if (embedded != null && embedded.length > 0) {
+                    return embedded;
+                }
+            }
+
             String downloadUrl = prepararUrlDownload(urlString);
 
             File cached = getCachedFile(downloadUrl);
