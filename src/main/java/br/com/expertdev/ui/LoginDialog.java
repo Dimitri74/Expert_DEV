@@ -43,7 +43,7 @@ public class LoginDialog extends JDialog {
     private JLabel lblTrial;
 
     public LoginDialog(Window owner, AuthService authService, ExpertDevConfig config) {
-        super(owner, "Acesso Expert Dev 2.4.0-BETA", ModalityType.APPLICATION_MODAL);
+        super(owner, "Acesso Expert Dev 2.4.1-BETA", ModalityType.APPLICATION_MODAL);
         this.authService = authService;
         this.config = config;
         construir();
@@ -194,7 +194,7 @@ public class LoginDialog extends JDialog {
         lblTrial.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblTrial.setForeground(COR_TEXTO_SUAVE);
 
-        JLabel lblVersao = new JLabel("v2.4.0-BETA");
+        JLabel lblVersao = new JLabel("v2.4.1-BETA");
         lblVersao.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         lblVersao.setForeground(COR_TEXTO_SUAVE);
 
@@ -420,7 +420,20 @@ public class LoginDialog extends JDialog {
     }
 
     private JButton criarBotao(String texto, Color cor) {
-        JButton botao = new JButton(texto);
+        JButton botao = new JButton(texto) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                try {
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(getBackground());
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 14, 14);
+                } finally {
+                    g2.dispose();
+                }
+                super.paintComponent(g);
+            }
+        };
         botao.setFont(FONTE_BOTAO);
         botao.setBackground(cor);
 
@@ -428,11 +441,11 @@ public class LoginDialog extends JDialog {
         Color corTexto = obterCorTextoParaBotao(cor);
         botao.setForeground(corTexto);
 
-        // Forçar renderização correta
-        botao.setContentAreaFilled(true);
-        botao.setOpaque(true);
-        botao.setBorderPainted(true);
-        botao.setBorder(BorderFactory.createLineBorder(cor, 2));
+        // Evita sobrescrita do Windows L&F e garante pintura manual do fundo
+        botao.setContentAreaFilled(false);
+        botao.setOpaque(false);
+        botao.setBorderPainted(false);
+        botao.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
         botao.setFocusPainted(false);
 
         botao.setPreferredSize(new Dimension(140, 40));

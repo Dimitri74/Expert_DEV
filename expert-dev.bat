@@ -1,5 +1,6 @@
 @echo off
 setlocal
+set "JAVA_UI_FLAGS=-Dsun.java2d.uiScale=1.0 -Dsun.java2d.d3d=false"
 
 :: Define o caminho para a JRE portatil local
 set "JAVA_EXE=.\jre8\bin\javaw.exe"
@@ -11,7 +12,7 @@ if not exist "%JAVA_EXE%" (
     echo Tentando usar o Java do sistema como fallback...
     where javaw >nul 2>nul
     if %ERRORLEVEL% EQU 0 (
-        start "" javaw -jar expert-dev-2.4.0-BETA.jar
+        start "" javaw %JAVA_UI_FLAGS% -jar expert-dev-2.4.1-BETA.jar
         exit /b
     ) else (
         echo [ERRO] Java nao encontrado no sistema.
@@ -21,7 +22,7 @@ if not exist "%JAVA_EXE%" (
 )
 
 :: Inicia o ExpertDev usando a JRE local
-echo [INFO] Iniciando ExpertDev 2.4.0-BETA com JRE Local...
-start "" "%JAVA_EXE%" -jar expert-dev-2.4.0-BETA.jar
+echo [INFO] Iniciando ExpertDev 2.4.1-BETA com JRE Local...
+start "" "%JAVA_EXE%" %JAVA_UI_FLAGS% -jar expert-dev-2.4.1-BETA.jar
 
 endlocal

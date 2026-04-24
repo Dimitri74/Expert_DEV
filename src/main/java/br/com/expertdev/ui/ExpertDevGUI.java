@@ -3,6 +3,8 @@ package br.com.expertdev.ui;
 import br.com.expertdev.service.*;
 import br.com.expertdev.config.ExpertDevConfig;
 import br.com.expertdev.io.DefaultTextFileWriter;
+import br.com.expertdev.ui.presentation.PresentationMessageService;
+import br.com.expertdev.ui.tabs.ExpertDevTabsBuilder;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -163,6 +165,7 @@ public class ExpertDevGUI extends JFrame {
     private boolean salvarApiKeySelecionada;
     private String apiKeyDigitada = "";
     private final AuthSession authSession;
+    private final PresentationMessageService presentationMessageService;
 
     public ExpertDevGUI() {
         this(new AuthSession("Local", "", LicenseStatus.PREMIUM, 0));
@@ -172,6 +175,7 @@ public class ExpertDevGUI extends JFrame {
         this.authSession = authSession == null
                 ? new AuthSession("Local", "", LicenseStatus.PREMIUM, 0)
                 : authSession;
+        this.presentationMessageService = new PresentationMessageService(this);
         auditoriaService = new AuditoriaService();
         performanceService = new PerformanceService(auditoriaService);
         reportService = new ReportService(performanceService);
@@ -215,7 +219,7 @@ public class ExpertDevGUI extends JFrame {
             }
         } catch (Exception e) {}
         
-        trayService = new TrayNotificationService("ExpertDev v2.4.0-BETA", icone, e -> {
+        trayService = new TrayNotificationService("ExpertDev v2.4.1-BETA", icone, e -> {
             setVisible(true);
             setExtendedState(JFrame.NORMAL);
             toFront();
@@ -356,7 +360,7 @@ public class ExpertDevGUI extends JFrame {
             }
         });
 
-        JLabel lblVersao = new JLabel("v 2.4.0-BETA");
+        JLabel lblVersao = new JLabel("v 2.4.1-BETA");
         lblVersao.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblVersao.setForeground(COR_DESTAQUE2);
         lblVersao.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -745,10 +749,12 @@ public class ExpertDevGUI extends JFrame {
 
         abas = new JTabbedPane();
         estilizarAbas(abas);
-        abas.addTab("  🌐  Via URLs  ", criarAbaUrls());
-        abas.addTab("  📄  Upload Word  ", criarAbaUpload());
-        abas.addTab("  📋  Histórico  ", criarAbaHistorico());
-        abas.addTab("  📊  Performance & ROI  ", criarAbaPerformance());
+        ExpertDevTabsBuilder tabsBuilder = new ExpertDevTabsBuilder();
+        tabsBuilder.addCoreTabs(abas,
+                this::criarAbaUrls,
+                this::criarAbaUpload,
+                this::criarAbaHistorico,
+                this::criarAbaPerformance);
         // RN: somente credencial Premium acessa o Assistente Pro.
         try {
             if (authSession != null && authSession.isPremium()) {
@@ -1411,11 +1417,11 @@ public class ExpertDevGUI extends JFrame {
     }
 
     private void mostrarAviso(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Aviso", JOptionPane.WARNING_MESSAGE);
+        presentationMessageService.showWarning(msg);
     }
 
     private void mostrarMensagem(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+        presentationMessageService.showInfo(msg);
     }
 
     private void atualizarDashboardTendencia() {
@@ -2797,7 +2803,7 @@ public class ExpertDevGUI extends JFrame {
     }
 
     private void mostrarErro(String mensagem) {
-        JOptionPane.showMessageDialog(this, mensagem, "Atenção", JOptionPane.WARNING_MESSAGE);
+        presentationMessageService.showError(mensagem);
     }
 
     private void alternarTema(boolean claro) {
@@ -3514,7 +3520,20 @@ public class ExpertDevGUI extends JFrame {
     }
 
     private JButton criarBotaoAcao(String texto) {
-        JButton btn = new JButton(texto);
+        JButton btn = new JButton(texto) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                try {
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(getBackground());
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 14, 14);
+                } finally {
+                    g2.dispose();
+                }
+                super.paintComponent(g);
+            }
+        };
         btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
         configurarPaletaBotao(
                 btn,
@@ -3525,7 +3544,9 @@ public class ExpertDevGUI extends JFrame {
         );
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
-        btn.setOpaque(true);
+        btn.setContentAreaFilled(false);
+        btn.setOpaque(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         btn.setPreferredSize(new Dimension(0, 44));
         return btn;
