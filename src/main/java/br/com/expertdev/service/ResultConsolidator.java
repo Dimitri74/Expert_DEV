@@ -21,6 +21,7 @@ public class ResultConsolidator {
     private static final String DELIMITADOR_REGRAS = "\n\n" + repeat("=", 80) + "\n\n";
 
     private final PromptGenerationService promptGenerationService;
+    private final MsgSistemaRtcFilterService msgSistemaRtcFilterService;
 
     public ResultConsolidator(PromptGenerator promptGenerator) {
         this(new LocalPromptGenerationService(promptGenerator));
@@ -28,6 +29,7 @@ public class ResultConsolidator {
 
     public ResultConsolidator(PromptGenerationService promptGenerationService) {
         this.promptGenerationService = promptGenerationService;
+        this.msgSistemaRtcFilterService = new MsgSistemaRtcFilterService();
     }
 
     public ExecucaoConsolidada consolidar(List<ResultadoProcessamento> resultados,
@@ -35,7 +37,8 @@ public class ResultConsolidator {
                                           Instant inicio,
                                           Instant fim,
                                           String arquivoWord,
-                                          String arquivoPdf) {
+                                          String arquivoPdf,
+                                          String rtcNumero) {
         StringJoiner regrasExtraidas = new StringJoiner(DELIMITADOR_REGRAS);
         StringJoiner imagensEncontradas = new StringJoiner("\n");
         List<String> erros = new ArrayList<>();
@@ -51,7 +54,7 @@ public class ResultConsolidator {
             if (resultado.isSucesso()) {
                 sucesso++;
                 urlsSucesso.add(resultado.getUrl());
-                regrasExtraidas.add(criarBlocoTexto(resultado));
+                regrasExtraidas.add(criarBlocoTexto(resultado, rtcNumero));
                 totalImagens += adicionarImagens(resultado, imagensGlobais, imagensEncontradas);
             } else {
                 falhas++;
@@ -89,7 +92,7 @@ public class ResultConsolidator {
         );
     }
 
-    private String criarBlocoTexto(ResultadoProcessamento resultado) {
+    private String criarBlocoTexto(ResultadoProcessamento resultado, String rtcNumero) {
         StringBuilder blocoTexto = new StringBuilder();
         blocoTexto.append("URL: ").append(resultado.getUrl()).append("\n\n");
 
@@ -97,7 +100,10 @@ public class ResultConsolidator {
             blocoTexto.append("Observação: ").append(resultado.getObservacao()).append("\n\n");
         }
 
-        blocoTexto.append(resultado.getTextoExtraido() == null ? "" : resultado.getTextoExtraido());
+        String textoBase = resultado.getTextoExtraido() == null ? "" : resultado.getTextoExtraido();
+        String textoFiltrado = msgSistemaRtcFilterService.reduzirRuidoSeAplicavel(
+                resultado.getUrl(), textoBase, rtcNumero);
+        blocoTexto.append(textoFiltrado);
         return blocoTexto.toString();
     }
 
@@ -142,7 +148,7 @@ public class ResultConsolidator {
                                        List<String> urlsSucesso,
                                        List<String> urlsFalha) {
         StringBuilder resumo = new StringBuilder();
-        resumo.append("Resumo da execução - Expert Dev 2.0\n");
+        resumo.append("Resumo da execução - Expert Dev 2.4.0-BETA\n");
         resumo.append(repeat("=", 50)).append("\n\n");
         resumo.append("Início: ").append(RESUMO_DATE_FORMAT.format(inicio)).append("\n");
         resumo.append("Fim: ").append(RESUMO_DATE_FORMAT.format(fim)).append("\n\n");

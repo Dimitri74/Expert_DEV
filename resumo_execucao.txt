@@ -1,18 +1,20 @@
-Resumo da execução - Expert Dev 2.0
+Resumo da execução - Expert Dev 2.4.0-BETA
 ==================================================
 
-Início: 2026-04-22 22:18:57
-Fim: 2026-04-22 22:18:59
+Início: 2026-04-23 21:41:25
+Fim: 2026-04-23 21:41:26
 
 Totais:
- - URLs recebidas: 1
- - URLs com sucesso: 1
+ - URLs recebidas: 3
+ - URLs com sucesso: 3
  - URLs com falha: 0
- - Imagens únicas coletadas: 5
- - Tempo total (s): 2
+ - Imagens únicas coletadas: 0
+ - Tempo total (s): 1
 
 URLs processadas com sucesso:
- - https://github.com/Dimitri74/Portifolio-UNIPDS/blob/main/README.md
+ - upload://SIPCS_Msg_Sistema.doc
+ - upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc
+ - upload://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc
 
 URLs com falha:
  - Nenhuma

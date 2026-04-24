@@ -1,4 +1,4 @@
-# Especificacao Tecnica - Autenticacao ExpertDev 2.2.3-BETA
+# Especificacao Tecnica - Autenticacao ExpertDev 2.4.0-BETA
 
 ## Objetivo
 Implementar controle de acesso local no ExpertDev com:
@@ -81,6 +81,6 @@ Arquivo: `expertdev.properties`
 
 ## Riscos conhecidos e proximos incrementos
 - Codigo de reset e local (nao envia email); para ambiente corporativo, integrar SMTP no futuro.
-- Nao ha lockout por tentativas em 2.2.1; implementado em 2.2.3-BETA com 5 tentativas e bloqueio de 5 minutos.
+- Nao ha lockout por tentativas em 2.2.1; implementado em 2.4.0-BETA com 5 tentativas e bloqueio de 5 minutos.
 - Nao ha criptografia de banco inteiro; apenas hash de credenciais.
 

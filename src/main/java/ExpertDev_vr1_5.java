@@ -22,7 +22,7 @@ public class ExpertDev_vr1_5 {
         Instant inicio = Instant.now();
         ExpertDevConfig config = ExpertDevConfig.carregar();
 
-        System.out.println("=== Expert Dev 2.0 (com Paralelismo, PDF e IA opcional na UI) ===\n");
+        System.out.println("=== Expert Dev 2.4.0-BETA (com Paralelismo, PDF e IA opcional na UI) ===\n");
 
         String input = obterInput(args);
         UrlParser urlParser = new UrlParser();
@@ -48,7 +48,7 @@ public class ExpertDev_vr1_5 {
 
         // Consolidar e gerar demais outputs
         ExecucaoConsolidada execucaoFinal = new ResultConsolidator(new PromptGenerator())
-                .consolidar(resultados, urls.size(), inicio, Instant.now(), arquivoWord, arquivoPdf);
+                .consolidar(resultados, urls.size(), inicio, Instant.now(), arquivoWord, arquivoPdf, "");
 
         salvarSaidas(config, execucaoFinal, new DefaultTextFileWriter());
         imprimirResumoFinal(config, execucaoFinal);

@@ -38,6 +38,10 @@ public class ExpertDevConfig {
     private final String promptProfile;
     private final boolean authEnabled;
     private final String authLastUser;
+    private final boolean wordDocConversionEnabled;
+    private final String wordLibreOfficePath;
+    private final int wordDocConversionTimeoutSec;
+    private final boolean wordDocFallbackToDirectRead;
 
     private ExpertDevConfig(Properties properties) {
         this.timeoutMs = parseInteger(properties, "timeout.ms", 30000);
@@ -72,6 +76,10 @@ public class ExpertDevConfig {
         this.promptProfile = properties.getProperty("prompt.profile", "tecnico").trim().toLowerCase();
         this.authEnabled = parseBoolean(properties, "auth.enabled", true);
         this.authLastUser = properties.getProperty("auth.last.user", "").trim();
+        this.wordDocConversionEnabled = parseBoolean(properties, "word.doc.conversion.enabled", true);
+        this.wordLibreOfficePath = properties.getProperty("word.libreoffice.path", "").trim();
+        this.wordDocConversionTimeoutSec = parseInteger(properties, "word.doc.conversion.timeout.sec", 45);
+        this.wordDocFallbackToDirectRead = parseBoolean(properties, "word.doc.fallback.to.direct.read", true);
     }
 
     public static ExpertDevConfig carregar() {
@@ -109,6 +117,10 @@ public class ExpertDevConfig {
         properties.setProperty("prompt.profile", "tecnico");
         properties.setProperty("auth.enabled", "true");
         properties.setProperty("auth.last.user", "");
+        properties.setProperty("word.doc.conversion.enabled", "true");
+        properties.setProperty("word.libreoffice.path", "");
+        properties.setProperty("word.doc.conversion.timeout.sec", "45");
+        properties.setProperty("word.doc.fallback.to.direct.read", "true");
         return properties;
     }
 
@@ -380,6 +392,22 @@ public class ExpertDevConfig {
 
     public String getAuthLastUser() {
         return authLastUser;
+    }
+
+    public boolean isWordDocConversionEnabled() {
+        return wordDocConversionEnabled;
+    }
+
+    public String getWordLibreOfficePath() {
+        return wordLibreOfficePath;
+    }
+
+    public int getWordDocConversionTimeoutSec() {
+        return wordDocConversionTimeoutSec;
+    }
+
+    public boolean isWordDocFallbackToDirectRead() {
+        return wordDocFallbackToDirectRead;
     }
 }
 

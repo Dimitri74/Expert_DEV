@@ -30,7 +30,7 @@ Guia de orientação rápida para novos usuários. Fornece um roteiro de como na
 - Arquivos principais mapeados por tipo de usuário
 - Cores principais (azul, vermelho, amarelo, verde)
 - Como executar: `.\target\ExpertDev.exe`
-- Stack técnico: Java 8+, Swing, Maven, versão 2.2.3-BETA
+- Stack técnico: Java 8+, Swing, Maven, versão 2.4.0-BETA
 - Lista dos 10 arquivos de documentação
 
 ### Para Usar
@@ -102,7 +102,7 @@ Documento técnico detalhando todas as melhorias implementadas na interface de l
 - **Compilação**: mvn clean package -DskipTests gera JAR 42.6MB e ExpertDev.exe
 - **Comparação antes/depois**: Botões genéricos → coloridos, interface genérica → profissional, sem efeitos → hover effects, tela pequena → otimizada
 - **Paleta**: 9 cores (fundo #121e1e, painel #1c1c2d, painel alt #232337, texto #e2e8f0, cinza #94a3b8, borda #334155)
-- **Statusfinal**: Build SUCCESS, sem erros, versão 2.2.3-BETA, 22 de abril 2026
+- **Statusfinal**: Build SUCCESS, sem erros, versão 2.4.0-BETA, 22 de abril 2026
 
 ---
 
@@ -212,7 +212,7 @@ Guia completo para testes e QA com 5 testes estruturados, checklist de aceitaç�
 - **Fluxo recomendado**: Para implementação, teste, apresentação
 - **Estrutura informação**: Árvore visual de conteúdo por documento
 - **Cores principais referência**: Azul #636af1, Verde #34d399, Amarelo #facc15, Vermelho #f87171
-- **Arquivos código**: LoginDialog.java, RecoveryDialog.java, builds expert-dev-2.2.3-BETA.jar, ExpertDev.exe
+- **Arquivos código**: LoginDialog.java, RecoveryDialog.java, builds expert-dev-2.4.0-BETA.jar, ExpertDev.exe
 - **Links rápidos**: Compilação Maven, localização arquivos, documentação
 - **Checklist leitura**: Primeiro contato, conhecimento técnico, teste & QA, referência futura
 - **FAQ**: Como mudar cor, por que hover não funciona, como comparar antes/depois, como testar
@@ -260,7 +260,7 @@ Relatório de evolução do Expert Dev através de versões (VR1.1 até VR1.5) c
 ## 🎯 Resumo Executivo Geral
 
 ### Projeto
-**Expert Dev 2.2.3-BETA** - Aplicação Java com interface Swing que foi completamente redesenhada com foco em UI/UX moderna.
+**Expert Dev 2.4.0-BETA** - Aplicação Java com interface Swing que foi completamente redesenhada com foco em UI/UX moderna.
 
 ### Principais Conquistas
 1. ✅ Redesign da tela de login com design elegante e profissional
@@ -294,7 +294,7 @@ Relatório de evolução do Expert Dev através de versões (VR1.1 até VR1.5) c
 ---
 
 **Documento Consolidado**: 22 de abril de 2026  
-**Versão**: 2.2.3-BETA  
+**Versão**: 2.4.0-BETA
 **Status**: ✅ DOCUMENTAÇÃO COMPLETA E ORGANIZADA
 
 ---

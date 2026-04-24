@@ -4,438 +4,1537 @@ Perfil de resposta:
 - Negocial (visao de negocio, priorizacao, impacto e riscos).
 
 Objetivo:
-Evoluir ou implementar uma plataforma de food delivery com foco em requisitos de negocio e arquitetura descritos no contexto.
+Analisar o contexto extraido e transformar os requisitos em um plano de implementacao tecnico acionavel.
 
 Resumo intermediario do contexto:
-- Caracteres de regras refinadas: 26483
-- Caracteres de referencias visuais: 654
+- Caracteres de regras refinadas: 112296
+- Caracteres de referencias visuais: 24
 - Principais blocos por relevancia:
-- [score 10] | **Mockito** | | 5.x | Framework de mocking para testes unitários. `@Mock`, `@InjectMocks`, `when(...).thenReturn(...)`, `verify(...)`. Usado para isolar Services e testar regras de negócio sem dependências externas (banco, Kafka, HTTP). |
-- [score 9] | **Testcontainers** | | 1.19.8 | Biblioteca para testes de integração com infraestrutura real em Docker. Sobe PostgreSQL, MySQL e Kafka como containers efêmeros durante os testes. Suite em `testes-integracao/` para `ms-catalogo`, `ms-pedidos` e `ms-pagamentos`. Sem mocks de banco — testes "realistas". |
-- [score 8] > **Arquitetura de microsserviços** com Quarkus, Kafka, IA generativa com RAG, frontend Next.js 15,
-- [score 7] | **Prometheus** | | latest | Sistema de monitoramento e alertas time-series. Faz scrape das métricas de todos os 6 serviços via `/q/metrics` a cada 15s. Coleta: JVM heap/GC/threads, latência por endpoint, taxa de erros, status do Circuit Breaker, throughput Kafka. Alertas configurados em `florinda-alerts.yml`: serviço DOWN, latência > 2s, erro 5xx > 1%. |
-- [score 7] | **OpenAPI 3.0 / Swagger UI** | | (SmallRye) | Documentação automática de APIs gerada a partir das annotations JAX-RS. Cada módulo expõe Swagger UI em `/swagger-ui` com todos os endpoints, schemas de request/response e exemplos. Permite testes interativos de toda a API diretamente no browser. |
-- [score 7] | **Quarkus Security** | | (Quarkus BOM) | Framework de segurança preparado para OIDC, JWT e RBAC. Estrutura pronta para integração com Keycloak ou Auth0. Endpoints sensíveis (`/v1/ia/admin/*`) protegidos por roles. |
+- [score 4] MN241 - Operação não permitida. Existe um ou mais grupos de regra associados ao batimento.
+- [score 4] MN242 - Operação não permitida. O grupo de regra já foi executado.
+- [score 4] MN243 - Operação não permitida. Existe uma ou mais regras associadas ao grupo.
+- [score 4] MN246 - Operação não permitida. A regra de batimento já foi executada.
+- [score 4] MN248 - Operação não permitida. A ação de batimento está associada a uma ou mais regras de batimento.
+- [score 4] MA263 - O campo <nome do campo de> deve ser menor ou igual ao campo <nome do campo até>. Esta regra está associada a uma ou mais estratégias de cobrança, deseja continuar?
 - Objetivo: converter contexto bruto em plano tecnico executavel com perguntas objetivas para lacunas.
 
 Contexto consolidado (regras e requisitos):
 
-URL: https://github.com/Dimitri74/Portifolio-UNIPDS/blob/main/README.md
-
-# 🍽️ Florinda Eats 2.0
-
-### Plataforma completa de Food Delivery — Portfólio de Pós-Graduação Java Elite · UNIPDS
-
-> **Arquitetura de microsserviços** com Quarkus, Kafka, IA generativa com RAG, frontend Next.js 15,
-> observabilidade completa e deploy nativo via GraalVM + Kubernetes.
-
-## 📋 Índice
-
-- [Visão Geral](#-visão-geral)
-- [Arquitetura](#-arquitetura)
-- [Estrutura do Repositório](#-estrutura-do-repositório)
-- [Backend — Microsserviços](#-backend--microsserviços-quarkus)
-- [Frontend — Dashboard & App](#-frontend--dashboard--app-nextjs)
-- [Stack Tecnológica Completa](#-stack-tecnológica-completa)
-- [Fluxo SAGA com Kafka](#-fluxo-saga-com-kafka)
-- [Observabilidade](#-observabilidade)
-- [Como Executar Localmente](#-como-executar-localmente)
-- [Kubernetes & CI/CD](#-kubernetes--cicd)
-- [Autor](#-autor)
-
-## 🎯 Visão Geral
-
-O **Florinda Eats 2.0** é uma plataforma completa de food delivery construída como projeto de portfólio da pós-graduação **Java Elite (UNIPDS)**. O projeto demonstra domínio de arquitetura moderna de software em produção:
-
-| Característica | Detalhe |
-|---|---|
-| 🏗️ Padrão arquitetural | Microsserviços com Clean Architecture + DDD |
-| 📡 Comunicação assíncrona | SAGA Pattern via Apache Kafka |
-| 🤖 Inteligência Artificial | Agente conversacional RAG com LangChain4j + Ollama |
-| 🔌 Protocolo MCP | Model Context Protocol para tools de IA |
-| 📊 Observabilidade | OpenTelemetry + Prometheus + Grafana + Jaeger |
-| ☸️ Containerização | Docker Compose + Kubernetes (Minikube) + GraalVM Native |
-| 🖥️ Frontend | Dashboard administrativo + App de pedidos em Next.js 15 |
-| 🔁 Resiliência | Circuit Breaker, Retry, Timeout, Fallback |
-| 🧪 Testes | Unitários + Integração com Testcontainers |
-| 🚀 CI/CD | GitHub Actions com pipeline completo |
-
-## 🏛️ Arquitetura
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│ FLORINDA EATS 2.0 │
-│ │
-│ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ │
-│ │ ms-catalogo │ │ ms-pedidos │ │ms-pagamentos │ │
-│ │ :8082 │ │ :8080 │ │ :8081 │ │
-│ │ PostgreSQL │ │ MySQL │ │ MySQL │ │
-│ │ PgVector │ │ Flyway │ │ Flyway │ │
-│ │ Redis Cache │ │ Reactive │ │ Fault Tol. │ │
-│ └──────┬───────┘ └──────┬───────┘ └──────┬───────┘ │
-│ │ │ │ │
-│ └───────────────────┴────────────────────┘ │
-│ │ │
-│ ┌────────▼────────┐ │
-│ │ Apache Kafka │ SAGA Pattern │
-│ │ :9092 │ order.created │
-│ │ │ payment.approved │
-│ └────────┬────────┘ payment.failed │
-│ │ order.status.updated │
-│ ┌──────────────┼──────────────┐ │
-│ ┌──────────▼──────┐ ┌─────▼──────┐ ┌────▼─────────────┐ │
-│ │ms-notificacoes │ │ms-ia-suporte│ │mcp-florinda-server│ │
-│ │ :8084 │ │ :8083 │ │ :8085 │ │
-│ │ Kafka Consumer │ │ LangChain4j│ │ MCP Protocol SSE │ │
-│ │ │ │ RAG+PgVec │ │ Tools: status, │ │
-│ │ │ │ Ollama │ │ cancel, menu │ │
-│ └─────────────────┘ └─────────────┘ └───────────────────┘ │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ OBSERVABILIDADE (Docker) │ │
-│ │ Prometheus :9090 │ Grafana :3000 │ Jaeger :16686 │ │
-│ │ OTEL Collector :4317 │ Alertas automáticos │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│ ┌───────────────────────────────────────┐ │
-│ │ FRONTEND (Next.js 15) │ │
-│ │ Dashboard Admin │ App de Pedidos │ :3001 │
-│ │ Recharts │ Tailwind CSS 4 │ │
-│ └───────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────────────┘
-
-## 📁 Estrutura do Repositório
-
-Portifolio-UNIPDS/
-│
-├── backend/ # 🔵 Microsserviços Java/Quarkus
-│ ├── ms-catalogo/ # Catálogo de restaurantes e cardápios
-│ ├── ms-pedidos/ # Gestão de pedidos
-│ ├── ms-pagamentos/ # Processamento de pagamentos
-│ ├── ms-notificacoes/ # Notificações via Kafka
-│ ├── ms-ia-suporte/ # Agente IA com RAG
-│ ├── mcp-florinda-server/ # MCP Server (tools para IA)
-│ ├── kubernetes/ # Manifests K8s
-│ ├── observabilidade/ # Docker Compose + Grafana + Prometheus
-│ ├── testes-integracao/ # Suite Testcontainers
-│ ├── .github/workflows/ # CI/CD GitHub Actions
-│ └── pom.xml # Maven monorepo root
-└── frontend/ # 🟢 Dashboard & App Next.js 15
-├── src/app/ # Pages (App Router)
-├── src/components/ # Componentes React
-│ ├── dashboard/ # Charts, Stats, Tables
-│ ├── pedidos/ # Cardápio, Carrinho, Checkout
-│ ├── admin/ # Formulários de gestão
-│ ├── chat/ # Widget IA integrado
-│ ├── layout/ # Header, Sidebar, MainLayout
-│ └── ui/ # Design System próprio
-├── src/hooks/ # Custom hooks (useCart)
-├── src/lib/ # API client, utilitários
-└── src/types/ # TypeScript types
-
-## 🔵 Backend — Microsserviços (Quarkus)
-
-### Módulos e Responsabilidades
-
-| Módulo | Porta | Banco | Responsabilidade |
-|---|---|---|---|
-| **ms-catalogo** | 8082 | PostgreSQL + PgVector | CRUD de restaurantes, cardápios e itens. Cache Redis. Publica eventos `catalog.item.updated`. Suporte a embeddings vetoriais para RAG. |
-| **ms-pedidos** | 8080 | MySQL | Criação e gestão de pedidos. Reactive datasource + JDBC para Flyway. Publica `order.created` e `order.status.updated`. Consome `payment.*`. |
-| **ms-pagamentos** | 8081 | MySQL | Processamento de pagamentos com gateway simulado. Fault Tolerance (Circuit Breaker + Retry + Fallback). Publica `payment.approved/failed`. |
-| **ms-notificacoes** | 8084 | — | Consumer Kafka puro. Registra e exibe histórico de todas as notificações da saga em tempo real. |
-| **ms-ia-suporte** | 8083 | PostgreSQL + PgVector | Agente IA conversacional. Pipeline RAG completo com LangChain4j, embeddings nomic-embed-text e LLM llama3.2 via Ollama. Histórico de conversa em Redis. |
-| **mcp-florinda-server** | 8085 | — | Servidor MCP (Model Context Protocol) com SSE. Expõe tools `getOrderStatus`, `cancelOrder`, `getMenu` para agentes IA externos. |
-
-### Endpoints Principais
-
-# Catálogo
-GET /v1/restaurantes
-POST /v1/restaurantes
-GET /v1/restaurantes/{id}/cardapios
-
-# Pedidos
-POST /v1/pedidos
-GET /v1/pedidos/{id}
-
-# Pagamentos
-POST /v1/pagamentos
-POST /v1/pagamentos/{id}/estorno
-
-# Agente IA
-POST /v1/ia/chat
-POST /v1/ia/admin/ingerir (RAG ingestion)
-GET /v1/ia/health
-
-# MCP
-GET /mcp/sse (SSE stream)
-
-# Observabilidade (todos os módulos)
-GET /q/health
-GET /q/metrics
-GET /swagger-ui
-
-## 🟢 Frontend — Dashboard & App (Next.js)
-
-Interface moderna construída com **Next.js 15 App Router**, **TypeScript**, **Tailwind CSS 4** e **Recharts**.
-
-### Páginas e Funcionalidades
-
-| Página | Rota | Funcionalidade |
-|---|---|---|
-| **Home** | `/` | Landing page com visão geral da plataforma |
-| **Dashboard** | `/dashboard` | KPIs em tempo real: receita, pedidos, gráficos de pizza e linha |
-| **Pedidos** | `/pedidos` | Cardápio interativo, carrinho, checkout e rastreamento |
-| **Admin** | `/admin` | Gestão de restaurantes, cardápios e itens |
-
-### Componentes Destacados
-
-- **`ChatWidget`** — Widget flutuante integrado ao agente IA (`POST /v1/ia/chat`)
-- **`RevenueChart`** — Gráfico de receita com Recharts (LineChart responsivo)
-- **`OrdersPieChart`** — Distribuição de pedidos por status
-- **`CartDrawer`** — Carrinho lateral com gestão de estado via `useCart` hook
-- **`OrderTracking`** — Rastreamento de pedido em tempo real
-- **`StatsCard`** — Cards de métricas com ícones Lucide React
-
-## 🛠️ Stack Tecnológica Completa
-
-### ☕ Backend — Linguagem & Runtime
-
-| Tecnologia | Ícone | Versão | O que é e o que faz no projeto |
-| **Java** | | 21 LTS | Linguagem principal de todos os microsserviços. Java 21 traz Virtual Threads (Project Loom) para alta concorrência sem custo de threads do SO, pattern matching avançado e performance otimizada. Toda a lógica de negócio, domínio, serviços e consumers Kafka são escritos em Java. |
-| **Quarkus** | | 3.17.5 | Framework cloud-native otimizado para microsserviços. Startup em 1-2s em modo JVM (vs 10-15s do Spring Boot) e 32ms em modo nativo. Dev Mode com live reload automático. BOM unificado para gerenciamento de dependências. Base de todos os 6 módulos. |
-| **Maven** | | 3.9.9 | Ferramenta de build e gerenciamento de dependências. Monorepo com módulos hierárquicos — um único `mvn install` compila todos os 6 microsserviços. Gerencia plugins Quarkus, Jib, Native Image e execução de testes. |
-| **GraalVM Native Image** | | 21 CE | Compilador AOT (Ahead-of-Time) que transforma bytecode Java em binário nativo executável. Resulta em startup de 32ms e footprint de memória ~70% menor. Usado no `ms-catalogo` para deploy Kubernetes com imagem Docker | 16 | Banco relacional robusto usado pelo `ms-catalogo` e `ms-ia-suporte`. Armazena restaurantes, cardápios, itens e dados de conhecimento para RAG. Suporta a extensão PgVector para operações de similaridade vetorial. |
-| **PgVector** | | 0.1.0 | Extensão do PostgreSQL para armazenamento e busca de vetores (embeddings). Implementa busca por similaridade coseno/L2. Armazena os embeddings gerados pelo modelo `nomic-embed-text` para o pipeline RAG do agente IA. Consultas ` ` de distância vetorial. |
-| **MySQL** | | 8.0 | Banco relacional para domínios transacionais. `ms-pedidos` usa instância na porta 3307 com driver reactive para máxima throughput. `ms-pagamentos` usa instância na porta 3308 com JDBC síncrono para transações financeiras. Schemas versionados via Flyway. |
-| **Redis** | | 7 | Cache distribuído em memória. Armazena o histórico de conversas do agente IA por sessão (`chat:{sessionId}`), cache de catálogo para reduzir carga no PostgreSQL e suporta TTL automático de sessões. Acesso via Quarkus Redis Client. |
-| **Flyway** | | (Quarkus BOM) | Versionamento e migração automática de schema de banco de dados. Scripts SQL incrementais (`V001__`, `V002__`) aplicados na inicialização de cada serviço. Garante consistência de schema entre ambientes dev/staging/prod. Usado em `ms-pedidos`, `ms-pagamentos`, `ms-ia-suporte`. |
-
-### 📡 Mensageria & Streaming
-
-| **Apache Kafka** | | 3.9.0 | Message broker distribuído para comunicação assíncrona entre microsserviços. Implementa o padrão SAGA coreografado: cada serviço publica eventos e reage a eventos de outros. Garante entrega ordenada, durabilidade e escalabilidade. Tópicos: `order.created`, `payment.approved`, `payment.failed`, `order.status.updated`, `catalog.item.updated`. |
-| **SmallRye Reactive Messaging** | | (Quarkus BOM) | Abstração sobre Kafka integrada ao Quarkus. Permite consumir/produzir mensagens com simples annotations `@Incoming` e `@Outgoing` nos métodos. Suporta backpressure reativo, retry automático, Dead Letter Queue e integração transparente com CDI/Quarkus. |
-
-### 🤖 Inteligência Artificial & ML
-
-| **LangChain4j** | | 0.26.1 | Framework Java de orquestração para aplicações de IA. Gerencia o pipeline RAG completo: chunking de documentos → geração de embeddings → armazenamento vetorial → recuperação semântica → augmentação do prompt → resposta do LLM. Gerencia histórico de conversas (Memory) em Redis e integra com Ollama. Core do `ms-ia-suporte`. |
-| **Ollama** | | latest | Servidor LLM local para execução de modelos de linguagem sem dependência de APIs cloud. Roda dois modelos: `llama3.2` (7B params) para geração de respostas conversacionais e `nomic-embed-text` para geração de embeddings vetoriais. Expõe REST API na porta 11434. |
-| **MCP Protocol** | | 1.0.0.Alpha6 | Model Context Protocol via Quarkiverse. Protocolo padronizado para expor "ferramentas" que agentes IA podem chamar. O `mcp-florinda-server` expõe: `getOrderStatus` (consultar pedido), `cancelOrder` (cancelar pedido) e `getMenu` (listar cardápio). Usa SSE como transport. |
-| **RAG (Retrieval Augmented Generation)** | 🔍 | — | Padrão arquitetural de IA que enriquece prompts com contexto recuperado de base de conhecimento. Fluxo: pergunta do usuário → embedding → busca vetorial no PgVector → top-K chunks relevantes → prompt aumentado → LLM gera resposta fundamentada nos dados do projeto. Elimina alucinações e mantém respostas precisas sobre o negócio. |
-
-### 🔁 Resiliência & Fault Tolerance
-
-| **SmallRye Fault Tolerance** | | (Quarkus BOM) | Implementação de padrões de resiliência via annotations. `@Retry`: tenta a operação N vezes antes de falhar. `@Timeout`: falha a operação se demorar além do limite. `@CircuitBreaker`: abre o circuito após X falhas consecutivas, evitando cascata de erros. `@Fallback`: retorna resposta degradada de emergência. Aplicado em `ms-pagamentos` e `ms-ia-suporte`. |
-
-### 📊 Observabilidade & Monitoramento
-
-| **OpenTelemetry** | | 1.35.0 | Padrão aberto para observabilidade distribuída. Instrumentação automática de requisições HTTP, operações Kafka, queries de banco e chamadas entre serviços. Gera traces distribuídos que mostram o caminho completo de uma requisição pelos microsserviços. Exporta para Jaeger (traces) e Prometheus (métricas). |
-| **Prometheus** | | latest | Sistema de monitoramento e alertas time-series. Faz scrape das métricas de todos os 6 serviços via `/q/metrics` a cada 15s. Coleta: JVM heap/GC/threads, latência por endpoint, taxa de erros, status do Circuit Breaker, throughput Kafka. Alertas configurados em `florinda-alerts.yml`: serviço DOWN, latência > 2s, erro 5xx > 1%. |
-| **Grafana** | | latest | Plataforma de visualização de métricas e dashboards. 2 dashboards provisionados automaticamente via GitOps: **"Florinda Eats — Visão Geral"** (latência P95, taxa de erros, throughput, Circuit Breaker) e **"JVM vs Native"** (comparação de startup time, heap e CPU). Integrado ao Jaeger como datasource para correlação trace-métrica. |
-| **Jaeger** | | latest | Plataforma de rastreamento distribuído (distributed tracing). Recebe spans do OTEL Collector e monta o trace completo de cada requisição. Permite visualizar: tempo gasto em cada microsserviço, queries de banco, chamadas Kafka, identificação de gargalos. UI acessível em `localhost:16686`. |
-| **Micrometer** | | (Quarkus BOM) | Facade de métricas de aplicação. Integração automática com Prometheus via Quarkus. Coleta métricas de negócio (pedidos criados, pagamentos processados, erros de gateway) além das métricas JVM padrão. |
-
-### 🌐 APIs & Protocolos
-
-| **Jakarta REST (JAX-RS)** | | (Jakarta EE) | Padrão para criação de APIs RESTful. Todos os microsserviços expõem endpoints `/v1/*` com suporte a content negotiation JSON automático, validação via Bean Validation e tratamento global de exceções via `@Provider`. |
-| **OpenAPI 3.0 / Swagger UI** | | (SmallRye) | Documentação automática de APIs gerada a partir das annotations JAX-RS. Cada módulo expõe Swagger UI em `/swagger-ui` com todos os endpoints, schemas de request/response e exemplos. Permite testes interativos de toda a API diretamente no browser. |
-| **Server-Sent Events (SSE)** | 📡 | HTTP std | Protocolo de push unidirecional (servidor → cliente) baseado em HTTP. Usado pelo `mcp-florinda-server` como transport para o Model Context Protocol. Permite que agentes IA se conectem e recebam respostas em streaming das tools. |
-| **REST Client (MicroProfile)** | | (Quarkus BOM) | Cliente HTTP declarativo para comunicação síncrona entre microsserviços. O `mcp-florinda-server` usa para chamar `ms-pedidos` e `ms-catalogo`. Configuração via `@RegisterRestClient` e injeção CDI. |
-
-### 🗃️ ORM & Persistência
-
-| **Hibernate Panache** | | (Quarkus BOM) | Abstração ORM simplificada sobre Hibernate. Pattern Active Record: entidades herdam de `PanacheEntity` e ganham `persist()`, `findById()`, `listAll()` automaticamente. Suporte a queries JPQL type-safe e paginação. Usado em `ms-catalogo` (PostgreSQL) e `ms-pagamentos` (MySQL). |
-| **Hibernate Reactive** | | (Quarkus BOM) | Versão não-bloqueante do Hibernate para I/O assíncrono com banco de dados. Usado no `ms-pedidos` para maximizar throughput sem bloquear threads. Integração com Mutiny (`Uni<>`, `Multi<>`) para pipeline reativo end-to-end. |
-
-### 🔐 Validação & Segurança
-
-| **Jakarta Bean Validation** | | (Jakarta EE) | Validação declarativa de DTOs via annotations: `@NotNull`, `@NotBlank`, `@Email`, `@Size`, `@Pattern`, `@Min`, `@Max`. Validação automática nos endpoints REST — resposta `400 Bad Request` com detalhes do erro quando a validação falha. |
-| **Quarkus Security** | | (Quarkus BOM) | Framework de segurança preparado para OIDC, JWT e RBAC. Estrutura pronta para integração com Keycloak ou Auth0. Endpoints sensíveis (`/v1/ia/admin/*`) protegidos por roles. |
-
-### 🧰 Utilitários & Produtividade
-
-| **Lombok** | | 1.18.32 | Gerador de código boilerplate Java via annotations em compile-time: `@Data` (getters/setters/equals/hashCode), `@Builder` (builder pattern), `@Slf4j` (logger SLF4J), `@RequiredArgsConstructor`. Reduz drasticamente linhas de código sem overhead em runtime. |
-| **MapStruct** | | 1.5.5.Final | Gerador de mappers entre objetos (DTO ↔ Entity) em compile-time via annotation processing. Type-safe, sem reflection em runtime. Gera código Java puro otimizado. Usado para transformar `CriarRestauranteRequest → RestauranteEntity` e entidades → DTOs de response. |
-| **SmallRye Config** | | (Quarkus BOM) | Gerenciamento unificado de configurações. Suporta `application.properties`, variáveis de ambiente, secrets e profiles (`%dev`, `%prod`). Injeta valores via `@ConfigProperty`. Permite override completo de config via env vars no Docker/K8s. |
-
-### 🧪 Testes
-
-| **JUnit 5 (Jupiter)** | | 5.x | Framework de testes padrão Java. `@Test`, `@ParameterizedTest`, `@Nested`, `@BeforeEach`. Integração nativa com Quarkus via `@QuarkusTest` que sobe o contexto completo do microsserviço para testes de integração. |
-| **Mockito** | | 5.x | Framework de mocking para testes unitários. `@Mock`, `@InjectMocks`, `when(...).thenReturn(...)`, `verify(...)`. Usado para isolar Services e testar regras de negócio sem dependências externas (banco, Kafka, HTTP). |
-| **REST Assured** | | 5.x | DSL fluente para testes de APIs HTTP. `given().when().get("/v1/restaurantes").then().statusCode(200).body("nome", equalTo("..."))`. Testes de contrato dos endpoints REST com JSON Path assertions. |
-| **Testcontainers** | | 1.19.8 | Biblioteca para testes de integração com infraestrutura real em Docker. Sobe PostgreSQL, MySQL e Kafka como containers efêmeros durante os testes. Suite em `testes-integracao/` para `ms-catalogo`, `ms-pedidos` e `ms-pagamentos`. Sem mocks de banco — testes "realistas". |
-
-### 🐳 Containerização & Deploy
-
-| **Docker** | | latest | Containerização de todos os componentes. Cada microsserviço tem Dockerfile gerado pelo Quarkus. Infraestrutura local (PostgreSQL, MySQL, Kafka, Redis, Ollama) roda em containers Docker garantindo ambiente idêntico entre dev e produção. |
-| **Docker Compose** | | 2.x | Orquestração local de múltiplos containers. `observabilidade/docker-compose.yml` sobe toda a stack de monitoramento (Prometheus, Grafana, Jaeger, OTEL Collector) com um único comando. Health checks e dependências entre serviços configurados. |
-| **Kubernetes (Minikube)** | | 1.28+ | Orquestração de containers em escala. Manifests em `kubernetes/` para todos os 6 microsserviços no namespace `florinda-app`. `ms-catalogo` com imagem **GraalVM Native** e **HPA** (auto-scale 1→10 pods, trigger CPU 70%). ConfigMap e Secrets centralizados. Ingress nginx em `florinda.local`. |
-| **Jib** | | (Quarkus) | Plugin de build de imagens OCI sem Docker CLI. Constrói imagens layer-optimizadas diretamente do Maven, separando dependências de código da aplicação para máximo aproveitamento de cache. Usado no pipeline CI/CD para build JVM rápido. |
-
-### 🔄 CI/CD
-
-| **GitHub Actions** | | — | Pipeline CI/CD completo. **`ci.yml`**: build → testes unitários → testes de integração com Testcontainers → análise de qualidade. **`cd.yml`**: build Jib (JVM) + build Native (GraalVM) → push para registry → deploy no Minikube com smoke test automático. Ativado em push/PR na branch `main`. |
-
-## 🟢 Frontend — Stack Tecnológica
-
-| **Next.js** | | 15.3.0 | Framework React com renderização híbrida (SSR/SSG/CSR). Usa **App Router** (diretório `app/`) com React Server Components. Route Handlers (`/api/*`) funcionam como proxy para os microsserviços backend, evitando CORS em produção. Hot reload instantâneo em dev. |
-| **React** | | 19.0.0 | Biblioteca para construção de interfaces. React 19 traz melhorias de performance com o novo compilador React, Actions para formulários e hooks aprimorados. Componentes funcionais com hooks são o padrão em todo o projeto. |
-| **TypeScript** | | 5.8.0 | Superset tipado do JavaScript. Tipos definidos em `src/types/index.ts` para todas as entidades do domínio (Restaurante, Pedido, Pagamento, ItemCardapio). Erros de tipo detectados em compile-time, autocompletar e refactoring seguros no IDE. |
-| **Tailwind CSS** | | 4.1.0 | Framework CSS utility-first. Tailwind v4 é ~10x mais rápido que v3 (novo engine em Rust/Oxide). Design system baseado em classes utilitárias diretamente no JSX. Sistema de cores, espaçamento e tipografia consistentes em toda a aplicação sem CSS customizado. |
-| **Recharts** | | 2.15.0 | Biblioteca de gráficos para React baseada em D3. Usada nos componentes do Dashboard: `LineChart` para receita ao longo do tempo, `PieChart` para distribuição de pedidos por status, `BarChart` para comparativos. Responsivo e animado nativamente. |
-| **Lucide React** | | 0.525.0 | Biblioteca de ícones SVG para React. +1000 ícones como componentes React tree-shakeable (bundle size mínimo). Usado em todo o Design System: ícones de navegação no Sidebar, ícones em StatsCards, botões e badges da interface. |
-| **ESLint** | | 9.x | Linter estático para JavaScript/TypeScript. Configuração `eslint-config-next` com regras específicas para Next.js. Detecta erros comuns, imports não utilizados, problemas de acessibilidade (jsx-a11y) e padrões incorretos de React hooks. Integrado ao CI/CD. |
-
-## 🔄 Fluxo SAGA com Kafka
-
-Cliente → POST /v1/pedidos
-▼
-ms-pedidos ──── publica ──→ [order.created]
-│ ┌─────────┘
-│ ▼
-│ ms-pagamentos
-│ (gateway simulado)
-│ Circuit Breaker ativo
-│ ┌────────┴────────┐
-│ ▼ ▼
-│ [payment.approved] [payment.failed]
-│ ┌────┘ └────┐
-│ ms-pedidos ms-pedidos
-│ status: APROVADO status: CANCELADO
-└─────────┴──── publica ──→ [order.status.updated]
-┌────────────────┴────────────────┐
-▼ ▼
-ms-notificacoes ms-ia-suporte
-(registra evento) (atualiza contexto)
-
-**Tópicos Kafka:**
-
-| Tópico | Producer | Consumer(s) |
-| `order.created` | ms-pedidos | ms-pagamentos, ms-notificacoes |
-| `order.status.updated` | ms-pedidos | ms-ia-suporte, ms-notificacoes |
-| `payment.approved` | ms-pagamentos | ms-pedidos, ms-notificacoes |
-| `payment.failed` | ms-pagamentos | ms-pedidos, ms-notificacoes |
-| `catalog.item.updated` | ms-catalogo | ms-ia-suporte |
-
-## 📊 Observabilidade
-
-Stack completa de monitoramento provisionada via Docker Compose:
-
-| Serviço | URL | Função |
-| **Grafana** | http://localhost:3000 (`admin`/`admin`) | Dashboards de métricas e alertas |
-| **Prometheus** | http://localhost:9090 | Coleta e consulta de métricas |
-| **Jaeger UI** | http://localhost:16686 | Rastreamento distribuído de requests |
-| **OTEL Collector** | localhost:4317 (gRPC) | Recebe e roteia telemetria |
-
-**Dashboards provisionados automaticamente:**
-- 📈 `Florinda Eats — Visão Geral`: latência P95, taxa de erros 5xx, throughput RPS, estado Circuit Breaker
-- 🔥 `JVM vs Native`: comparativo de startup time, heap usage, CPU entre modo JVM e GraalVM Native
-
-## 🚀 Como Executar Localmente
-
-### Pré-requisitos
-
-- Java 21 (Eclipse Adoptium recomendado)
-- Maven 3.9+
-- Docker Desktop
-- Node.js 22+
-- Ollama instalado (`ollama pull llama3.2 && ollama pull nomic-embed-text`)
-
-### 1. Infraestrutura (Docker)
-
-```powershell
-# Sobe PostgreSQL, MySQL x2, Kafka, Redis, Ollama
-.\backend\dev-up.ps1
-
-# Sobe observabilidade (Prometheus, Grafana, Jaeger)
-docker compose -f .\backend\observabilidade\docker-compose.yml up -d
-
-### 2. Backend — Microsserviços
-
-# Cada serviço em um terminal separado (ou usar dev-up.ps1)
-cd backend
-
-mvn -pl ms-catalogo quarkus:dev # :8082
-mvn -pl ms-pedidos quarkus:dev # :8080
-mvn -pl ms-pagamentos quarkus:dev # :8081
-mvn -pl ms-notificacoes quarkus:dev # :8084
-mvn -pl ms-ia-suporte quarkus:dev # :8083
-mvn -pl mcp-florinda-server quarkus:dev # :8085
-
-### 3. Frontend
-
-cd frontend
-npm install
-npm run dev # :3001
-
-### 4. Acesse
-
-| Interface | URL |
-| 🖥️ Frontend App | http://localhost:3001 |
-| 📚 Swagger Catálogo | http://localhost:8082/swagger-ui |
-| 📚 Swagger Pedidos | http://localhost:8080/swagger-ui |
-| 📚 Swagger Pagamentos | http://localhost:8081/swagger-ui |
-| 🤖 Chat IA | http://localhost:8083/swagger-ui |
-| 📊 Grafana | http://localhost:3000 |
-| 🔍 Jaeger Tracing | http://localhost:16686 |
-| 📈 Prometheus | http://localhost:9090 |
-
-## ☸️ Kubernetes & CI/CD
-
-### Deploy Kubernetes (Minikube)
-
-```bash
-minikube start --cpus=4 --memory=6g
-minikube addons enable ingress
-
-kubectl apply -f backend/kubernetes/infra/00-namespaces.yml
-kubectl apply -f backend/kubernetes/infra/dependencies.yml
-kubectl apply -f backend/kubernetes/infra/outros-servicos.yml
-kubectl apply -f backend/kubernetes/infra/ingress.yml
-
-# Build Native do ms-catalogo
-./backend/build-native.sh
-
-kubectl get pods -n florinda-app
-
-### Pipelines CI/CD (GitHub Actions)
-
-| Workflow | Trigger | Etapas |
-| `ci.yml` | Push / PR → main | Build → Testes Unitários → Testes Integração → Qualidade |
-| `cd.yml` | Push → main | Build Jib → Build Native GraalVM → Deploy Minikube → Smoke Test |
-
-## 📐 Princípios Arquiteturais Aplicados
-
-| Princípio | Como foi aplicado |
-| **Clean Architecture** | Separação em camadas: `domain/`, `service/`, `resource/`, `infra/`. Domain objects sem dependências de framework. |
-| **DDD (Domain-Driven Design)** | Cada microsserviço é um Bounded Context. Linguagem ubíqua por domínio (Pedido, Pagamento, Catálogo). |
-| **SAGA Pattern** | Transações distribuídas via coreografia Kafka. Sem coordenador central — cada serviço reage a eventos. |
-| **CQRS** | Separação de leitura e escrita no `ms-catalogo` (reactive reads + sync writes). |
-| **Strangler Fig** | Arquitetura preparada para substituição incremental de módulos sem impacto nos demais. |
-| **12-Factor App** | Configuração via env vars, logs para stdout, stateless, backing services intercambiáveis. |
-
-## 👤 Autor
-
-**Marcus Dimitri**
-Pós-Graduação Java Elite — UNIPDS
-
-> *"Este projeto foi desenvolvido com o objetivo de demonstrar domínio real de arquitetura de software moderna,
-> indo além do CRUD — implementando padrões de resiliência, observabilidade, IA generativa e deploy nativo."*
-
-**⭐ Se este projeto foi útil, deixe uma estrela no repositório! ⭐**
-
-Florinda Eats 2.0 — Portfólio de Pós-Graduação Java Elite · UNIPDS · 2026
+URL: upload://SIPCS_Msg_Sistema.doc
+
+Observação: Importado do arquivo Word: SIPCS_Msg_Sistema.doc | Arquivo recebido: SIPCS_Msg_Sistema.doc | Formato DOC legado detectado. | Tentando detectar LibreOffice em: soffice | Tentando detectar LibreOffice em: C:\Program Files\LibreOffice\program\soffice.exe | Tentando detectar LibreOffice em: C:\Program Files (x86)\LibreOffice\program\soffice.exe | LibreOffice indisponivel nos caminhos avaliados. | Fallback direto para parser DOC habilitado.
+
+[MSG_SISTEMA filtrado por RTC]
+RTC: 24823240
+Codigos referenciados no historico: MA755, MA756, MN001, MN002, MN003, MN004, MN005, MN006, MN007, MN008, MN009, MN010, MN011, MN012, MN013, MN014, MN015, MN016, MN017, MN018, MN019, MN020, MN021, MN022, MN023, MN024, MN025, MN026, MN027, MN028, MN029, MN030, MN031, MN032, MN033, MN034, MN035, MN036, MN037, MN038, MN039, MN040, MN041, MN042, MN043, MN044, MN045, MN046, MN047, MN048, MN049, MN050, MN051, MN052, MN053, MN054, MN055, MN056, MN057, MN058, MN059, MN060, MN061, MN062, MN063, MN064, MN065, MN066, MN067, MN068, MN069, MN070, MN071, MN072, MN073, MN074, MN075, MN076, MN077, MN078, MN079, MN080, MN081, MN082, MN083, MN084, MN085, MN086, MN087, MN088, MN089, MN090, MN091, MN092, MN093, MN094, MN095, MN096, MN097, MN098, MN099, MN100, MN101, MN102, MN103, MN104, MN105, MN106, MN107, MN108, MN109, MN110, MN111, MN112, MN113, MN114, MN115, MN116, MN117, MN118, MN119, MN120, MN121, MN122, MN123, MN124, MN125, MN126, MN127, MN128, MN129, MN130, MN131, MN132, MN133, MN134, MN135, MN136, MN137, MN138, MN139, MN140, MN141, MN142, MN143, MN144, MN145, MN146, MN147, MN148, MN149, MN150, MN151, MN152, MN153, MN154, MN155, MN156, MN157, MN158, MN159, MN160, MN161, MN162, MN163, MN164, MN165, MN166, MN167, MN168, MN169, MN170, MN171, MN172, MN173, MN174, MN175, MN176, MN177, MN178, MN179, MN180, MN181, MN182, MN183, MN184, MN185, MN186, MN187, MN188, MN189, MN190, MN191, MN192, MN193, MN194, MN195, MN196, MN197, MN198, MN199, MN200, MN201, MN202, MN203, MN204, MN205, MN206, MN207, MN208, MN209, MN210, MN211, MN212, MN213, MN214, MN215, MN216, MN217, MN218, MN219, MN220, MN221, MN222, MN223, MN224, MN225, MN226, MN227, MN228, MN229, MN230, MN231, MN232, MN233, MN234, MN235, MN236, MN237, MN238, MN239, MN240, MN241, MN242, MN243, MN244, MN245, MN246, MN247, MN248, MN249, MN250, MN251, MN252, MN253, MN254, MN255, MN256, MN257, MN258, MN259, MN260, MN261, MN262, MN263, MN264, MN265, MN266, MN267, MN268, MN269, MN270, MN271, MN272, MN273, MN274, MN275, MN276, MN277, MN278, MN279, MN280, MN281, MN282, MN283, MN284, MN285, MN286, MN287, MN288, MN289, MN290, MN291, MN292, MN293, MN294, MN295, MN296, MN297, MN298, MN299, MN300, MN301, MN302, MN303, MN304, MN305, MN306, MN307, MN308, MN309, MN310, MN311, MN312, MN313, MN314, MN315, MN316, MN317, MN318, MN319, MN320, MN321, MN322, MN323, MN324, MN325, MN326, MN327, MN328, MN329, MN330, MN331, MN332, MN333, MN334, MN335, MN336, MN337, MN338, MN339, MN340, MN341, MN342, MN343, MN344, MN345, MN346, MN347, MN348, MN349, MN350, MN351, MN352, MN353, MN354, MN355, MN356, MN357, MN358, MN359, MN360, MN361, MN362, MN363, MN364, MN365, MN366, MN367, MN368, MN369, MN370, MN371, MN372, MN373, MN374, MN375, MN376, MN377, MN378, MN379, MN380, MN381, MN382, MN383, MN384, MN385, MN386, MN387, MN388, MN389, MN390, MN391, MN392, MN393, MN394, MN395, MN396, MN397, MN398, MN399, MN400, MN401, MN402, MN403, MN404, MN405, MN406, MN407, MN408, MN409, MN410, MN411, MN412, MN413, MN414, MN415, MN416, MN417, MN418, MN419, MN420, MN421, MN422, MN423, MN424, MN425, MN426, MN427, MN428, MN429, MN430, MN431, MN432, MN433, MN434, MN435, MN436, MN437, MN438, MN439, MN440, MN441, MN442, MN443, MN444, MN445, MN446, MN447, MN448, MN449, MN450, MN451, MN452, MN453, MN454, MN455, MN456, MN457, MN458, MN459, MN460, MN461, MN462, MN463, MN464, MN465, MN466, MN467, MH001, MH002, MH003, MH004, MH005, MH006, MH007, MH008, MH009, MH010, MH011, MH012, MH013, MA001, MA002, MA003, MA004, MA005, MA006, MA007, MA008, MA009, MA010, MA011, MA012, MA013, MA014, MA015, MA016, MA017, MA018, MA019, MA020, MA021, MA022, MA023, MA024, MA025, MA026, MA027, MA028, MA029, MA030, MA031, MA032, MA033, MA034, MA035, MA036, MA037, MA038, MA039, MA040, MA041, MA042, MA043, MA044, MA045, MA046, MA047, MA048, MA049, MA050, MA051, MA052, MA053, MA054, MA055, MA056, MA057, MA058, MA059, MA060, MA061, MA062, MA063, MA064, MA065, MA066, MA067, MA068, MA069, MA070, MA071, MA072, MA073, MA074, MA075, MA076, MA077, MA078, MA079, MA080, MA081, MA082, MA083, MA084, MA085, MA086, MA087, MA088, MA089, MA090, MA091, MA092, MA093, MA094, MA095, MA096, MA097, MA098, MA099, MA100, MA101, MA102, MA103, MA104, MA105, MA106, MA107, MA108, MA109, MA110, MA111, MA112, MA113, MA114, MA115, MA116, MA117, MA118, MA119, MA120, MA121, MA122, MA123, MA124, MA125, MA126, MA127, MA128, MA129, MA130, MA131, MA132, MA133, MA134, MA135, MA136, MA138, MA139, MA140, MA141, MA142, MA143, MA144, MA145, MA146, MA147, MA148, MA149, MA150, MA151, MA152, MA153, MA154, MA155, MA156, MA157, MA158, MA159, MA160, MA161, MA162, MA163, MA164, MA165, MA166, MA167, MA168, MA169, MA170, MA171, MA172, MA173, MA174, MA175, MA176, MA177, MA178, MA179, MA180, MA181, MA182, MA183, MA184, MA185, MA186, MA187, MA188, MA189, MA190, MA191, MA192, MA193, MA194, MA195, MA196, MA197, MA198, MA199, MA200, MA201, MA202, MA203, MA204, MA205, MA206, MA207, MA208, MA209, MA210, MA211, MA212, MA213, MA214, MA215, MA216, MA217, MA218, MA219, MA220, MA221, MA222, MA223, MA224, MA225, MA226, MA227, MA228, MA229, MA230, MA231, MA232, MA233, MA234, MA235, MA236, MA237, MA238, MA239, MA240, MA241, MA242, MA243, MA244, MA245, MA246, MA247, MA248, MA249, MA250, MA251, MA252, MA253, MA254, MA255, MA256, MA257, MA258, MA259, MA260, MA261, MA262, MA263, MA264, MA265, MA266, MA267, MA268, MA269, MA270, MA271, MA272, MA273, MA274, MA275, MA276, MA277, MA278, MA279, MA280, MA281, MA282, MA283, MA284, MA285, MA286, MA287, MA288, MA289, MA290, MA291, MA292, MA293, MA294, MA295, MA296, MA297, MA298, MA299, MA300, MA301, MA302, MA303, MA304, MA305, MA306, MA307, MA308, MA309, MA310, MA311, MA312, MA313, MA314, MA315, MA316, MA317, MA318, MA319, MA320, MA321, MA322, MA323, MA324, MA325, MA326, MA327, MA328, MA329, MA330, MA331, MA332, MA333, MA334, MA335, MA336, MA337, MA338, MA339, MA340, MA341, MA342, MA343, MA344, MA345, MA346, MA347, MA348, MA349, MA350, MA351, MA352, MA353, MA354, MA355, MA356, MA357, MA358, MA359, MA360, MA361, MA362, MA363, MA364, MA365, MA366, MA367, MA368, MA369, MA370, MA371, MA372, MA373, MA374, MA375, MA376, MA377, MA378, MA379, MA380, MA381, MA382, MA383, MA384, MA385, MA386, MA387, MA388, MA389, MA390, MA391, MA392, MA393, MA394, MA395, MA396, MA397, MA398, MA399, MA400, MA401, MA402, MA403, MA404, MA405, MA406, MA407, MA408, MA409, MA410, MA411, MA412, MA413, MA414, MA415, MA416, MA417, MA418, MA419, MA420, MA421, MA422, MA423, MA424, MA425, MA426, MA427, MA428, MA429, MA430, MA431, MA432, MA433, MA434, MA435, MA436, MA437, MA438, MA439, MA440, MA441, MA442, MA443, MA444, MA445, MA446, MA447, MA448, MA449, MA450, MA451, MA452, MA453, MA454, MA455, MA456, MA457, MA458, MA459, MA460, MA461, MA462, MA463, MA464, MA465, MA466, MA467, MA468, MA469, MA470, MA471, MA472, MA473, MA474, MA475, MA476, MA477, MA478, MA479, MA480, MA481, MA482, MA483, MA484, MA485, MA486, MA487, MA488, MA489, MA490, MA491, MA492, MA493, MA494, MA495, MA496, MA497, MA498, MA499, MA500, MA501, MA502, MA503, MA504, MA505, MA506, MA507, MA508, MA509, MA510, MA511, MA512, MA513, MA514, MA515, MA516, MA517, MA518, MA519, MA520, MA521, MA522, MA523, MA524, MA525, MA526, MA527, MA528, MA529, MA530, MA531, MA532, MA533, MA534, MA535, MA536, MA537, MA538, MA539, MA540, MA541, MA542, MA543, MA544, MA545, MA546, MA547, MA548, MA549, MA550, MA551, MA552, MA553, MA554, MA555, MA556, MA557, MA558, MA559, MA560, MA561, MA562, MA563, MA564, MA565, MA566, MA567, MA568, MA569, MA570, MA571, MA572, MA573, MA574, MA575, MA576, MA577, MA578, MA579, MA580, MA581, MA582, MA583, MA584, MA585, MA586, MA587, MA588, MA589, MA590, MA591, MA592, MA593, MA594, MA595, MA596, MA597, MA598, MA599, MA600, MA601, MA602, MA603, MA604, MA605, MA606, MA607, MA608, MA609, MA610, MA611, MA612, MA613, MA614, MA615, MA616, MA617, MA618, MA619, MA620, MA621, MA622, MA623, MA624, MA625, MA626, MA627, MA628, MA629, MA630, MA631, MA632, MA633, MA634, MA635, MA636, MA637, MA638, MA639, MA640, MA641, MA642, MA643, MA644, MA645, MA646, MA647, MA648, MA649, MA650, MA651, MA652, MA653, MA654, MA655, MA656, MA657, MA658, MA659, MA660, MA661, MA662, MA663, MA664, MA665, MA666, MA667, MA668, MA669, MA670, MA671, MA672, MA673, MA674, MA675, MA676, MA677, MA678, MA679, MA680, MA681, MA682, MA683, MA684, MA685, MA686, MA687, MA688, MA689, MA690, MA691, MA692, MA693, MA694, MA695, MA696, MA697, MA698, MA699, MA700, MA701, MA702, MA703, MA704, MA705, MA706, MA707, MA708, MA709, MA710, MA711, MA712, MA713, MA714, MA715, MA716, MA717, MA718, MA719, MA720, MA721, MA722, MA723, MA724, MA725, MA726, MA727, MA728, MA729, MA730, MA731, MA732, MA733, MA734, MA735, MA736, MA737, MA738, MA739, MA740, MA741, MA742, MA743, MA744, MA745, MA746, MA747, MA748, MA749, MA750, MA751, MA752, MA753, MA754
+
+MA755 - O valor do campo <nome do campo> deve ser maior ou igual ao do campo <nome do campo>.
+MA756 - O valor do campo <nome do campo> deve ser menor ou igual ao do campo <nome do campo>. Modelo V01 – PPDS
+MN001 - O conteúdo do <nome do campo> é inválido.
+MN002 - Já existe existem dois cartões adicionais para o mesmo cliente.
+MN003 - O percentual da comissão deve ser menor ou igual a 100,00%.
+MN004 - Não é permitido realizar a solicitação de senha para cartão Múltiplo.
+MN005 - Cancelamento de Conta Cartão não permitido. Devem ser pagos os valores pendentes da conta cartão.
+MN006 - Alteração não permitida. O dado econômico <nome do dado econômico> supera o limite.
+MN007 - Alteração de limite não permitida. O cartão encontra-se <tipo do bloqueio> e/ou <quantidade de dias> dias fora do prazo para alteração.
+MN008 - O Cartão <número do PAN> Agência <número da agência> Contrato < número da conta cartão>. Foi contratado corretamente.
+MN009 - Número de telefone inválido! O mesmo deve ser composto de DDD + Número de Contato + Ramal.
+MN010 - Operação não permitida! Idade do cliente deve estar entre <idade mínima> e <idade máxima> anos.
+MN011 - Exclusão de documento principal do cliente não permitida!
+MN012 - Situação do Cartão incorreta para confirmação de recebimento de cartão.
+MN013 - Moeda informada deve ser a mesma da conta do titular.
+MN014 - Cartão <não possui/possui> bloqueio <embossing/preventivo/ de cobrança>.
+MN015 - Não existe transação <saque/compra/compra parcelada/ nulo> para o período.
+MN016 - <Conta Cartão / Cartão> não permite liberação para realizar transação internacional. <Conta Cartão / Cartão> encontra-se <situação>.
+MN017 - Não há transações a serem enviadas para a Bandeira <nome da bandeira>.
+MN018 - Renovação não permitida. <Motivo da recusa>.
+MN019 - Reemissão não permitida. <Cartão ou Conta Cartão> encontra-se <situação blo                                                                                                                                                                          queio>.
+MN020 - <Bloqueio ou Desbloqueio> não permitido. Cartão encontra-se em “<código do indicador - descrição do indicador>”
+MN021 - Operação não permitida. Pacote de Serviço PADRÃO já cadastrado.
+MN022 - O valor percentual do <nome do campo> não pode ser superior a 100%.
+MN023 - A quantidade <mínima / máxima / solicitada> de cartões deve ser maior que 0.
+MN024 - A quantidade solicitada de cartões em estoque deve estar compreendida entre <qtd. Mínima> e <qtd. Máxima>.
+MN025 - Alteração de limite não permitida. Cartão possui compra parcelada a vencer.
+MN026 - Conta cartão não possui <Seguro Proteção Perda Roubo/Anuidade/Acordo> na fatura.
+MN027 - Valor de Pagamento Incorreto! O valor deve compreender o intervalo mínimo e máximo permitidos para a conta cartão.
+MN028 - <Nome do campo> incorreto! Os valores permitidos são: <valores permitidos para o campo>.
+MN029 - Conta cartão não possui cartão adicional.
+MN030 - Valor total da Conta cartão dispensa a geração de boleto bancário.
+MN031 - Associação não permitida! O tipo de Conceito deve ser igual a <nome do campo> e vertente igual a <nome do campo>.
+MN032 - Exclusão não permitida! O registro possui vínculo com outra tabela.
+MN033 - Conta cartão possui inibição de envio de fatura.
+MN034 - Insira valores de 01 a 89 para o código do Produto.
+MN035 - Deve ser inserido ao menos 1 dia para a alteração do Grupo de Liquidação.
+MN036 - O número máximo permitido para inclusão de moedas por conta cartão é 2.
+MN037 - Operação não é de Saque. Inclusão de Promessa de Pagamento possível apenas para operações de Saque.
+MN038 - Operação não permite gerar ocorrência. Operação com <situação da operação>!
+MN039 - Inclusão de cartão adicional não permitida! Cartão titular possui número máximo de cartões adicionais.
+MN040 - O intervalo informado entre os campos <nome do campo 1> e <nome do campo 2> ocupa a faixa de outro campo incluído.
+MN041 - Inclusão de Promessa de Pagamento não permitida.
+MN042 - Exclusão não permitida! Perfil de acesso vinculado a um usuário já autenticado no sistema.
+MN043 - Não são permitidos movimentos on-line para faturas sem alteração.
+MN044 - Usuário inexistente ou inativo. Consulte o administrador.
+MN045 - Negada. Conta cartão não existe.
+MN046 - Negada. Conta cartão não efetivo.
+MN047 - Período de permissão para transação internacional não pode ser maior que <quantidade de dias parâmetro> dias.
+MN048 - Negada. Estabelecimento não existe.
+MN049 - Negada. Terminal não existe.
+MN050 - Produto já possui parceiro associado.
+MN051 - TIPFAC inválida. Será gerada incidência para esta transação.
+MN052 - Negada. Conta bloqueada.
+MN053 - Negada. Valor não permitido.
+MN054 - Negada. Número de parcelas não permitido.
+MN055 - Transação em duplicidade, conciliação não poderá ser realizada.
+MN056 - Número da parcela a ser conciliada não corresponde com o número esperado.
+MN057 - Prazo para apresentação da transação pela Bandeira expirado, conciliação não permitida.
+MN058 - Nenhuma solicitação de cancelamento de serviço de mensagens SMS identificada.
+MN059 - Número <descrição do número> em duplicidade.
+MN060 - O intervalo de dias entre a data inicial e a final deve ser igual ou superior a 30 dias.
+MN061 - O intervalo de dias entre a data inicial e a final deve ser igual ou superior a 365 dias.
+MN062 - Já existe comissão de honorário ativa para o escritório externo.
+MN063 - Quantidade de dias excede a quantidade máxima estabelecida para o Produto.
+MN064 - A situação da fatura deve ser diferente de <tipo da situação da fatura>.
+MN065 - Parcelamento não autorizado. A conta cartão possui débito.
+MN066 - Operação não permitida! A conta cartão não dispõe de saldo credor.
+MN067 - Operação não permitida! Quantidade de tentativas de adesão ao serviço SMS por processo on-line excedida.
+MN068 - Alteração de data de vencimento não permitida! Conta cartão possui parcelamento vigente.
+MN069 - Alteração não permitida! Intervalo entre solicitações inferior a <quantidade de dias parametrizada conforme solicitação [alteração de data de vencimento OU alteração de limite de crédito]> dias.
+MN070 - Alteração não permitida! Dias de atraso <da conta cartão> maior que o permitido.
+MN071 - Alteração não permitida! A data de vencimento da fatura já foi alterada recentemente.
+MN072 - ERRO. Já existe texto de e-mail para este tipo de documento associado a este banco.
+MN073 - Operação não permitida! Conta cartão <bloqueada OU em inadimplência>.
+MN074 - O número máximo de adicionais/solidários permitidos para a conta cartão é igual a <número parametrizado para a conta cartão>.
+MN075 - A idade do cliente adicional/solidário deve ser igual ou superior a 12 anos.
+MN076 - Solicitação de < [cartão adicional OU adicional mesada OU virtual] OU [aumento de limite de crédito conta/saque]> não permitida! O limite de crédito informado deve ser igual ou superior a R$ <limite mínimo da conta >.
+MN077 - Solicitação de <cartão adicional OU adicional mesada OU virtual] OU [aumento de limite de crédito conta/saque]> não permitida! O limite de crédito informado deve ser inferior ou igual a R$ <limite máximo da conta >.
+MN078 - Solicitação de cartão <adicional OU adicional mesada OU virtual>não permitida! O limite de crédito informado deve ser múltiplo do valor de R$ <valor parametrizado como múltiplo do produto>.
+MN079 - Alteração de limite não permitida! Cartão do cliente possui bloqueio de operação.
+MN080 - Alteração de limite não permitida! Situação do Cartão não permite a operação.
+MN081 - A conta cartão deve existir a pelo menos 30 dias <OU dias parametrizáveis conforme operação>.
+MN082 - Alteração de limite não permitida! Nível de Behavior Score do cliente igual a <situação de behavior score do cliente>.
+MN083 - Valor de entrada menor que o permitido para o acordo.
+MN084 - Negada. Cartão não existe.
+MN085 - Negada. Cartão não efetivo.
+MN086 - Negada. Cartão vencido.
+MN087 - Negada. Data validade errônea.
+MN088 - Negada. Tentativas de PIN Excedidas.
+MN089 - Negada. Erro criptografia. Não reter.
+MN090 - Negada. PIN incorreto.
+MN091 - Negada. Suspeita de falsificação.
+MN092 - Negada. Erro validação ARQC.
+MN093 - Negada. BIN não existe.
+MN094 - Negada. BIN inativo.
+MN095 - Negada. Entidade emissora não existe.
+MN096 - Negada. Entidade emissora inativa.
+MN097 - Negada. Moeda não existe para entidade emissora.
+MN098 - Negada. Moeda inativa para entidade emissora.
+MN099 - Negada. Quantia superior ao máxima da entidade emissora.
+MN100 - Negada. Quantia superior ao máximo do BIN.
+MN101 - Negada. Entidade adquirente não existe.
+MN102 - Negada. Entidade adquirente inativa.
+MN103 - Negada. Moeda não existe para entidade adquirente.
+MN104 - Negada. Moeda inativa para entidade adquirente.
+MN105 - Negada. Quantia superior ao máxima da entidade adquirente.
+MN106 - Negada. Operação não permitida para a origem.
+MN107 - Negada. Operação excluída para a origem.
+MN108 - Não é permitido associar nova mensagem. A quantidade de mensagem associadas a esse Tipo de Mensagem está completa.
+MN109 - Motivo de inadimplência já vigente para a conta cartão.
+MN110 - Logomarca não se aplica para tipo de cartão.
+MN111 - Operação não permitida. Já existe uma simulação com o mesmo código de acesso.
+MN112 - Nenhuma conta cartão a faturar para a data atual.
+MN113 - Conta cartão não possui parcelamento de fatura.
+MN114 - Conta cartão não possui <Nome do Seguro> contratado.
+MN115 - Solicitação de < [cartão adicional OU adicional mesada OU virtual] OU [aumento de limite de crédito]> não permitida! O limite de crédito informado deve ser igual ou superior ao limite de saldo comprometido do cliente.
+MN116 - Cliente não possui email cadastrado, por favor cadastrar no SAT.
+MN117 - Operação não permitida! Contrato com bloqueio.
+MN118 - Operação não permitida! Cartão executivo.
+MN119 - Operação não permitida! Primeiro vencimento.
+MN120 - Número de telefone celular inválido.
+MN121 - Operação não permitida! Alteração de grupo de liquidação pendente.
+MN122 - Operação não permitida! Contrato possui solicitação de inibição de juros.
+MN123 - Operação não permitida! Contrato enquadrado.
+MN124 - Operação não permitida! Contrato sem dívida.
+MN125 - Parâmetros do acordo não cadastrado para o produto.
+MN126 - Número de parcelas não permitido.
+MN127 - Valor da parcela não permitido.
+MN128 - Valor da parcela menor que a soma dos encargos.
+MN129 - Valor para acordo não permitido.
+MN130 - Existe acordo simulado para o código de acesso.
+MN131 - Valor da entrada não permitido.
+MN132 - Valor do desconto não permitido.
+MN133 - data de entrada / 1ª parcela não permitida.
+MN134 - Parcela acima do determinado.
+MN135 - Data Antecipação não permitida.
+MN136 - Alteração não permitida. Taxa de anuidade associado a um PV Célula.
+MN137 - Não existe número de cartões atualizados para a data atual.
+MN138 - Carta senha não recebida.
+MN139 - Cliente possui conta negativada.
+MN140 - Conta já possui indicador de seguro ativo.
+MN141 - Conta não é Pessoa Física.
+MN142 - Conta não permite operar.
+MN143 - Número de protocolo não válido.
+MN144 - Cliente possui restrição cadastral.
+MN145 - CPF informado não é o do titular/responsável da conta cartão.
+MN146 - Cliente não permite envio de cartas.
+MN147 - Reemissão de cartão não autorizada pelo SICAC.
+MN148 - Alteração de Variante do Produto da conta cartão não autorizada pelo SICAC.
+MN149 - Operação não permitida! Situação da carteira digital não permite a operação.
+MN150 - Operação não permitida! Conta do cliente possui boletim de proteção registrado.
+MN151 - Operação não permitida! Conta do cliente possui cartão inativo.
+MN152 - Operação não permitida! Conta do cliente foi aberta a menos de <Idade mínima para alteração de variante>
+MN153 - Operação não permitida! Conta do cliente teve alteração de variante a menos de <Tempo mínimo para realteração de variante>
+MN154 - Operação não permitida! Conta do cliente possui transações internacionais a faturar.
+MN155 - Operação não permitida! Behavior Score do cliente é menor do que o nível parametrizado para a variante de destino.
+MN156 - Operação não permitida! Renda do cliente inferior ao mínimo parametrizado no sistema para a variante de destino.
+MN157 - Operação não permitida! Limite do cliente inferior ao mínimo parametrizado no sistema para a variante de destino.
+MN158 - Operação não permitida! Bloqueio da conta não permite alteração.
+MN159 - Alteração de limite não permitida! Situação da Conta não permite a operação.
+MN160 - Limite do cartão não pode ser maior que limite da conta cartão.
+MN161 - Idade do cliente não se encontra no range requerido.
+MN162 - Limite de Crédito do Cartão não pode superar o limite de crédito da conta cartão.
+MN163 - Para clientes menores de 16 anos somente é permitido cartão mesada.
+MN164 - Limite informado é superior ao máximo permitido.
+MN165 - O intervalo de dias entre a data inicial e a data final não pode ser superior ao máximo permitido.
+MN166 - Operação não permitida. Não houve abertura de processo de disputa anterior ao lançamento da FEE.
+MN167 - Juros máximo não pode ser superior a 100.
+MN168 - A data inicio/fim informada ocupa a faixa de outra vigência incluída.
+MN169 - Cliente com bloqueio de cadastro. Abrir ocorrência.
+MN170 - Código de ativação do Token expirado. Foi solicitado novo código de ativação.
+MN171 - Operação não permitida! Contrato possui estorno de saldo enquadrado pendente.
+MN172 - Operação não permitida! Situação da solicitação igual a “Confirmada”.
+MN173 - Operação não permitida! Conta Cartão possui acordo com situação igual a “Pendente”.
+MN174 - Operação não permitida! Conta Cartão possui acordo com situação igual a “Ativo”.
+MN175 - Operação não permitida! Conta Cartão possui pagamento com situação igual a “Pendente”.
+MN176 - Operação não permitida! Conta Cartão não possui saldo principal.
+MN177 - Operação não permitida! Conta Cartão possui cartão tokenizado ativo.
+MN178 - Não é permitido cobrar tarifa. Produto não parametrizado para cobrança de tarifa.
+MN179 - O Arquivo ultrapassou o limite máximo de 1 MegaBytes permitido.
+MN180 - Operação não permitida! Telefone <Número de telefone formato DDD-999999999> não permite a exclusão.
+MN181 - Existe solicitação de senha em andamento.
+MN182 - “Ano Base” informado maior ou igual ao Ano Corrente.
+MN183 - Operação não permitida! Token expirado Por gentileza, solicitar novo Token.
+MN184 - Operação não permitida! Conta cartão não permite operações com Token por SMS.
+MN185 - Operação não permitida! Operação não pode ser realizada com Token.
+MN186 - Data início vigência tem que ser anterior a data fim vigência.
+MN187 - O tamanho do campo senha criptográfica não pode superar <quantidade de caracteres do campo senha criptográfica informada> Caracteres.
+MN188 - Não existe extrato anual de tarifas para o ano informado.
+MN189 - Operação não permitida! Bloqueio não é do tipo “T – Cartão”.
+MN190 - Número do cartão não existe.
+MN191 - Operação não permitida! Usuário não possui perfil para exclusão de bloqueio irreversível.
+MN192 - Não permitido o desbloqueio, o chip foi enviado para destruição. Solicitar a remissão do cartão.
+MN193 - Bloqueio não removível.
+MN194 - Conta Cartão do Cliente não possui adesão ao parcelamento automático.
+MN195 - Produto da conta cartão não permite o parcelamento automático.
+MN196 - TIPFAC não permite o parcelamento automático.
+MN197 - Não é possível incluir opção de parcelamento automático para TIFFAC do tipo “Débito”.
+MN198 - Tipo de linha excluído.
+MN199 - Operação não permitida! <Conta Cartão / Cartão> não permite realizar saque emergencial. <Conta Cartão / Cartão> encontra-se <situação>.
+MN200 - Operação não permitida! <Conta Cartão / Cartão> possui limite de saque indisponível realizar saque emergencial.
+MN201 - Operação não permitida! Cartão não possui permissão de transação internacional.
+MN202 - Operação não permitida! <Parâmetro/Ação/Perfil> com dupla custódia “Pendente”.
+MN203 - Operação não permitida! A exclusão de bloqueio só poderá ser realizada por um usuário diferente do que inclui o bloqueio.
+MN204 - Conta cartão possui parcelamento simulado entre o período de vencimento da fatura e o corte atual.
+MN205 - Saldo das contas cartão é composto somente por anuidade e tarifas.
+MN206 - Não é possível incluir opção de exibir no primeiro bloco fatura a TIFFAC do tipo Débito.
+MN207 - Produto Executivo não pode realizar financiamento.
+MN208 - Vencimento da conta não foi efetivado.
+MN209 - Dias de atraso excedido. Parcelamento de saldo não permitido. Pagar mínimo da última fatura em atraso e fazer novo contrato.
+MN210 - O estado da parcela deve esta com valor 01 – Pendente.
+MN211 - Valor do desconto deve ser menor/igual o valor parcela.
+MN212 - Operação não permitida! Conta cartão possui bloqueio de boleto adulterado.
+MN213 - FEES JCB enviadas somente a partir da gestão de ocorrência.
+MN214 - Limite de crédito superior ao limite da conta cartão.
+MN215 - Limite de crédito superior ao limite do cartão mesada.
+MN216 - Simulação não permitida nesta data em função de fechamento da fatura. Solicitar o parcelamento em D+1 do corte.
+MN217 - Não permitido envio de ofertas de parcelamento de fatura para contas com débito automático.
+MN218 - Não existe empresa cadastrada para a cessão de crédito.
+MN219 - Rejeitado por pagamento duplicado <<(PAN-AVULSO) ou (CONTA) ou (PAN)>>
+MN220 - Operação não permitida. Modalidade SIAPC associada à conta contábil.
+MN221 - Operação não permitida! Negociação de Quita Saldo com situação diferente de “Pendente”.
+MN222 - Parâmetros de variáveis de Quitação de Saldo não cadastrado para o produto.
+MN223 - Carta de Antecipação não pode ser emitida! Antecipação aguardando processamento bancário.
+MN224 - Operação não permitida! Conta Cartão está enquadrada.
+MN225 - Operação não permitida! Conta Cartão sem dívida.
+MN226 - Operação não permitida! Dias de Atraso fora da faixa parametrizada.
+MN227 - Operação não permitida! Saldo Devedor fora da faixa parametrizada.
+MN228 - Não pode se fazer a inclusão do parcelamento, acordo pendente.
+MN229 - Operação não permitida! Produto da Conta Cartão não está marcado com segmento Exclusivo.
+MN230 - Caso <número do caso> aberto junto à bandeira. Favor acessar o portal da bandeira para preenchimento do questionário.
+MN231 - Dias de atraso excedido. Parcelamento de saldo não permitido. Pagar mínimo da última fatura em atraso e fazer novo contato.
+MN232 - Não foi possível cancelar o celular. Conta cadastrada no sistema de envio de sms não canc. celular.
+MN233 - Conta Cartão possui solicitação de alteração de produto com situação “Pendente”.
+MN234 - O valor da entrada deve ser maior que o valor da menor parcela calculada (<Nº Parcela> x <Valor Menor Parcela>).
+MN235 - O Estado Deve Ser Pendente.
+MN236 - O Estado Deve Ser <Estado do Acerto Contábil> ou <Estado do Acerto Contábil>.
+MN237 - <Campo> deve ser menor ou igual que <Campo>.
+MN238 - Relação ID Contábil e Produto SIICO Não Existente.
+MN239 - Simulação de Quitação Saldo não permitida nesta data em função de fechamento da fatura.
+MN240 - Operação não permitida. O batimento já foi executado.
+MN241 - Operação não permitida. Existe um ou mais grupos de regra associados ao batimento.
+MN242 - Operação não permitida. O grupo de regra já foi executado.
+MN243 - Operação não permitida. Existe uma ou mais regras associadas ao grupo.
+MN244 - Não é possível realizar a ação pois não houve parcela de anuidade postada ou não existe parcela de anuidade a postar.
+MN245 - Reversão não permitida. Próximo plano de anuidade já renovado com aplicação de isenção.
+MN246 - Operação não permitida. A regra de batimento já foi executada.
+MN247 - Operação não permitida. A ação de batimento já foi executada.
+MN248 - Operação não permitida. A ação de batimento está associada a uma ou mais regras de batimento.
+MN249 - Operação não permitida! Conta do cliente possui bloqueio que não permite o envio de carta de quitação de débito pós enquadramento.
+MN250 - Operação não permitida! Conta do cliente possui débito em aberto.
+MN251 - Valor é superior ao máximo permitido.
+MN252 - Compra parcelada não vigente.
+MN253 - Parcelas a acelerar deve ser menor que parcelas pendentes.
+MN254 - Antecipação de parcela com situação “Pendente”.
+MN255 - Conta Cliente está na base Inativa, deseja consultar?
+MN256 - Operação não permitida! Conta cedida.
+MN257 - Não existe parâmetro de cessão cadastrado para a empresa informada.
+MN258 - Operação não permitida! Já existe conta cadastrada para cessão do tipo “Online”.
+MN259 - Não existem parcelas a serem antecipadas”.
+MN260 - Situação do Caso não permite Chargeback.
+MN261 - Operação não permitida! Faixa já cadastrada.
+MN262 - Prazo para emissão de parcela excedido.
+MN263 - Operação não permitida! CPF do cliente consta na lista de óbito.
+MN264 - Operação não permitida! CPF do cliente consta na lista OFAC.
+MN265 - Operação não permitida! Conta Cartão possui saldo em disputa.
+MN266 - Operação não permitida. A soma dos valores informados é maior ou igual ao saldo para acordo.
+MN267 - Acordo gravado. Houve erro no registro do boleto. Efetuar o pagamento a partir do próximo dia útil.
+MN268 - CEP informado não existe na UF.
+MN269 - Existe exceção cadastrada para produto, remessa, UF e CEP informado.
+MN270 - Existe(em) exceção(ões) cadastrada(s) para produto e tipo de remessa informada. É necessário excluir a exceção existente.
+MN271 - Operação não permitida, existe(em) exceção(ões) cadastrada(s) para produto e tipo de remessa informada.
+MN272 - Solicitação de alteração de limite de cartão < Pessoa Física ou Pessoa Jurídica > não permitida! O limite de crédito informado deve ser igual ou superior ao < limite mínimo parametrizado do cartão Pessoa Física ou Pessoa Jurídica >.
+MN273 - Solicitação de alteração de limite de cartão < Pessoa Física ou Pessoa Jurídica > não permitida! O limite de crédito informado deve ser inferior ou igual ao < limite máximo parametrizado do cartão Pessoa Física ou Pessoa Jurídica >.
+MN274 - Alteração de limite não permitida para o produto consignado.
+MN275 - Inclusão de débito automático não permitida para o produto consignado.
+MN276 - Alteração de vencimento não permitida para o produto consignado.
+MN277 - Prorrogação de vencimento não permitida para o produto consignado.
+MN278 - Exclusão de bloqueio de <conta/cartão> não permitida. Conta cartão já possui RMC excluído no SICAC.
+MN279 - Perfil não possui permissão para solicitar transferência bancária.
+MN280 - Inclusão de permissão de overlimit não permitida para o produto consignado.
+MN281 - Limite de crédito do cartão não pode ser maior que o limite de crédito da conta cartão.
+MN282 - Reinclusão não permitida para este tipo de ocorrência.
+MN283 - Operação não permitida. Conta cartão possui antecipação de parcelado pendente.
+MN284 - Antecipação não permitida. Existe <<parcelamento de fatura/quita saldo>> pendente.
+MN285 - Operação não permitida. Fatura sem pagamento Total.
+MN286 - Operação não permitida nesta data em função de fechamento da fatura. Solicitar a antecipação em D+1 do corte.
+MN287 - Simulação não permitida de 21h até 00h.
+MN288 - Esta autorização não tem o estado 1-pendente.
+MN289 - Operação não permitida! Solicitação negada por validação do sistema antifraude.
+MN290 - Operação não permitida! Solicitação negada por código de segurança do cartão inválido.
+MN291 - Operação não permitida! Solicitação negada por risco alto do processo de tokenização.
+MN292 - Data inválida.
+MN293 - Existe um ou mais código de acesso ativo para esse código de importação.
+MN294 - Existe um ou mais código de importação inativo para esse código de acesso.
+MN295 - Operação não permitida. Já existe texto de WhatsApp para este banco.
+MN296 - Operação não permitida. Esta ação pode ser cancelada somente no mesmo dia da solicitação, até as 17:00 horas.
+MN297 - Operação não permitida. A operação só poderá ser atualizada após 3 dias úteis do envio da solicitação ao SIACC.
+MN298 - Operação não permitida. Convênio Inativo.
+MN299 - Existe uma ou mais sobreposição de faixa de atraso e faixa de saldo.
+MN300 - Existe uma ou mais campanha ativa para esse grupo de negociação.
+MN301 - Existe uma ou mais campanha administrativa com situação ativa vinculada ao produto.
+MN302 - Correios não confirmou a entrega do Cartão. Por segurança, aguardar a confirmação da entrega para posterior desbloqueio.
+MN303 - Código de Importação <código> não possui tabela de negociação vinculada.
+MN304 - Código de acesso vinculado a grupo de negociação ativo. Não é possível alterar ação de cobrança.
+MN305 - Código de acesso vinculado a grupo de negociação ativo. Não é possível inativar.
+MN306 - Existe um ou mais código de importação inativo para esse grupo de negociação.
+MN307 - Existe um ou mais código de importação associado a código de acesso inativo ou fora da vigência.
+MN308 - Existe uma ou mais tabela de negociação inativa ou fora da vigência para esse grupo de negociação.
+MN309 - Existe uma ou mais tabela de negociação associada a código de acesso inativo ou fora da vigência.
+MN310 - Existe um ou mais grupo de negociação ativo vinculado a essa tabela de negociação.
+MN311 - Código do Grupo CRD deve ser alfanumérico, no formato X99, sendo a primeira posição, letra e as duas últimas posições numéricas.
+MN312 - Operação não permitida. Existe(m) registro(s) sequencial(is) vinculados.
+MN313 - Antecipação não pode ser cancelada! Aguardando processamento bancário.
+MN314 - Na pesquisa da versão 1 é necessário informar outro filtro de pesquisa.
+MN315 - Acordo não pode ser cancelado! Existe antecipação aguardando processamento bancário.
+MN316 - PMA não pode ser emitida! Existe antecipação pendente.
+MN317 - A ocorrência não foi encontrada na base ativa, deseja consultar na base inativa?
+MN318 - Operação não permitida. Grupo associado a Tela por Canal Ativa.
+MN319 - Operação não permitida. Grupo possui código de acesso Inativo.
+MN320 - Operação não permitida. Registro vinculado a grupo de código de acesso ativo.
+MN321 - Operação não permitida. Registro possui grupo de código de acesso inativo.
+MN322 - Operação não permitida. Existe Tela por Canal inativa vinculada ao registro.
+MN323 - Operação não permitida. Registro vinculado a sequencia de tela ativa.
+MN324 - Operação não permitida. Já existe sequência de tela ativa para o canal.
+MN325 - Operação não permitida. Situação da antecipação não permite desfazer o cancelamento.
+MN326 - Operação não permitida. O acordo não está ativo.
+MN327 - Operação não permitida. Situação da antecipação não permite cancelamento.
+MN328 - O Cartão foi devolvido.
+MN329 - O Cartão foi extraviado.
+MN330 - O Cartão ainda não foi entregue.
+MN331 - Evento não encontrado na base de dados.
+MN332 - Não existe sequência de telas ativa para o canal.
+MN333 - Não é permitido o vínculo de Anexo a Carta selecionada.
+MN334 - Acordo com situação diferente de Pendente.
+MN335 - Prazo para cancelamento do acordo expirou.
+MN336 - Quantidade de parcelamento com carência excede o limite permitido.
+MN337 - Parcelamento com carência não permite inclusão de valores opcionais.
+MN338 - Estorno de pagamento já processado.
+MN339 - Estorno de pagamento não processado.
+MN340 - O cliente não possui telefone válido para envio de senha por WhatsApp.
+MN341 - Operação não permitida. Valores informados não permitem gerar acordo.
+MN342 - Operação não permitida. Evento de Origem possui vínculo com Status Evento com geração de carta.
+MN343 - Exclusão não permitida. Grupo CRD possui vínculo com Status Evento com geração de carta.
+MN344 - Exclusão não permitida. CRD possui vínculo com Status Evento com geração de carta.
+MN345 - Exclusão não permitida. Grupo de Carta possui vínculo com Grupo CRD ativo.
+MN346 - Exclusão Não permitida. Grupo CRD possui uma restrição vinculada.
+MN347 - Exclusão não permitida. Grupo Carta possui uma restrição vinculada.
+MN348 - Para esta conta não está disponível o demonstrativo de débito no cancelamento do cartão.
+MN349 - Operação não permitida. Já existe uma solicitação com os mesmos dados.
+MN350 - Operação não permitida. O período inicial não deve ser menor que a data do enquadramento.
+MN351 - Operação não permitida. O Saldo Base de Cálculo não deve ser maior que o saldo atual da conta.
+MN352 - Parcelamento com carência só estará disponível após o fechamento da fatura.
+MN353 - Parcelamento com carência permitido somente para contas adimplentes entre corte e vencimento.
+MN354 - Vínculo não permitido. Grupo CRD possui variáveis não compatíveis com a Carta enviada pelo SRO.
+MN355 - Plano de anuidade não está em vigor para este cartão.
+MN356 - Cliente sem Avaliação de Risco para realizar aumento de limite.
+MN357 - Cliente não possui percentual de limite utilizado para realizar aumento de limite.
+MN358 - Cliente já realizou aumento de limite a pouco tempo, aguarde a liberação para uma nova solicitação.
+MN359 - Na ativação do acordo, o valor do IOF será recalculado com a alíquota vigente na data de efetivação do pagamento.
+MN360 - Público Alvo não definido para Cliente.
+MN361 - Percentual de limite para alteração maior que o da oferta do cliente.
+MN362 - Adesão ao SIGMS efetuada! Não foi possível confirmar o retorno do SIGMS. Erro SIGMS: <Código de erro e Descrição de erro do SIGMS>. Por gentileza, efetuar a operação novamente.
+MN363 - Adesão ao serviço de mensagem não efetuada! Erro SIGMS: <Código de erro e Descrição de erro do SIGMS>.
+MN364 - Adesão ao SIGMS efetuada! Não foi possível confirmar o retorno do SIGMS. Erro SIGMS: <Código de erro e Descrição de erro do SIGMS>.
+MN365 - Não é possível incluir opção de recomposição de limite para tipfac de débito.
+MN366 - Não existem acordos para essa conta.
+MN367 - Não Há Extrato Vencido.
+MN368 - Quantidade de parcelamento com opção de entrada excede o limite permitido.
+MN369 - Conta cartão já possui adesão ao modelo de desconto por faixa de gasto.
+MN370 - Para a fase selecionada é permitido apenas um registro de periodicidade e ele deve ser mensal.
+MN371 - Parcelamento com entrada só estará disponível após o fechamento da fatura.
+MN372 - Operação não permitida! Solicitação de tokenização negada pela Bandeira.
+MN373 - Existe sobreposição de faixa de atraso/saldo nos registros <sequencial registro> e <sequencial registro>.
+MN374 - Ao negociar nestas condições você ficará impossibilitado de negociar com a CAIXA por <período de restrição> anos, deseja continuar?
+MN375 - Valor da entrada deve ser menor que o valor do saldo do acordo.
+MN376 - A data inicial deve ser maior ou igual a data do primeiro acionamento (<data do primeiro acionamento>)
+MN377 - A data final deve ser menor ou igual a data do último acionamento (<data último acionamento>)
+MN378 - As condições da conta foram alteradas. É necessário simular o acordo novamente.
+MN379 - A quantidade informada deve ser igual ou maior que a quantidade utilizada na extração (<Quantidade utilizada na extração>)
+MN380 - A quantidade informada deve ser maior que zero.
+MN381 - Exclusão de desconto consignado não permitido. Pré corte com situação diferente de “Enviado” ou “Averbado”.
+MN382 - Exclusão de desconto consignado não permitido. Conta cartão consignado já possui pagamento para o pré corte do mês.
+MN383 - A faixa final de parcelas deve ser menor ou igual a <quantidade máxima>.
+MN384 - Nenhum AR encontrado.
+MN385 - Nenhuma conta elegível vinculada ao CPF/CNPJ informado.
+MN386 - Erro de Banco de Dados.
+MN387 - Não existem cartões aptos à alteração de produto.
+MN388 - Contate a Central de Atendimento para solicitação do cartão adicional.
+MN389 - Cartão virtual não permite alteração de produto.
+MN390 - Não é permitido reemitir um cartão inativo.
+MN391 - Cartão não permite remissão.
+MN392 - Não pode ser cartão provisório.
+MN393 - Bloqueio não permite alteração de produto.
+MN394 - Idade do cliente é inferior a 8 anos.
+MN395 - Já existe solicitação de alteração de produto realizada na data atual.
+MN396 - A quantidade máxima de cartões virtuais emitidos por período foi atingida.
+MN397 - Operação não permitida! Conta cartão/cartão possui bloqueio que não permite o envio de SMS.
+MN398 - Operação não permitida! Conta cartão não possui serviço de SMS.
+MN399 - Operação não permitida! Conta cartão possui bloqueio que não permite a criação de cartão virtual.
+MN400 - CPF irregular na Receita Federal: <descrição do erro retornado>.
+MN401 - Quantidade de contas em que o mesmo CPF pode ser cadastrado como adicional/solidário excedida.
+MN402 - Alteração de limite não permitida! Conta cartão de produto BNDES não permite aumento de limite, apenas redução.
+MN403 - Conta cartão não está vinculada ao CNPJ informado.
+MN404 - Operação não permitida! Conta possui adesão ao débito automático.
+MN405 - Operação não permitida! Existe acordo de parcelamento de fatura pendente de ativação.
+MN406 - Cartão informado pertence ao representante legal da empresa.
+MN407 - Petição de senha não permitida, Cartão BNDES.
+MN408 - Bloqueio da conta não deve estar ativo.
+MN409 - Cartão não operativo.
+MN410 - Situação do cartão não permite operar.
+MN411 - Não permitida reemissão de senha - Num. dias alteração de endereço inferior a XX.
+MN412 - Reemissão de carta senha não permitida para cartão do tipo virtual.
+MN413 - Acordo realizado na Agência com vencimento em xx/xx/xx. Nova simulação, por este canal, somente após o vencimento do boleto.
+MN414 - Emissão do boleto disponível nas Agências.
+MN415 - Acordo realizado na Agência com vencimento em xx/xx/xx. Consulta da Proposta, por este canal, somente após o vencimento do boleto.
+MN416 - Descritivo de Crédito não disponível! Cliente não possui cobrança de encargos de rotativo.
+MN417 - Operação não permitida! Conta cartão possui negociação de quitação de saldo pendente.
+MN418 - Cliente possui bloqueio e não possui extrato de fatura pendente.
+MN419 - Cartão c/ limite zero. Contrate limite p/ desbloquear o cartão e realizar compras na função crédito.
+MN420 - Operação não permitida! Funcionalidade indisponível para o convênio INSS.
+MN421 - Exclusão não permitida! O registro já possui uma data de exclusão.
+MN422 - Cartão informado não pertence ao titular ou representante legal da conta.
+MN423 - Produto DN informado não está disponível para o cliente.
+MN424 - Limite disponível da conta não identificado.
+MN425 - Lista de vencimento não permitida para o produto consignado.
+MN426 - Operação não permitida! Motivo do estágio já registrado para um contrato.
+MN427 - Atualmente, o limite do seu cartão não pode ser alterado.
+MN428 - Aumento não permitido no momento, pois o contrato de seu Cartão de Crédito ainda não atingiu o tempo mínimo para alteração do limite de compra.
+MN429 - No momento, não é possível alterar o limite do seu cartão de crédito, pois o seu cartão está em atraso.
+MN430 - Não é possível realizar uma nova alteração de limite, pois o tempo mínimo desde a última alteração ainda não foi atingido.
+MN431 - Não é possível alterar seu limite para o valor solicitado. Por favor, escolha um valor diferente.
+MN432 - Não foi identificada versão do roteiro contábil implantada para o identificador contábil informado.
+MN433 - Identificador contábil não afeta o fluxo de caixa! <campo> não deve ser informado.
+MN434 - CIF informado já está vinculado a outro tipo de movimento financeiro.
+MN435 - Existe mensagem estruturada ativa vinculada a este registro. Ao inativar este registro não será possível enviar a(s) mensagem(ns) WhatsApp vinculada(s). Deseja continuar? (Sim/Não).
+MN436 - Inativar o Código HSM significa que a mensagem WhatsApp não será enviada. Confirma a operação? (Sim/Não).
+MN437 - <Campo> está com situação inativa.
+MN438 - Contrato não aceita pagamento (contrato cedido ou na base inativa).
+MN439 - O cartão deve conter apenas números.
+MN440 - Código do bloqueio não permitido.
+MN441 - Código do bloqueio permitido somente para o titular da conta.
+MN442 - Não encontramos cartão de crédito de sua titularidade.
+MN443 - Cartão cancelado.
+MN444 - Não é a última via emitida do cartão.
+MN445 - Cartão do titular do contrato não ativado.
+MN446 - Operação não permitida, cartão virtual.
+MN447 - Serviço não disponível para este cartão. Entre em contato com a Central de Atendimento.
+MN448 - Código do bloqueio permitido somente para o adicional da conta.
+MN449 - Cartão não encontrado para desbloqueio. Se persistir, contate a Central, opção Cartão de Crédito.
+MN450 - Bloqueio/Desbloqueio do cartão <PAN> não permitido. Possui código de bloqueio irreversível.
+MN451 - Não foi possível desbloquear o cartão. Se persistir, contate a Central, opção Cartão de Crédito.
+MN452 - Não é possível realizar a alteração de produto. Cartões sem uso há mais de <quantidade de dias parametrizada como prazo máximo de inatividade do cartão solidário> dias.
+MN453 - O limite arredondado é igual ao limite anterior, alteração de limite não realizada.
+MN454 - O limite deve estar compreendido entre o limite máximo e mínimo de transações especiais.
+MN455 - A Data Específica da Apuração deve ser menor que a data atual.
+MN456 - A Data Específica da Apuração é maior do que 365 dias anteriores à data atual.
+MN457 - Operação indisponível para o produto consignado.
+MN458 - DISPONÍVEL.
+MN459 - Descritivo de Crédito não disponível! Cliente não possui operação vigente de rotativo ou parcelamento de fatura.
+MN460 - Desbloqueio indisponível. A entrega ainda não foi confirmada pelos Correios. Tente novamente depois.
+MN461 - Este cartão não possui a função de pagamento por aproximação.
+MN462 - Este cartão está bloqueado e isso impede o uso por aproximação. Após desbloqueá-lo, basta fazer uma compra inserindo o cartão e digitando a senha na maquininha para ativar a função.
+MN463 - Para ativar as compras por aproximação, realize uma compra inserindo o cartão na maquininha e digitando a senha. Depois disso, as compras por aproximação estarão ativas.
+MN464 - Operação não permitida! Nova situação do indicador de função de pagamento por aproximação igual à atual.
+MN465 - Não será possível realizar a inclusão, consulte a situação do cartão.
+MN466 - O <nome do campo> informado é inválido.
+MN467 - Bloqueio não permite emissão e remissão de cartão.
+MH001 - <<mensagem de hint>>.
+MH002 - NSA <número sequencial de arquivo> Total: <quantidade total de documentos> Produzidos: <quantidade de documentos produzidos> Rejeitados: <quantidade de documentos rejeitados> Pendentes Enviados:  <quantidade de documentos pendentes enviados>
+MH003 - NSA <número sequencial de arquivo> 0 documentos
+MH004 - Não há arquivo enviado.
+MH005 - Arquivo enviado vazio. Envio do Arquivo: <data de envio do arquivo ao fornecedor>
+MH006 - Envio do Arquivo: <data de envio do arquivo ao fornecedor> Previsão de Postagem: <data prevista de postagem>
+MH007 - Envio do Arquivo: <data de envio do arquivo ao fornecedor> Retorno do Arquivo <data ocorrida de retorno do arquivo> Postagem: <data ocorrida da postagem>
+MH008 - Pressione F7 para Incluir.
+MH009 - Pressione F8 para Alterar.
+MH010 - Pressione F10 para Mostrar Lista.
+MH011 - Pressione F11 para Aceitar.
+MH012 - Pressione F12 para Cancelar.
+MH013 - Data retroativa da apropriação do valor.
+MA001 - Dados obrigatórios não foram informados.
+MA002 - Não existem registros para a pesquisa realizada.
+MA003 - Quantidade de caracteres informado inferior ao exigido para o campo <nome do campo>.
+MA004 - <Inclusão/Alteração/Exclusão> não permitida.
+MA005 - Operação realizada com <sucesso ou êxito>.
+MA006 - Selecione ao menos um registro para prosseguir com a <nome da operação>.
+MA007 - Confirma a <operação> do registro?
+MA008 - Conta Cartão do Cliente Inativa.
+MA009 - Já existe outro registro cadastrado com os valores informados.
+MA010 - O número de registros encontrados para a consulta ultrapassou o limite estabelecido. Favor restringir os critérios da pesquisa.
+MA011 - O cartão não tem bloqueio.
+MA012 - A data de <nome do campo> não pode ser inferior à data corrente.
+MA013 - É necessário informar a marca e o tipo de cartão antes da(o) <Condição Embossing/Cartão chip/Certificado digital>.
+MA014 - A data de <nome do campo> deve ser menor que a data de <nome do campo>.
+MA015 - Registro já existente.
+MA016 - Moeda não informada antes da conta de débito.
+MA017 - Usuário inexistente ou inativo. Consulte o administrador.
+MA018 - Irá Notificar uma Reemissão de Cartão.
+MA019 - Ocorrerá <Bloqueio / Desbloqueio / Cancelamento> do Cartão.
+MA020 - O valor do campo <nome do campo> deve ser menor ou igual ao do campo <nome do campo>.
+MA021 - Irá Proceder a solicitação de PIN.
+MA022 - A Data de inicial deve ser <igual ou maior/maior> a data corrente.
+MA023 - Deseja efetivar o aviso de recebimento? (Sim/Não).
+MA024 - A data de <nome do campo> não pode ser superior à data corrente.
+MA025 - Documento de identificação inexistente no sistema. Deseja incluí-lo? (Sim/Não)
+MA026 - Cartão já foi cancelado. Cancelamento não realizado.
+MA027 - Deseja realmente cancelar a Conta Cartão? (Sim/Não).
+MA028 - Deseja Simular <o Cancelamento da Conta OU a compra parcelada>? (Ok/Cancelar).
+MA029 - Deve ser informado algum dos campos.
+MA030 - A Data de <nome do campo> deve ser maior ou igual à data <nome do campo>.
+MA031 - A quantidade de caracteres para o Número do Documento deve ser menor ou igual a 15.
+MA032 - Deseja solicitar novo cartão? (Sim/Não)
+MA033 - Deve ser informado ao menos 3 caracteres.
+MA034 - O valor do campo <nome do campo > deve ser maior que 0.
+MA035 - Confirma a reemissão de cartão? (Sim/Não).
+MA036 - É necessário informar o tipo e número do documento.
+MA037 - O valor máximo para o campo <nome do campo> deve ser maior ou igual ao valor do campo <nome do campo>.
+MA038 - Deseja gerar ocorrência? (Sim/Não)
+MA039 - Não existe fatura gerada para o cartão selecionado.
+MA040 - Informe apenas um critério de pesquisa.
+MA041 - Informe pelo menos um critério de pesquisa.
+MA042 - Deseja <ativar/inativar/reativar> o registro?
+MA043 - Deve ser inserido apenas número para o campo <nome do campo>.
+MA044 - Produto já possui parceiro associado.
+MA045 - Não existe transação a ser conciliada.
+MA046 - <Conta Cartão ou Cartão> possui bloqueio de Operatividade.
+MA047 - O registro já está inativo.
+MA048 - Não há pacotes de serviço de mensagem a serem cancelados.
+MA049 - Senha incorreta, tente novamente.
+MA050 - Conta cartão sem movimentação para o mês de referência <nome do mês>.
+MA051 - Cliente não possui cartão ativo.
+MA052 - Descrição do <tipo de parâmetro> já cadastrada.
+MA053 - CPF existente.
+MA054 - Confirma a emissão da fatura? (Sim/Não)
+MA055 - <nome do campo> inexistente.
+MA056 - Conta cartão cancelada.
+MA057 - O valor inicial da faixa de atraso deve ser menor que o valor final.
+MA058 - A data de <nome do campo> deve ser maior que a data de <nome do campo>.
+MA059 - Falha de comunicação com o sistema <nome do sistema>.
+MA060 - Arquivo indisponível no(a) <nome do sistema/nome da bandeira>.
+MA061 - Número de parcelas está fora do intervalo permitido.
+MA062 - Deseja imprimir? (Sim/Não)
+MA063 - Nenhuma informação de fatura identificada.
+MA064 - A conta cartão já possui cartão virtual.
+MA065 - Selecione um cartão para simulação de CET.
+MA066 - Selecione um tipo de operação para simulação de CET.
+MA067 - Nenhum registro encontrado.
+MA068 - Deve ser informado apenas um parâmetro de tempo: Ano, Mês ou Dia.
+MA069 - Nenhum dado a ser movimentado.
+MA070 - Não é permitido visualizar a funcionalidade <descrição da funcionalidade do Menu>.
+MA071 - O período inicial deve ser igual ou anterior ao período final.
+MA072 - O período inicial não pode ser superior à data corrente.
+MA073 - Deve ser selecionado um parceiro.
+MA074 - Conta cartão já possui acordo ativo cadastrado.
+MA075 - Conta cartão já possui ação judicial ativa cadastrada.
+MA076 - O número de parcelas deve ser maior que 1.
+MA077 - Deseja <simular/incluir> o dado selecionado? (OK/Cancelar)
+MA078 - A quantidade de <nome do campo> deve ser maior ou igual à quantidade <nome do campo>.
+MA079 - Faixa de parcela inválida.
+MA080 - O tamanho do campo deve estar entre 1 e 12.
+MA081 - Não é permitido salvar os dados com o status atual.
+MA082 - O <nome do campo> deve ser igual à zero.
+MA083 - O valor do campo <nome do campo> deve ser maior ao do campo <nome do campo>.
+MA084 - Número do cartão mascarado deve ser informado no formato 999999xxxxxx9999.
+MA085 - Contrato não possui Escritório Externo de Cobrança.
+MA086 - Não houve movimento para o relatório nesta data.
+MA087 - O <nome do campo> é um valor requerido.
+MA088 - Por favor selecionar um motivo de cancelamento.
+MA089 - Valor de limite não permite valor acima do permitido via Central ATC
+MA090 - Cliente já possui desconto no período <período restante para novo desconto>.
+MA091 - Não foi possível aplicar desconto de anuidade.
+MA092 - Cartão sem condições de desconto.
+MA093 - Não foram encontrados dados de anuidades vigentes.
+MA094 - Limite de crédito deve estar entre os valores MIN. e MAX. do produto.
+MA095 - O limite arredondado é igual ao limite anterior, não aplica alteração.
+MA096 - Campo obrigatório <Nome campo>.
+MA097 - Número de dias de atraso excessivo em conta.
+MA098 - Dias desde última alteração limite insuficiente para nova alteração.
+MA099 - Bloqueio de cartão não permite alteração de limite.
+MA100 - Tem certeza que deseja realizar essa operação?
+MA101 - Segunda via foi solicitada.
+MA102 - Obrigatório informar ao menos um dos campos.
+MA103 - Registro não vigente, não pode ser alterado.
+MA104 - Registro vigente, não pode mudar a data início de vigência.
+MA105 - Para ativar o parcelamento de fatura, deve ser feito pagamento no valor exato de R$ <valor da ativação> até a data de <data da ativação>.
+MA106 - O acordo de saldo será ativado hoje.
+MA107 - A simulação foi feita com sucesso.
+MA108 - Informe um número de CPF.
+MA109 - Solicitação de senha incluída com sucesso.
+MA110 - Selecione um parâmetro para realizar a consulta.
+MA111 - O Cliente não possui extrato anual de tarifas gerado para o ano solicitado.
+MA112 - O Cliente não possui quitação anual de débito gerada para o ano solicitado.
+MA113 - Usuário e/ou senha inválidos.
+MA114 - Erro na validação da linha.
+MA115 - Acordo cancelado.
+MA116 - Registro já excluído.
+MA117 - Data início não pode ser maior que 18 meses da data atual, período disponível para envio de segunda via.
+MA118 - Não é possível alterar o fornecedor de um tipo de serviço de embossadora para printcenter.
+MA119 - O intervalo de dias entre a data inicial e a corrente não deve superior a 30 dias.
+MA120 - O intervalo máximo entre as datas deve ser de 60 dias.
+MA121 - O valor para pagamento mínimo do boleto registrado deve ser superior a R$ 0,01.
+MA122 - Cartão não é o cartão ativo do cliente.
+MA123 - O valor mínimo para pagamento do boleto deve ser menor que o valor máximo.
+MA124 - Solicitação de bloqueio não permitida para este Canal.
+MA125 - Operação não permitida! Forma de envio igual a atual.
+MA126 - O intervalo de dias entre a data inicial e a final deve ser igual ou inferior a 365 dias.
+MA127 - Dados sem atualizar, realize uma nova consulta.
+MA128 - Deseja parar o elemento << nome do elemento>>? (Ok/Cancelar).
+MA129 - Deseja começar o elemento << nome do elemento>>? (Ok/Cancelar).
+MA130 - Deseja executar Sign-On do canal <nome do canal>? (Ok/Cancelar).
+MA131 - Deseja executar Sign-Off do canal <nome do canal>? (Ok/Cancelar).
+MA132 - Deseja executar Teste do canal <nome do canal>? (Ok/Cancelar).
+MA133 - Selecione um canal.
+MA134 - Erro comunicação Rede.
+MA135 - O valor do campo <nome do campo > deve ser maior ou igual a 0.
+MA136 - Intervalo de Dias entre a data atual e data <nome do campo> não deve ser superior a 180 dias.
+MA138 - Parcelamento de saldo Excluído. Deseja Fazer uma nova simulação?
+MA139 - Operação não permitida! Alteração de endereço recente.
+MA140 - O cartão já está bloqueado.
+MA141 - Já existe cartão para o CPF informado.
+MA142 - Deseja realizar a simulação? (Sim/Não)
+MA143 - Não é permitido alterar a situação do token de <<situação atual>>” para <<situação a ser alterada>>.
+MA144 - Não existe código de ativação valido para o token e wallet.
+MA145 - O Nome Foi Alterado. Deseja Embossar O Cartão?
+MA146 - A data de <nome do campo> não pode ser menor que a data de <nome do campo>.
+MA147 - O registro já está ativo.
+MA148 - O Token já se encontra <ativo / suspenso / cancelado>.
+MA149 - A conta cartão não permite Token.
+MA150 - A carteira digital associada ao Token está inativa.
+MA151 - A bandeira do cartão está inativa para a carteira digital associada ao Token.
+MA152 - Valor do limite de crédito mensal fora do limite de crédito permitido na conta cartão.
+MA153 - Valor do limite de crédito diário fora do permitido para o valor do limite de crédito mensal.
+MA154 - Valor do limite de débito diário fora do permitido para o valor o limite de débito mensal.
+MA155 - Confirma a cobrança de tarifa de <valor da tarifa> para a emissão de novo cartão? (SIM/NÃO).
+MA156 - Operação não permitida! SIGCB rejeitou o registro de cobrança.
+MA157 - Usuário sem permissão de <executor/validador>.
+MA158 - Tipo de boleto parametrizado.
+MA159 - Num. Financiamento é maior que o permitido.
+MA160 - A data de exclusão não pode ser menor que a data atual.
+MA161 - Situação da Solicitação não permite exclusão.
+MA162 - Consulta indisponível no momento. Por favor tente novamente mais tarde.
+MA163 - Só Pode Escolher A Aplicação SAT ou SAI.
+MA164 - Foi identificado que o usuário está vinculado a outros grupos. Confirma atualização da atividade para os demais grupos? (Sim/Não)
+MA165 - Operação não permitida! <<Campo>> não deve ser preenchido no caso de rejeição.
+MA166 - <<Nome Campo>> não encontrado na Tabela <<Nome Tabela>>.
+MA167 - Confirma inclusão de pendência de aprovação por dupla custódia?
+MA168 - Parâmetro Pendente de Aprovação de Dupla Custódia.
+MA169 - Deve Selecionar Um Registro Antes De Poder Alterá-Lo/Eliminá-Lo
+MA170 - Solução não permitida. Tente novamente desde o começo.
+MA171 - Beneficiário não utiliza o padrão SIGCB.
+MA172 - Deseja <Cancelar> a conta do cliente? (Sim/Não).
+MA173 - Rejeição de pagamento não permitida.
+MA174 - O cartão foi reemitido.
+MA175 - Consulta permitida apenas para cartão beneficiário/solidário.
+MA176 - Deseja reemitir cartão? (Sim/Não).
+MA177 - Deseja Alterar O Dado Selecionado? (OK/Cancelar).
+MA178 - Deseja Excluir O Dado Selecionado? (OK/Cancelar).
+MA179 - A Pergunta não pode ser Inativada pois existe um relacionamento ativo entre Pergunta e Resposta.
+MA180 - A Resposta não pode ser Inativada pois existe um relacionamento ativo entre Pergunta e Resposta.
+MA181 - Preencha Os Campos Requeridos.
+MA182 - Deseja Incluir o Dado Selecionado? (OK/Cancelar).
+MA183 - A Operação Foi Efetuada Corretamente.
+MA184 - Deve Selecionar Um Registro Antes De Poder Alterá-lo.
+MA185 - Não Foram Encontrados Dados Para Essa Consulta.
+MA186 - A data inicial não pode ser maior que a data final.
+MA187 - As datas são necessárias.
+MA188 - Introduza uma data válida.
+MA189 - Já existe cessão cadastrada.
+MA190 - Data deve ser sábado e maior que a atual.
+MA191 - Não existem dados para o cliente.
+MA192 - Data de cessão deve ser maior que a data de extração.
+MA193 - Valor a ser cedido tem que ser maior que zero.
+MA194 - Quantidade de dias em atraso que se fará a extração tem que ser maior que zero.
+MA195 - Não será possível ativar a associação de Pergunta e Resposta, pois a Pergunta encontra-se inativa.
+MA196 - Não será possível ativar a associação de Pergunta e Resposta, pois a Resposta encontra-se inativa.
+MA197 - Cessão já não permite alterações.
+MA198 - O status só poderá passar de <<Pendente/Pendente Variável/Extraído>> para Cancelado.
+MA199 - Cliente não encontrado. Pesquisar na Base de Inativos?
+MA200 - Não é possível consultar conta inativa por nome/razão social.
+MA201 - Operação realizada com sucesso. Registro pendente de dupla custódia.
+MA202 - Operação não permitida! Conta cartão com situação diferente de “Cedida”.
+MA203 - <Confirma/Cancela> desfazimento de cessão?
+MA204 - Operação não permitida! Desfazimento de cessão com situação diferente de “Pendente”.
+MA205 - Desfazimento de Cessão de Crédito não permite a operação.
+MA206 - Tipo Pessoa informado no cadastro de variáveis é diferente do informado no cadastrado da cessão de crédito.
+MA207 - Faixa de atraso da variável deve ser maior ou igual a quantidade cadastrada na cessão de crédito.
+MA208 - Faixa de valor da variável deve ser maior ou igual ao valor principal cadastrado para a cessão de crédito.
+MA209 - Confirma a solicitação de reenvio do código de ativação para o token? (Confirmar/Cancelar).
+MA210 - Ativação de campanha não permitida! Dia para ativação superior ao parametrizado na variável de acordo.
+MA211 - Operação não permitida! Conta é de produto BNDES.
+MA212 - Quantidade de <dias de bloqueio | dias para retorno de cotação do dólar I tentativas de adesão ao serviço SMS batch/on-line I contas em que o mesmo CPF pode ser cliente adicional/solidário> deve ser igual ou maior que 1.
+MA213 - Operação não permitida!  Perfil diferente de funcionário Caixa.
+MA214 - O Saldo Enquadrado Final não pode ser menor que o Saldo Enquadrado Inicial.
+MA215 - Não existe fatura a vencer.
+MA216 - Não existem débitos a serem pagos.
+MA217 - Cessão pendente de Percentual sobre Crédito Cedido.
+MA218 - Cessão já não permite cancelamento.
+MA219 - Quantidade de dias para expurgo não foi parametrizada.
+MA220 - Erro na recuperação da senha junto ao SIRAN. Por favor, tentar novamente.
+MA221 - ATENÇÃO: Existe Proposta de Acordo Pendente. Deseja incluir um novo?
+MA222 - Data informada não pode ser igual ou superior à data atual.
+MA223 - Data de expiração do cartão virtual menor que a data atual.
+MA224 - O limite para inclusão de cartões virtuais deste tipo foi excedido.
+MA225 - Máximo de autorizações por dia deve ser igual ou maior que 1.
+MA226 - Valor máximo de autorização deve ser diferente de zero.
+MA227 - Valor máximo de autorização deve ser menor ou igual ao limite do cartão virtual.
+MA228 - O cartão já está desbloqueado.
+MA229 - Simulação permitida somente em D+2 da data de vencimento.
+MA230 - Resposta está incorreta para a pergunta realizada ao cliente.
+MA231 - A senha do cartão será enviada por carta senha.
+MA232 - A senha não pode ser encaminhada por SMS.
+MA233 - O horário final deve ser maior que o horário inicial.
+MA234 - A data informada não pode ser superior à data corrente.
+MA235 - O valor máximo deve ser maior que o valor mínimo.
+MA236 - O usuário <matrícula do usuário> exportou em <data da última exportação> o resultado da consulta utilizando os mesmos filtros. Deseja continuar? (SIM/NÃO)
+MA237 - Para geração de gráfico consolidado com todos os períodos é necessário que todos os períodos tenham a mesma quantidade de dias.
+MA238 - Não há faturas disponíveis para esse cartão.
+MA239 - Conta cadastrada com sucesso.
+MA240 - O titular da conta informada não é o mesmo do cartão.
+MA241 - Esta conta já está vinculada para o cartão.
+MA242 - Conta excluída com sucesso.
+MA243 - Não foi possível realizar a exclusão da conta.
+MA244 - Não há conta vinculada a este cartão.
+MA245 - Não há pagamento para o período.
+MA246 - A consulta é permitida até 30 dias da data atual.
+MA247 - Confirma o cancelamento do pagamento pendente? (SIM/NÃO)
+MA248 - Data vencimento da parcela Inválido.
+MA249 - Data vencimento maior que a data limite parametrizada.
+MA250 - O horário final da última faixa de envio de alerta deve ser igual a 23:59.
+MA251 - O período deve estar entre 30 a 365 dias.
+MA252 - O período deve estar entre 2 a 10 anos.
+MA253 - Pelo menos um meio de comunicação deve ser informado.
+MA254 - Cliente já possui retenção no período de um ano.
+MA255 - Atenção! Se a conta ficar com nenhum telefone celular vinculado, ela será bloqueada por bloqueio cadastral. Confirma essa operação? (Sim/Não)
+MA256 - Selecione no máximo 6 faturas para envio.
+MA257 - Operação não permitida! Este bloqueio é excluído automaticamente pelo sistema após marcação como sim dos indicadores de envio SMS e de identificação positiva via token.
+MA258 - Conta Cartão possui bloqueio de reemissão de cartão.
+MA259 - Conta cartão com bloqueio irreversível.
+MA260 - Endereço não localizado para o CEP informado.
+MA261 - Contrato não dispõe de saldo credor. Operação não pode ser realizada.
+MA262 - Valor a devolver deve ser igual ou inferior ao valor máximo a devolver.
+MA263 - O campo <nome do campo de> deve ser menor ou igual ao campo <nome do campo até>. Esta regra está associada a uma ou mais estratégias de cobrança, deseja continuar?
+MA264 - Operação não permitida. Regra associada a uma ou mais estratégias de cobrança.
+MA265 - Operação não permitida. Estratégia faz parte de uma ou mais associações de RDG/Produto ativa.
+MA266 - Operação não permitida. Ação da Estratégia está vinculada a uma ou mais Regras.
+MA267 - O valor do percentual do limite de crédito deve ser superior a 0%.
+MA268 - O valor do percentual do limite de crédito deve ser inferior ou igual a 100%.
+MA269 - O valor informado para o nível deve ser superior ao valor do nível anterior a ele.
+MA270 - Operação não permitida. Existe estratégia inativa associada.
+MA271 - Já existe uma mensagem eletrônica de custódia <pendente/aprovada/rejeitada> ativa. Deseja inativa-la e substituir por esta? (Confirmar/Cancelar).
+MA272 - O tempo pesquisado é muito extenso. É necessário reduzir a data de processo.
+MA273 - Existem intervalos de RDG não cadastrados ou duplicados.
+MA274 - Data de expiração do cartão virtual maior que a data máxima parametrizada para o produto.
+MA275 - O canal de cobrança é inválido ou está inativo.
+MA276 - Tipo de transação não permitida para cartão nacional.
+MA277 - Data superior a data corrente.
+MA278 - A descrição resumida já existe cadastrada para o Canal.
+MA279 - O intervalo de meses entre a data de corte inicial e a data de corte final deve ser igual ou inferior a 12 meses.
+MA280 - Não é permitido alterar a imagem, pois a mesma já foi utilizada em faturas geradas aos clientes. Incluir nova imagem associada ao CRD.
+MA281 - Visualização não permitida para cartões diferentes.
+MA282 - Nome da imagem já cadastrada.
+MA283 - O número máximo de e-mails permitidos para a mensagem eletrônica é de 40 emails.
+MA284 - Confirma a criação do rascunho? (Confirmar/Cancelar).
+MA285 - A eliminação de rascunho apagará todas as suas informações. Deseja prosseguir com a operação?
+MA286 - Confirma a reversão do perfil?
+MA287 - Preencha o campo corretamente.
+MA288 - Solicitação efetuada com sucesso! O processamento da Cessão ocorrerá no próximo sábado.
+MA289 - Confirma cancelamento da solicitação de cessão unitária?
+MA290 - Bloqueio de conta cartão não permite alteração de limite.
+MA291 - A operação não pode ser realizada na mesma conta do usuário autenticado no sistema.
+MA292 - Linha de saque não parametrizada para o produto.
+MA293 - Valor a financiar superior ao máximo permitido.
+MA294 - Data da transação deve ser menor ou igual a data atual.
+MA295 - E-mail acrescentado.
+MA296 - Confirma importação do arquivo?
+MA297 - Operação não efetivada. Valor solicitado superior ao Limite de crédito disponível + Limite atual da conta.
+MA298 - Perfil não possui permissão para alteração de envio de SMS.
+MA299 - Quantidade de <dias para retorno de cotação do dólar / tentativas de adesão ao serviço SMS batch/on-line> deve ser menor ou igual a 999.
+MA300 - Não existe parametrização de cessão para data atual.
+MA301 - Operação não permitida! Desfazimento de Cessão com situação pendente de execução.
+MA302 - <Tabela ou Serviço/Ação> já pertence a outro grupo de custódia.
+MA303 - Data incorreta, dia não útil.
+MA304 - Tabela não cadastrada no grupo de custódia.
+MA305 - A <nome do campo> não pode ser inferior à data corrente.
+MA306 - Usuário não pertence ao grupo de custódia.
+MA307 - Não tem permissões para <bloquear / desbloquear / sobrepor bloqueios> cartões.
+MA308 - O cartão não tem um bloqueio <irreversível/reversível>.
+MA309 - O cartão tem um bloqueio <irreversível/reversível>.
+MA310 - Será colocado um <bloqueio / bloqueio irreversível>. Apenas um perfil com privilégios poderá retirá-lo. Deseja bloquear o cartão?
+MA311 - Não Dispõe Permissões Suficientes Para Retirar um Bloqueio Irreversível de Cartão.
+MA312 - Ocorrerá o Desbloqueio do Cartão.
+MA313 - O bloqueio <Reversível ou Irreversível> do Cartão Será Substituído.
+MA314 - Confirma o cancelamento do acordo?
+MA315 - Não Dispõe de Permissões Especiais Para Retirar Este Tipo De Bloqueio.
+MA316 - Expediente com classificação Fraude/Disputa Incorreta. Confirma reclassificação?
+MA317 - Abertura de Case VISA rejeitada por <motivo da rejeição>.
+MA318 - Abertura de Disputa VISA rejeitada por <motivo da rejeição>.
+MA319 - <Inclusão/Alteração/Exclusão> de Reporte de Fraude Rejeitada.
+MA320 - A hora informada é inválida.
+MA321 - A hora final não pode ser menor que a hora inicial.
+MA322 - A quantidade máxima de registros para exportação é 500. Refine a pesquisa e tente novamente.
+MA323 - O intervalo de dias entre a data inicial e a final deve ser igual ou inferior a 30 dias.
+MA324 - Operação não permitida! Quantidade máxima de <<Num_Max_fraude>> chargebacks por motivo de fraude excedidos!
+MA325 - Dia Limite para Ativação da Campanha Inválido. Informe um valor entre 1 e 28.
+MA326 - Quantidade Máxima de Acordos Simultâneos inválida.
+MA327 - Deseja Realizar A <Inclusão/Alteração/Exclusão/Confirmação>?
+MA328 - Operação Efetuada Corretamente.
+MA329 - Deseja realizar outra <<Inclusão/Alteração/Exclusão/Confirmação>?
+MA330 - Operação não permitida! CRD não permite visualização em PDF.
+MA331 - Confirma o cancelamento da marcação de Regularização Manual?
+MA332 - Foi Alterada A Data Contábil. Deseja Continuar?
+MA333 - A quantidade meses para expurgo de acordos não aceitos não deve ser menor que 1.
+MA334 - Existe simulação Quita Saldo Pendente. Deseja excluir esta simulação?
+MA335 - Cliente não possui e-mail cadastrado.
+MA336 - O e-mail informado é inválido.
+MA337 - Não existe informação para o dado de origem para a data selecionada.
+MA338 - O arquivo anexado deve possuir a extensão txt.
+MA339 - Próximo plano de anuidade já renovado com isenção permanente. A isenção será alterada para aplicação apenas no plano renovado. Deseja continuar?
+MA340 - Próximo plano de anuidade renovado com isenção. A isenção será alterada para aplicação permanente. Deseja continuar?
+MA341 - Próximo plano de anuidade já renovado com aplicação de isenção. As taxas de anuidade voltarão a ser cobradas a partir do plano subsequente. Confirma a reversão?
+MA342 - A lista de TIPCONs associada será excluída. Deseja continuar?
+MA343 - O período consultado deve ser menor ou igual a 60 dias.
+MA344 - Compra parcelada não vigente
+MA345 - Parcelas a acelerar deve ser menor que parcelas pendentes
+MA346 - Esta autorização não tem estado pendente
+MA347 - Solicitação de Enquadramento já existente.
+MA348 - O arquivo anexado está vazio.
+MA349 - Descrição Resumida já utilizada para outra variável.
+MA350 - Operação realizada com sucesso<OK> disponível
+MA351 - Operação não permitida para conta conjunta não-solidária! O cliente deve procurar a agência.
+MA352 - Confirma cancelamento da Solicitação de Débito Automático?
+MA353 - A data de exclusão da ação não pode ser anterior à data de inclusão da ação e posterior à data corrente.
+MA354 - Confirma Nova Solicitação de Dossiê? Visualização do Dossiê estará disponível a partir do próximo dia útil.
+MA355 - Antecipação não permitida. Retornar no próximo dia útil.
+MA356 - O CRD <código CRD – nome CRD> já está vinculado a outro texto de documento ativo.
+MA357 - Deseja ativar o canal <nome do canal>? (Ok/Cancelar).
+MA358 - Deseja suspender o canal <nome do canal>? (Ok/Cancelar).
+MA359 - Deseja inativar o canal <nome do canal>? (Ok/Cancelar).
+MA360 - Qualquer alteração ou cancelamento somente poderão ser realizados após 24 horas úteis, a partir da solicitação. Deseja confirmar a operação?
+MA361 - Selecione o Motivo da Reabilitação.
+MA362 - A conta cartão possui acordo ativo ou pendente.
+MA363 - Conta não enquadrada.
+MA364 - Atenção ao Inativar esta Associação todos os produtos vinculados a ela estarão sem régua de cobrança. Deseja realmente continuar?
+MA365 - O tamanho do campo da faixa <inferior/superior> bin não pode ser inferior a 10 dígitos.
+MA366 - O tipo de disposição não pode ser Sem Especificar se a entidade não é Externa.
+MA367 - Esta Regra está associada a uma ou mais estratégias de cobrança inativas, deseja continuar?
+MA368 - Esta Estratégia está associada a uma ou mais associações de RDG/Produto inativas, deseja continuar?
+MA369 - Esta associação está inativa, deseja continuar?
+MA370 - A data de ativação não pode ser menor que a data do sistema.
+MA371 - Deve selecionar um registro antes de poder alterar.
+MA372 - Deve selecionar um registro antes de poder cancelar.
+MA373 - O tipo de Ação alterado está vinculado a uma ou mais Regras.
+MA374 - Cliente não correntista CAIXA.
+MA375 - É necessário relacionar pelo menos uma Ação.
+MA376 - Exclusão não permitida! O grupo selecionado possui MCC associados.
+MA377 - Grupo MCC de Origem e Destinos iguais.
+MA378 - Reemissão não permitida! CPF do cliente consta na lista de óbito. O(s) cartão(ões) será(ão) cancelado(s).
+MA379 - Reemissão não permitida! CPF do cliente consta na lista OFAC. O(s) cartão(ões) será(ão) cancelado(s).
+MA380 - O bloqueio da seção Regras deve ser diferente do bloqueio da seção Validação p/ Aplicação das Ações.
+MA381 - O elemento de apoio e o elemento autorizador não podem ser o mesmo.
+MA382 - Existe análise pendente de finalização para esta transação.
+MA383 - Sistema indisponível no momento. Tente mais tarde.
+MA384 - Não é possível realizar análise automática no momento. Tente novamente mais tarde.
+MA385 - Transação cancelada em fatura. Sem débito para o cliente.
+MA386 - Conta cedida. Contata empresa responsável pelo contrato.
+MA387 - Conta não localizada para contestação. Verificar dados cadastrais.
+MA388 - Necessária análise. Tratamento Manual.
+MA389 - É necessário informar o período a ser pesquisado e a Estratégia ou Agência/Conta.
+MA390 - Operação não permitida. Todos os intervalos de RDG (00 a 99) já foram preenchidos.
+MA391 - Operação não permitida. O “R. Digit Fim” da última faixa deve ser igual a 99.
+MA392 - Solicitação de Cessão Unitária já foi agendada.
+MA393 - Operação não permitida. O R. Digit Fim deve ser maior ou igual ao R. Digit Início.
+MA394 - Data inicio vigência deve ser maior ou igual a data de hoje.
+MA395 - Registro de Boleto não efetuado. Sistema indisponível.
+MA396 - Não se pode gerar chargeback, necessita pedido de documentação.
+MA397 - Chargeback parcial requer abono para sua geração.
+MA398 - Inserir um valor menor que o da operação.
+MA399 - Valor mínimo deve ser menor que o valor da transação.
+MA400 - Obrigatória geração de fraude.
+MA401 - O chargeback será realizado após 24 horas da compra.
+MA402 - Não há relacionamentos inadimplentes para este tipo de bloqueio.
+MA403 - O percentual mínimo de entrada deve ser maior que zero.
+MA404 - Quantidade máxima de revisões permitidas para a conta cartão deve ser igual ou maior que 1.
+MA405 - O intervalo de dias entre as solicitações de revisão de limite deve ser menor ou igual a 999.
+MA406 - Nome do arquivo não pode ser igual a um arquivo já incluído
+MA407 - O arquivo anexado deve possuir a extensão xls.
+MA408 - O Arquivo ultrapassou o limite máximo de 3 MegaBytes permitido.
+MA409 - A cópia do perfil foi realizada e enviada para aprovação na dupla custódia.
+MA410 - O cancelamento de rascunho apagará todas as suas informações que não estiverem gravadas antes no rascunho. Deseja prosseguir com a operação?
+MA411 - Deseja enviar o rascunho para aprovar dupla custódia?
+MA412 - O percentual máximo de RMC não pode ser igual a 0.
+MA413 - O percentual <mínimo/máximo> de crédito em conta não pode ser igual a 0.
+MA414 - O fator para obtenção do limite não pode ser igual a 0.
+MA415 - A quantidade de parcelas da tarifa de emissão de cartão consignado não pode ser igual a 0.
+MA416 - Dia de vencimento não parametrizado.
+MA417 - Perfil não possui permissão para alteração de tipo de envio de fatura.
+MA418 - Já tem um adiamento ativo, pesquise em consultas.
+MA419 - Qte. dias excede o max. estabelecido para este produto -> Número de dias a Prorrogar.
+MA420 - Situação da fatura dif. de pendente.
+MA421 - Transferência não realizada! Por favor, refaça a operação.
+MA422 - Operação não permitida! Situação da transferência de valor contratado igual a <situação da transferência>.
+MA423 - Deve selecionar um registro.
+MA424 - Razão Inválida para o produto frete.
+MA425 - A data do processo para pesquisa deve ser maior ou igual a data do enquadramento da conta.
+MA426 - O percentual máximo de RMC não pode ser maior que 100.
+MA427 - O percentual <mínimo/máximo> de crédito em conta não pode ser maior que 100.
+MA428 - Operação não permitida! Valor para transferência inferior ao mínimo permitido.
+MA429 - Quantidade máxima de variáveis excedida. São permitidos apenas 10 parâmetros.
+MA430 - Dia de pré-corte não pode ser igual a 0.
+MA431 - Dia de pré-corte não pode ser superior a 28.
+MA432 - Operação não permitida. Necessário 	que o cliente efetue o aviso de recebimento do cartão (desbloqueio) para realizar a transferência.
+MA433 - Identificador da convenente já cadastrado.
+MA434 - Número de Identificação do Cliente não localizado.
+MA435 - A Data não pode ser maior que a data do dia.
+MA436 - Atenção. Confira os valores arredondados.
+MA437 - Operação não disponível para cartões desta bandeira.
+MA438 - O intervalo de dias entre a data inicial e data final de lote não deve ser superior a 10 dias.
+MA439 - Cliente não possui contas válidas suficientes para efetuar transação.
+MA440 - As moedas de entidade e contrato são distintas.
+MA441 - Contrato associado a mais de uma moeda.
+MA442 - Os dados informados entram conflito com os de outro parâmetro cadastrado. Verificar o preenchimento do campo <Nome do Campo>.
+MA443 - Nenhuma conta encontrada.
+MA444 - Operação não disponível para esta carteira digital.
+MA445 - O código de tradução para esta carteira não pode ser igual a zero.
+MA446 - A tradução associada à carteira digital associada está inativa.
+MA447 - Número de referência do cartão inexistente.
+MA448 - O intervalo de meses entre a data inicial e a data final deve ser igual ou inferior a 12 meses.
+MA449 - Já existe uma solicitação de relatório analítico para Mês/Ano de referência.
+MA450 -  Operação não permitida. O limite máximo de 20 grupos Ativos foi atingido. 
+MA451 - Não existe informação de Perfil de Gastos disponível para a Fatura.
+MA452 - Grupo “Outros” não pode ser alterado/excluído.
+MA453 - Código da fatura inválida.
+MA454 - Código Cliente inválido.
+MA455 - Código Grupo MCC inválido.
+MA456 - Não há conta apta para inclusão de débito automático.
+MA457 - Não é permitido a operação para cartão virtual com situação igual a “Cancelado”.
+MA458 - Convenente já associada a outro convênio consignado.
+MA459 - O percentual mínimo de crédito em conta não pode ser superior ao percentual máximo de crédito em conta.
+MA460 - Código de convênio já cadastrado.
+MA461 - Registro de percentual de desconto já existe para a convenente e tipo de público.
+MA462 - Percentual de desconto do tipo de público não pode ser superior a 100.
+MA463 - Não há conta apta para inclusão.
+MA464 - Operação não permitida! Solicitação negada por código de segurança do cartão não recebido.
+MA465 - Operação não permitida! Conta cartão não possui telefone cadastrado.
+MA466 - Transação já anulada ou revertida.
+MA467 - Operação não permitida! Valor para transferência superior ao disponível.
+MA468 - O prazo de retorno do SRO deve ser maior que a quantidade de dias do SRO.
+MA469 - Deseja realmente cancelar o crédito em conta consignado? (Sim/Não).
+MA470 - Deseja realmente estornar o crédito em conta consignado? (Sim/Não).
+MA471 - Deseja realmente atualizar a situação do crédito em conta consignado? (Sim/Não).
+MA472 - Selecione um convênio para pesquisa.
+MA473 - Operação não permitida! Situação de débito em conta consignado igual a <situação da transferência>.
+MA474 - O arquivo anexado deve possuir a extensão PDF.
+MA475 - Deseja reativar todas as convenentes associadas ao convênio consignado? (Sim/Não).
+MA476 - Operação não permitida. Cliente não possui conta de débito para realizar a ação.
+MA477 - Operação não permitida. Existe solicitação com situação “Pendente”.
+MA478 - Solicitação retornada com erro.
+MA479 - Limite do tempo de resposta excedido.
+MA480 - Deseja exportar <Quantidade de registros> registro(s) para o arquivo TXT?
+MA481 - Confirma a solicitação de alteração de <Quantidade de registros> registro(s)?
+MA482 - Confirma a cópia de <Quantidade de registros> registro(s) para a versão <Número Versão destino>?
+MA483 - Ocorreu erro no processamento do arquivo.
+MA484 - Eventos De Contabilidade Não Encontrado Na Tabela De Eventos Da Caixa.
+MA485 - Reapresentação deve estar pendente e possuir número de ocorrência igual ao número do processo.
+MA486 - Tipo de ocorrência deve ser de reapresentação.
+MA487 - Transação do expediente destino deve ser do mesmo Tipo de Fatura.
+MA488 - Processo de destino deve estar com situação fechada e solucionada com chargeback.
+MA489 - Deve inserir o tipo de rede para pesquisar e qualquer outro campo.
+MA490 - Cartão do processo de destino diferente do Cartão de Origem.  MA491 – Confirma a alteração do agrupador para os <Quantidade de Registros> registros?
+MA491 - [definicao nao localizada no catalogo]
+MA492 - Informe o campo <Nome do Campo Obrigatório>.
+MA493 - Existe solicitação de antecipação pendente, confirma o cancelamento?
+MA494 - <Produto/Taxa Anuidade> não está com situação ativa.
+MA495 - Ao inativar esse registro não será possível registrar acordo via <código do canal>, deseja continuar?
+MA496 - Código de razão inválido para transações pertencentes ao programa de mobilidade ELO.
+MA497 - Status da Cessão não permite inclusão de prévia.
+MA498 - Data da prévia online inválida.
+MA499 - Status da Prévia não permite alteração.
+MA500 - Status da Prévia não permite cancelamento.
+MA501 - Existe prévia pendente para a cessão.
+MA502 - O LOGO MARCA NÃO É UM LOGO TIPO PARCEIRO.
+MA503 - O LOGO MARCA NÃO É UM LOGO DO TIPO DINERS.
+MA504 - O LOGO do PARCEIRO/DINERS NÃO PODE SER PARAMETRIZADO.
+MA505 - LOGO VINCULADO A ENTIDADE.
+MA506 - LOGO VINCULADO A BANDEIRA - MARCA TIPO DE CARTAO.
+MA507 - LOGO VINCULADO A PRODUCTO COBRANDED 
+MA508 - LOGO VINCULADO A PRODUTO DINERS 
+MA509 - Status da Cessão não permite alteração de parâmetro.
+MA510 - Pelo menos um produto deve fazer parte da Cessão de Crédito.
+MA511 - As opções selecionadas identificam os parâmetros para EXCLUSÃO das contas na extração, cessão prévia e cessão massiva.
+MA512 - Reporte de Fraude fora do prazo.
+MA513 - Não há fatura disponível para conta cartão.
+MA514 - Deseja enviar Reporte de Fraude?
+MA515 - A data de hoje <data corrente> não se encontra entre a data início <data início campanha> e data final <data final da campanha> da campanha.
+MA516 - Campanha não vigente.
+MA517 - A campanha selecionada está excluída.
+MA518 - Situação da disputa não permite solucionar ocorrência.
+MA519 - Não é possível iniciar disputa, aguardando recebimento de crédito.
+MA520 - Não é permitida a reemissão de senha para este produto.
+MA521 - Parcela não encontrada.
+MA522 - Não há linha digitável gerada para este cliente.
+MA523 - Evento de Origem Inativo.
+MA524 - Grupo CRD Inativo.
+MA525 - CRD Inativo.
+MA526 - A carta não permite envio via e-mail.
+MA527 - Não Poderá Incluir Mais Endereços.
+MA528 - Tem Certeza De Alterar O Endereço De Correspondência?
+MA529 - A data inicial não pode ser maior que a data final
+MA530 - A data final não pode ser maior que a data atual.
+MA531 - O intervalo de dias entre a data inicial e a final deve ser igual ou inferior a <15 / 60> dias.
+MA532 - O intervalo de dias entre a data inicial e a atual deve ser igual ou inferior a 365 dias.
+MA533 - Já existe solicitação pendente ou processada com os mesmos dados informados.
+MA534 - São permitidas somente 12 solicitações pendentes.
+MA535 - Não identificado solicitação de atualização de saldo com a situação de “Processado”.
+MA536 - Nenhum documento localizado para a data informada.
+MA537 - O acordo será ativado com o pagamento do valor do IOF até o vencimento.
+MA538 - Intervalo entre Limites, a Primeira Faixa é menor a R$ 1,00.
+MA539 - O valor da faixa seguinte deve ser maior que o valor da faixa imediatamente anterior.
+MA540 - O valor do percentual <nome do campo> deve ser superior a 0%.
+MA541 - O valor do percentual <nome do campo> deve ser inferior ou igual a 100%.
+MA542 - Intervalo de tempo (dias) entre aumento de limite não pode ser Zero.
+MA543 - Quantidade de parcelamento excede o limite permitido.
+MA544 - Essa exclusão será uma inativação do registro, deseja continuar?
+MA545 - O valor do limite temporário não pode superar o total disponível temporário.
+MA546 - O valor inicial da faixa de nível superior deve ser igual ao valor final da faixa anterior mais R$ 0,01.
+MA547 - Obrigatório informar todos os campos da faixa.
+MA548 - A quantidade máxima de parcelas do acordo é 180.
+MA549 - Perfil não possui permissão para alterar o indicador de adesão de anuidade por faixa de gasto.
+MA550 - O período da consulta não pode ser maior que 180 dias.
+MA551 - A quantidade máxima de parcelas do acordo é 96.
+MA552 - Deseja enviar pré-arbitragem à bandeira?
+MA553 - Confirma o cancelamento do processamento de tombamento de produto?
+MA554 - Não existe acionamento registrado para a conta cartão.
+MA555 - Operação não permitida! Já existe solicitação de tombamento em andamento.
+MA556 - Quantidade de dias parametrizados deve ser maior que zero.
+MA557 - O intervalo de quantidade de parcelas da simulação Opção 2 Emissor não deve ser igual à Opção 1 Emissor.
+MA558 - Operação não permitida. A soma das parcelas informada excede a quantidade parametrizada.
+MA559 - O valor mínimo da faixa deve ser igual ao valor máximo da faixa anterior mais R$ 0,01. Confirma alteração do valor informado?
+MA560 - O valor máximo da faixa informado deve ser igual ao valor mínimo da próxima faixa menos R$ 0,01. Confirma alteração do valor informado?
+MA561 - Valores informados já estão cadastrados em outro percentual de desconto. Confirma adequação das faixas para inclusão do registro?
+MA562 - Quantidade de dias para cancelamento não pode ser menor ou igual que a quantidade de dias para aviso de pendência.
+MA563 - Não se permite Chargeback para o cod. razão informado.
+MA564 - Para ativar o acordo, deve ser feito pagamento via boleto e as demais parcelas do acordo serão agendadas em débito automático.
+MA565 - Operação realizada com sucesso. Os juros de carência serão estornados.
+MA566 - Selecione uma conta para débito automático.
+MA567 - Acordo em débito automático. Confirma a operação?
+MA568 - Texto de Perda de Capital (CONRES) não informado.
+MA569 - Operação não permitida! Aguarde o vencimento da parcela do acordo.
+MA570 - Confirma opção de débito em conta para pagamento do acordo?
+MA571 - Débito em conta não permitido! Existe <antecipação/cancelamento> pendente.
+MA572 - Período não pode ser superior a seis meses.
+MA573 - Taxa BNDES deve ser inferior a taxa total do parcelado BNDES.
+MA574 - Atualização de <endereço / meio de comunicação> não efetivada no SICLI. Por gentileza, realizar novamente a operação.
+MA575 - Conta enquadrada não permite utilização de cheque especial e débito após vencimento. Favor realizar nova solicitação de débito.
+MA576 - Já existe parcela faturada! Débito em conta estará disponível no próximo vencimento.
+MA577 - CPF não encontrado na base da Receita Federal.
+MA578 - Confirma exportação do arquivo de pedido de liberação?
+MA579 - Arquivo exportado com sucesso.
+MA580 - Alteração possível somente para autorizações com erro ou já solucionadas.
+MA581 - Indisponibilidade de recurso DB.
+MA582 - CHPRAS informado não está vinculado ao CPF do titular/representante legal ou CNPJ da empresa.
+MA583 - Não existe relacionamento ativo entre a taxa de anuidade e o nicho do Open Banking.
+MA584 - Já existe solicitação de ação de retenção de cliente acatada para conta.
+MA585 - Limite indisponível no SICAC.
+MA586 - Não é possível realizar CBK antes dos 30 dias da autorização.
+MA587 - Tipo de acesso inválido. Val. Permit.: S(SIMULAR) / C(CONFIRMAR).
+MA588 - Texto Carta Senha não informado.
+MA589 - A bandeira do cartão está inativa para a tradução da carteira digital associada ao Token.
+MA590 - Confirma o cancelamento da solicitação de reemissão pendente?
+MA591 - MPA869 - VLR Transit deve ser maior ou igual ao VLR parametrizado.
+MA592 - Situação do AR não permite operação.
+MA593 - Existe débito agendado para conta. Confirma o bloqueio do débito?
+MA594 - Desbloqueio do débito não permitido para o vencimento atual.
+MA595 - Será solicitado débito em conta para fatura atual. Confirma desbloqueio do débito?
+MA596 - <Bloqueio ou Desbloqueio> confirmado com sucesso.
+MA597 - Se o valor da fatura ultrapassar o limite máximo definido, nenhum valor será debitado.
+MA598 - Conta cartão não possui adesão ao débito automático via NSGD.
+MA599 - Sua próxima fatura, com vencimento em <<DD/MM de vencimento da fatura>> já será paga automaticamente usando o saldo disponível na sua conta <<Agência e Conta Débito, formato(99999 XXXXXXXXXX99-9)>>.
+MA600 - Cancelamento de cadastro de débito automático efetivado a partir de <DD/MM vencimento fatura>.
+MA601 - <Bloqueio/Desbloqueio> não permitido antes de 2 dias (úteis) do vencimento.
+MA602 - Bloqueio efetuado com sucesso para o vencimento <DD/MM vencimento fatura>. Próximos agendamentos serão realizados a partir do vencimento <DD/MM vencimento fatura>.
+MA603 - Débito será efetivado para o vencimento <DD/MM vencimento fatura atual>.
+MA604 - Operação não permitida! Cartão já possui adesão ao débito automático.
+MA605 - Texto de Custas Processuais não informado.
+MA606 - Texto de Honorários Advocatícios não informado.
+MA607 - Exclusão não efetuada, existe dependência com outras tabelas.
+MA608 - Usuário – senha não tem permissão.
+MA609 - Endereço está associado a contrato(s). Não é possível sua exclusão.
+MA610 - Operação não permitida! Não existe acordo ativado para a conta cartão.
+MA611 - Operação não permitida! Conta Cartão possui acordo Ativo.
+MA612 - Data de amortização deve ser menor ou igual a data atual.
+MA613 - Operação não permitida! Conta cartão com movimentação de crédito / débito pós-enquadramento.
+MA614 - Operação realizada com sucesso. Atualização de saldo será cancelada caso haja crédito/débitos pós enquadramento. MA615 – O valor do campo <nome do campo> deve ser menor ou igual a 99.
+MA615 - [definicao nao localizada no catalogo]
+MA616 -  O valor do campo <nome do campo> deve ser menor ou igual a 9999.
+MA617 - MPA0680 - VLR Transit ELO Nacional e Internacional deve ser maior ou igual ao VLR parametrizado.
+MA618 -  Operação não permitida! A situação do AR é a mais atual dos correios.
+MA619 -  Operação não permitida! Cartão já possui Aviso de Recebimento.
+MA620 -  Bloqueio do cartão é igual ao parametrizado no Status Eventos dos Correios.
+MA621 - Erro de processamento! Realize novamente a operação.
+MA622 - Data fim de vigência deve ser maior ou igual a data de hoje.
+MA623 - Não há conta de débito apta para devolução do saldo credor.
+MA624 - CEP informado é inválido ou não existe na base de dados.
+MA625 - CEP fim deve ser maior que o CEP início.
+MA626 - <CAMPO> não pode ser maior que 12 meses.
+MA627 - Favor ajustar a ordem de prioridade do nicho após alteração, através do menu “Parâmetros >> Anuidade >> Cashback >> Hierarquia de Nichos.
+MA628 - Não existe código HSM ativo.
+MA629 - Informe um dos parâmetros de consulta.
+MA630 - Quantidade Cotações deve ser maior que ou igual à 1.
+MA631 - Quantidade Cotações deve ser menor que ou igual à 360.
+MA632 - Data Inclusão formato inválido.
+MA633 - A busca não retornou resultados.
+MA634 - Data inicial superior a 20 anos!
+MA635 - <Campo> não deve estar vazio.
+MA636 - O tamanho deve ser entre 0 e 16.
+MA637 - Código de Evento Correios não Cadastrado.
+MA638 - Código de Evento Correios em Acompanhamento.
+MA639 - Operação realizada com sucesso.
+MA640 - Para este caso o envio da resposta da pré-arbitragem já foi enviada: <Rejeitada > / <Aceita parcial> /<Aceita>.
+MA641 - A situação do cartão não permite Token.
+MA642 - O arquivo anexado deve possuir a extensão .ZIP.
+MA643 - Ocorrência inelegível para chargeback - Trans Segura – TAF
+MA644 - O arquivo ultrapassou o limite máximo permitido de 2GB.
+MA645 - Não existe extrato para gerar a ação.
+MA646 - Falha na tokenização do cartão.
+MA647 - Código de Tradução de Carteira inválido.
+MA648 - <Nome do Campo> inválido [aceitos os valores: <valores permitidos para o campo>].
+MA649 - O campo Dias de Atraso para Permitir Acordo deve ser inferior a <quantidade> do enquadramento.
+MA650 - Operação não realizada: Você está tentando alterar o status da variação cambial com os mesmos valores já existentes.
+MA651 - Contrato em execução judicial. As despesas dos processos serão cobradas junto com a primeira parcela do acordo e o contrato será excluído da execução após o pagamento integral da parcela. O acordo não cumprido possibilita nova execução judicial e outras despesas.
+MA652 - Conta inativa.
+MA653 - Conta cartão sem endereço principal cadastrado.
+MA654 - O campo Dias de Atraso para Ativação de Acordo no Dia não pode ser superior ao campo Dias Atraso para Permitir Acordo.
+MA655 - Tamanho deve ser entre <posição inicial> e <posição final>.
+MA656 - Operação não permitida! O tipo de conversão da transação não foi definido para a conta.
+MA657 - O cartão já possui solicitação vigente para transações internacionais.
+MA658 - Marca-tipo do cartão não admite essa operação.
+MA659 - Domínio do <nome do campo> inválido.
+MA660 - O campo <nome do campo> não corresponde ao padrão esperado.
+MA661 - <Nome do campo> deve ser maior que zero.
+MA662 - Confirma o envio da conta para o UaU CAIXA?
+MA663 - Deve ser informado algum dos campos < nome do campo> ou <nome do campo> quando informar data.
+MA664 - Produto DN não está com situação ativa.
+MA665 - Tipo de cartão do produto não está ativo.
+MA666 - Não existe registro da requisição e resposta.
+MA667 - O CPF informado não é o mesmo do token.
+MA668 - Conta sem E-mail associado, é preciso pelo Tipo De Envio.
+MA669 - Não há contas para esse tipo de pesquisa.
+MA670 - Produto DN não encontrado ou já excluído.
+MA671 - O valor informado não é um CPF ou CNPJ válido: <VALOR INFORMADO>.
+MA672 - Cartão final <últimos 4 dígitos do cartão> possui bloqueio de Operatividade.
+MA673 - Operação não permitida. Transação aprovado em Stand In.
+MA674 - O intervalo de dias entre a data inicial e a data atual não deve ser superior a 180 dias.
+MA675 - Operação não permitida! Conta sem telefone associado.
+MA676 - Não existe fatura para os parâmetros informados.
+MA677 - Informe no máximo <quantidade de faturas> faturas por solicitação.
+MA678 - Operação Não Permitida! Conta cartão possui autorização de parcelado emissor ativa.
+MA679 - Operação Não Permitida! Conta ou cartão do titular bloqueado.
+MA680 - Operação Não Permitida! Nova data de vencimento superior a data fim de diferimento de anuidade.
+MA681 - Operação Não Permitida! Grupo de vencimento inexistente.
+MA682 - Operação Não Permitida! Grupo de vencimento cancelado.
+MA683 - Conta com bloqueio AÇÃO JUDICIAL. Para realizar a renegociação é necessário abrir consulta no Portal DIJUR, conforme MN CO112.
+MA684 - Ativação de cartão não permitida! Conta não é do tipo múltiplo default com limite de crédito zerado.
+MA685 - Dados do cartão atualizados com sucesso! Aguarde o recebimento do cartão para solicitar o desbloqueio.
+MA686 - O arquivo anexado deve possuir a extensão csv.
+MA687 - Operação não permitida! Conta não possui celular cadastrado.
+MA688 - Operação não permitida! Conta não possui e-mail cadastrado.
+MA689 - Número do cartão inválido.
+MA690 - CVV informado inválido.
+MA691 - Data de expiração do cartão inválida.
+MA692 - Operação não permitida! Conta cartão possui Plano de Recuperação Judicial em andamento.
+MA693 - O valor informado para o tipo de ação selecionada fará a liquidação total do Saldo Devedor da conta que será migrada para situação “Migrada SICDT”. Confirma a inclusão do registro?
+MA694 - <CAMPO> já cadastrado.
+MA695 - Solicitação rejeitada. A data da inclusão deverá ser após 180 dias da última solicitação.
+MA696 - Para inclusão da Novação de Dívida em PRJ, os acordos de renegociação pendentes e ativos da conta devem ser cancelados. Confirma o cancelamento desses acordos?
+MA697 - Operação não permitida! A conta possui novação de dívida em PRJ finalizada.
+MA698 - Conta em Plano de Recuperação Judicial.
+MA699 - Exclusão não permitida! Conta possui apropriação de valor de PRJ pendente.
+MA700 - O reenvio de <operação> será executado uma única vez! Confirma o reenvio?
+MA701 - Taxa de anuidade já associada ao benefício de Crédito Salário.
+MA702 - Valor informado da disputa não pode ser maior.
+MA703 - O arquivo anexado deve possuir a extensão PDF, JPEG, JPG ou TIFF.
+MA704 - O nome do arquivo ultrapassou o limite máximo de 16 caracteres permitido.
+MA705 - O Arquivo ultrapassou o limite máximo de 14.5 MegaBytes permitido.
+MA706 - Conta não está vinculada ao CPF/CNPJ informado.
+MA707 - CPF informado não pertence ao titular ou representante legal da conta.
+MA708 - Aumento não permitido neste momento, pois já houve alteração recente com o mesmo valor.
+MA709 - Alteração de limite não permitida! Limite novo informado é igual ou inferior ao limite total de crédito da conta.
+MA710 - Alteração de limite não permitida! Conta é do tipo Múltiplo Default com limite de crédito zerado.
+MA711 - DISPONÍVEL
+MA712 - Cartão não é virtual.
+MA713 - Operação não realizada! SMS já reenviado.
+MA714 - Este campo não permite caractere especial.
+MA715 - O registro foi guardado corretamente.
+MA716 - O registro foi eliminado corretamente.
+MA717 - Já existe voucher recebido para essa transação.
+MA718 - Upgrade deve ser ativado com o cartão do titular.
+MA719 - Limite recusado.
+MA720 - Desbloqueio deve ser realizado pelo titular do cartão.
+MA721 - Deseja realizar o acerto do registro para reenvio ao Parceiro UaU CAIXA? (Confirmar/Cancelar).
+MA722 - Este cartão está selecionado para embossing, não pode reemitir.
+MA723 - Não é possível emissão de segunda via para o titular da conta de empresa – cartão fictício.
+MA724 - DISPONÍVEL
+MA725 - Cancelamento de cadastro de débito automático efetivado a partir de <data de vencimento da fatura atual>. O valor agendado para débito será excluído automaticamente.
+MA726 - Cancelamento de cadastro de débito automático efetivado somente a partir de <data de vencimento da próxima fatura>. O valor agendado para o vencimento de <data de vencimento da fatura atual> ainda será debitado automaticamente.
+MA727 - Agendamento de débito automático excluído para o vencimento de  <data de vencimento da fatura atual>. A partir do vencimento de <data de vencimento da próxima fatura> o agendamento de débito ocorrerá automaticamente.
+MA728 - Bloqueio de agendamento não é mais permitido para esse vencimento! O valor agendado para o vencimento de <data de vencimento da fatura atual> ainda será debitado automaticamente.
+MA729 - Simulação no dia do vencimento permitida até às 21h30m. Após esse horário somente em D+2 do vencimento.
+MA730 - Operação não permitida, cartão já possui bloqueio.
+MA731 - Somente PDF, TIFF ou JPEG são aceitos/validos.
+MA732 - O arquivo PDF ultrapassou o limite máximo de 2 Megabytes permitido.
+MA733 - O arquivo TIFF/JPEG ultrapassou o limite máximo de 10 Megabytes permitido.
+MA734 - O débito automático será desativado partir do vencimento de <data de vencimento da fatura atual>. O valor agendado para débito será excluído automaticamente.
+MA735 - O valor agendado para o vencimento de <data de vencimento da fatura atual> ainda será debitado automaticamente. O cadastro de débito automático será cancelado a partir do vencimento de <data de vencimento da próxima fatura>.
+MA736 - O cadastro de débito automático será cancelado a partir do vencimento <data de vencimento da próxima fatura>.
+MA737 - Cadastro de débito automático cancelado. A partir do vencimento <data de vencimento da próxima fatura> as faturas deverão ser pagas manualmente.
+MA738 - Fatura atual ainda não está fechada. Necessário aguardar o fechamento da fatura para realizar o bloqueio do agendamento.
+MA739 - Para cartão múltiplo a senha é a mesma da conta.
+MA740 - Senha bloqueada.
+MA741 - Erro ao descriptografar a senha.
+MA742 - Senha não cadastrada.
+MA743 - Tipo de documento já existente para o cliente.
+MA744 - Insira uma data válida.
+MA745 - Documento principal. Não se permite a exclusão.
+MA746 - Tipo e número de documento já existem.
+MA747 - Dados de entrada não informados ou mal formatados.
+MA748 - Token inválido.
+MA749 - Erro nos parâmetros de paginação.
+MA750 - Confirma Novo Agendamento de Dossiê? O arquivo será gerado no próximo ciclo de uma hora (disponível apenas entre 08:00 e 18:00).
+MA751 - Solicitação agendada com sucesso!
+MA752 - Número do documento inválido.
+MA753 - Tipo de documento inválido.
+MA754 - A data final de paralisação de cobrança não é a data atual, esta data será alterada para a data de hoje. Confirma essa operação? (Sim/Não).
+
+Resumo filtro: 1233 definicao(oes) localizada(s) de 1235 codigo(s) do RTC.
+
+URL: upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc
+
+Observação: Importado do arquivo Word: SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc | Arquivo recebido: SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc | Formato DOC legado detectado. | Tentando detectar LibreOffice em: soffice | Tentando detectar LibreOffice em: C:\Program Files\LibreOffice\program\soffice.exe | Tentando detectar LibreOffice em: C:\Program Files (x86)\LibreOffice\program\soffice.exe | LibreOffice indisponivel nos caminhos avaliados. | Fallback direto para parser DOC habilitado.
+
+Descrição da Interface do Caso de Uso	Página          3 / 1
+Data Emissão22/04/2026
+Sistema<SIGLA>	Subsistema<SIGLA>	Módulo<SIGLA>
+Projeto<SIGLA> - <Nome do projeto>	Código<SIMDP>
+
+#CONFIDENCIAL 05
+
+SIPCS – Sistema de Processamento de Cartões e Serviços
+
+Descrição da Interface do Caso de Uso
+Mantém Parâmetro de Mensagem Digital
+
+Versão 1.0
+
+Histórico de Revisões
+
+Data	Versão	Descrição	Autor
+09/04/2026	1.0	Especificação inicial do artefato em atendimento ao RTC 24823240 - Super App - Mini App Cartões Onda 2 - Inclusão de Parametrização de Mensagens para Uso dos Canais.	Indra
+
+Sumário
+TOC \o "1-2" \h \z 1.	Objetivo	4
+2.	Detalhamento da apresentação	4
+2.1.	Interface Consulta Parâmetro Mensagem Digital	5
+2.2.	Interface Apresenta Resultado da Consulta Parâmetro Mensagem Digital	6
+2.3.	Interface Detalha Parâmetro de Mensagem Digital	9
+2.4.	Interface Inclui Parâmetro Mensagem Digital	11
+2.5.	Interface Altera Parâmetro Mensagem Digital	14
+2.6.	Interface Exclui Parâmetro Mensagem Digital	17
+3.	Referências	19
+
+1.	Objetivo
+O objetivo deste documento é detalhar os campos e regras das interfaces relacionadas ao caso de uso “Mantém Parâmetro de Mensagem Digital”.
+2.	Detalhamento da apresentação
+O acesso a esta funcionalidade se dá através do menu: Parâmetros >> Mensagens Digitais.
+
+2.1.	Interface Consulta Parâmetro Mensagem Digital
+
+2.1.1.	Campos
+	Estímulo
+-	Descrição: Permite selecionar o estímulo para a consulta da mensagem digital;
+-	Formato: Alfanumérico;
+-	Nome do campo na interface: “Estímulo”;
+-	Máscara: Não se aplica;
+-	Tamanho: 30;
+-	Valores possíveis: Não se aplica;
+-	Regras de interface:
+-	Campo editável;
+-	Campo não obrigatório;
+-	Campo do tipo caixa de seleção.
+
+Dados do rodapé:
+
+	Usuário autenticado na aplicação
+-	Descrição: Apresenta a identificação do usuário que está autenticado na aplicação;
+-	Nome do campo na interface: “Usuário”;
+-	Tamanho: 10;
+-	Valores possíveis: Conforme dados obtidos do SIPCS;
+-	Campo não editável.
+
+2.1.2.	Opções
+	Desfazer
+-	Descrição: Quando acionada, limpa os campos de consulta.
+
+	Consultar
+-	Descrição: Quando acionada, apresenta a interface “2.2 - Interface Apresenta Resultado da Consulta Parâmetro Mensagem Digital”.
+
+	Incluir Novo Registro
+-	Descrição: Quando acionada, apresenta a interface “2.44 - Interface Inclui Parâmetro Mensagem Digital”.
+
+2.1.3.	Regras de Apresentação
+-	Não se aplica.
+
+2.2.	Interface Apresenta Resultado da Consulta Parâmetro Mensagem Digital
+
+2.2.1.	Campos
+Os campos dos filtros de consulta e do rodapé são os mesmos descritos em 2.1.1.
+Os demais campos da interface estão abaixo:
+
+Resultado da Consulta:
+
+	Quantidade de registros encontrados
+-	Descrição: Apresenta o número de registros encontrados para a pesquisa;
+-	Nome do campo na interface: “XXX Registro(s) encontrado(s)”, onde XXX representa o número de registros encontrados;
+-	Tamanho: 03;
+
+-	Descrição: Apresenta o estímulo cadastrado;
+-	Campo não editável;
+-	Campo permite acesso à interface “2.3 - Interface Detalha Parâmetro de Mensagem Digital”.
+
+	Título da Mensagem
+-	Descrição: Apresenta o título da mensagem digital cadastrada;
+-	Nome do campo na interface: “Título da Mensagem”;
+-	Tamanho: 50;
+
+	Situação
+-	Descrição: Apresenta a situação da mensagem cadastrada;
+-	Nome do campo na interface: “Situação”;
+
+Paginação:
+
+	Paginação (Página Anterior)
+-	Descrição: Apresenta a página anterior do resultado da consulta;
+-	Nome do campo na interface: “<<”;
+-	Tamanho: Não se aplica;
+-	O campo permite acesso à interface anterior do resultado da consulta.
+
+	Número da Página
+-	Descrição: Apresenta os números das páginas;
+-	Nome do campo na interface: “XX”, onde XX representa o número da página do resultado da consulta;
+-	Tamanho: 02;
+
+	Paginação (Próxima Página)
+-	Descrição: Apresenta a próxima página do resultado da consulta;
+-	Nome do campo na interface: “>>”;
+-	O campo permite acesso à próxima página do resultado da consulta.
+
+2.2.2.	Opções
+	 As opções “Consultar”, “Desfazer” e “Incluir Novo Registro” são as mesmas descritas em 2.1.2.
+
+2.2.3.	Regras de apresentação
+-	A lista de resultados é apresentada ordenada de forma alfabética pelo campo “Estímulo”.
+-	O sistema deve paginar a lista quando a pesquisa retornar como resultado mais de 5 registros.
+-	O campo “Paginação (Página Anterior)” é apresentado somente a partir da segunda página de resultados da consulta.
+-	O campo “Paginação (Próxima Página)” é apresentado caso haja mais de uma página para o resultado da pesquisa.
+
+2.3.	Interface Detalha Parâmetro de Mensagem Digital
+
+2.3.1.	Campos
+O campo do rodapé é o mesmo descrito em 2.1.1.
+
+-	Nome do campo na interface: “Estímulo*”;
+
+	Quantidade de dias de atraso (De)
+-	Descrição: Apresenta a quantidade de dias de atraso de (igual ou maior);
+-	Formato: Numérico;
+-	Nome do campo na interface: “De (igual ou maior)*”;
+-	Máscara: 999;
+-	Tamanho: 3;
+
+	Quantidade de dias de atraso (Até)
+-	Descrição: Apresenta a quantidade de dias de atraso até (menor ou igual);
+-	Nome do campo na interface: “Até (menor ou igual)*;
+
+-	Nome do campo na interface: “Situação*”;
+
+	Data Situação
+-	Descrição: Apresenta a data da situação da mensagem cadastrada;
+-	Formato: Data;
+-	Nome do campo na interface: “Data Situação*”;
+-	Máscara: DD/MM/AAAA;
+-	Valores possíveis: Conforme dados obtidos no SIPCS;
+
+-	Nome do campo na interface: “Título da Mensagem*”;
+
+	Mensagem
+-	Descrição: Apresenta o texto da mensagem digital cadastrada;
+-	Nome do campo na interface: “Texto da Mensagem*”;
+-	Tamanho: 245;
+
+2.3.2.	Opções
+	Voltar
+
+	A opção “Desfazer” é a mesma descrita em 2.1.2.
+
+	Alterar
+-	Descrição: Quando acionada, apresenta a interface “2.5 - Interface Altera Parâmetro Mensagem Digital”.
+
+	Excluir
+-	Descrição: Quando acionada, apresenta a interface “2.6 - Interface Exclui Parâmetro Mensagem Digital”.
+
+2.3.3.	Regras de apresentação
+	A opção “Desfazer” deve ser apresentada desabilitada.
+
+2.4.	Interface Inclui Parâmetro Mensagem Digital
+
+2.4.1.	Campos
+
+-	Descrição: Permite informar a quantidade de dias de atraso de (igual ou maior);
+-	Campo obrigatório;
+-	Campo do tipo caixa de texto.
+
+-	Descrição: Permite informar a quantidade de dias de atraso até (menor ou igual);
+-	Nome do campo na interface: “Até (menor ou igual)*”;
+
+-	Descrição: Permite informar o título da mensagem digital;
+
+-	Descrição: Permite informar o texto da mensagem digital;
+
+2.4.2.	Opções
+-	Descrição: Quando acionada, retorna à interface anterior.
+
+	 Desfazer
+-	Descrição: Quando acionada, limpa os campos de inclusão.
+
+	Incluir
+-	Descrição: Quando acionada, registra a inclusão de parâmetro de mensagem digital.
+
+2.4.3.	Regras de apresentação
+	A opção “Excluir” deve ser apresentada desabilitada.
+
+2.5.	Interface Altera Parâmetro Mensagem Digital
+
+2.5.1.	Campos
+
+-	Descrição: Apresenta o estímulo da mensagem digital;
+
+-	Descrição: Permite selecionar a situação da mensagem digital.
+
+	Data da Situação
+-	Descrição: Apresenta a data da situação da mensagem digital;
+-	Tamanho:10;
+
+-	Descrição: Permite alterar o título da mensagem digital;
+
+-	Descrição: Permite alterar o texto da mensagem digital;
+2.5.2.	Opções
+
+-	Descrição: Quando acionada, limpa os campos.
+
+	Salvar
+-	Descrição: Quando acionada, registra a alteração das informações de mensagem digital.
+
+2.5.3.	Regras de apresentação
+	O campo “Situação” será permitido apenas selecionar a opção “Ativo”, caso esteja “Inativo”.
+
+2.6.	Interface Exclui Parâmetro Mensagem Digital
+
+2.6.1.	Campos
+
+2.6.2.	Opções
+
+-	Descrição: Quando acionada, registra a exclusão das informações de mensagem digital.
+
+2.6.3.	Regras de apresentação
+	A opção “Alterar” deve ser apresentada desabilitada.
+	O campo “Situação” será permitido apenas selecionar a opção “Inativo”, caso esteja “Ativo”.
+3.	Referências
+REF1.	Especificação de caso de uso Mantém Parâmetro de Mensagem Digital
+Este documento define todos os cenários do caso de uso Mantém Parâmetro de Mensagem Digital.
+REF2.	Glossário
+Este documento define os termos utilizados nos processos da área negocial do Projeto SIPCS, cujo entendimento é essencial ao desenvolvimento do projeto.
+
+Modelo V02 – PPDS
+
+Elaborado porIndra	ArquivoSIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc
+
+URL: upload://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc
+
+Observação: Importado do arquivo Word: SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc | Arquivo recebido: SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc | Formato DOC legado detectado. | Tentando detectar LibreOffice em: soffice | Tentando detectar LibreOffice em: C:\Program Files\LibreOffice\program\soffice.exe | Tentando detectar LibreOffice em: C:\Program Files (x86)\LibreOffice\program\soffice.exe | LibreOffice indisponivel nos caminhos avaliados. | Fallback direto para parser DOC habilitado.
+
+Codigos referenciados no historico: MA100, MA005, MA002, MA001, MA015, MA755, MA756
+
+MA100 - [definicao nao localizada no catalogo]
+MA005 - [definicao nao localizada no catalogo]
+MA002 - [definicao nao localizada no catalogo]
+MA001 - [definicao nao localizada no catalogo]
+MA015 - [definicao nao localizada no catalogo]
+MA755 - [definicao nao localizada no catalogo]
+MA756 - [definicao nao localizada no catalogo]
+
+Resumo filtro: 0 definicao(oes) localizada(s) de 7 codigo(s) do RTC.
 
 Referências visuais encontradas:
 
---- Imagens encontradas na página: https://github.com/Dimitri74/Portifolio-UNIPDS/blob/main/README.md ---
-Imagem: https://img.shields.io/github/last-commit/Dimitri74/Portifolio-UNIPDS?style=flat-square&color=4695EB
-Descrição: GitHub last commit
-Imagem: https://img.shields.io/badge/license-MIT-green?style=flat-square
-Descrição: License
-Imagem: https://img.shields.io/badge/Java-21%20LTS-ED8B00?style=flat-square&logo=openjdk
-Descrição: Java
-Imagem: https://img.shields.io/badge/status-Em%20Produção-success?style=flat-square
-Descrição: Status
-Imagem: https://img.shields.io/badge/GitHub-Dimitri74-181717?style=for-the-badge&logo=github
-Descrição: GitHub
+[Sem imagens detectadas]
 
 Restrições obrigatórias:
 - Manter aderencia ao contexto extraido.
@@ -443,7 +1542,7 @@ Restrições obrigatórias:
 - Priorizar objetividade, ordem de implementacao e testes.
 
 Lacunas e pontos para confirmação:
-- Confirmar requisitos de autenticacao/autorizacao.
+- Validar referencias visuais ausentes ou insuficientes.
 
 Diretrizes obrigatórias de implementação:
 - O desenvolvimento deve seguir rigorosamente as tecnologias, padrões e arquitetura já adotados no projeto existente.

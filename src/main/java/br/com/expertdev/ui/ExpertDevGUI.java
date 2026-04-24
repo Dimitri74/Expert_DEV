@@ -32,6 +32,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionListener;
 import java.awt.geom.Ellipse2D;
@@ -51,7 +52,7 @@ import java.util.List;
 
 /**
  * Interface gráfica principal do Expert Dev.
- * Permite processar URLs ou fazer upload de um arquivo Word (.docx)
+ * Permite processar URLs ou fazer upload de um arquivo Word (.doc/.docx)
  * para gerar o prompt de contexto para IA.
  */
 public class ExpertDevGUI extends JFrame {
@@ -101,12 +102,18 @@ public class ExpertDevGUI extends JFrame {
     private static final Font FONTE_BOTAO       = new Font("Segoe UI", Font.BOLD, 13);
     private static final int HEADER_LOGO_LARGURA = 320;
     private static final int HEADER_LOGO_ALTURA = 74;
+    private static final int MAX_ARQUIVOS_PREVIEW_EMBUTIDA = 1;
 
     // ─── Componentes principais ───────────────────────────────────────────────
     private JTabbedPane abas;
     private JTextArea areaUrls;
     private JLabel labelArquivoWord;
+    private JLabel labelResumoArquivosWord;
     private JTextArea areaPreviewWord;
+    private JPanel painelPreviewWord;
+    private JButton btnAbrirPreviewWord;
+    private DefaultListModel<File> modeloArquivosWord;
+    private JList<File> listaArquivosWord;
     private JPanel painelLogCards;
     private JScrollPane scrollLog;
     private JTextArea areaPrompt;
@@ -123,7 +130,6 @@ public class ExpertDevGUI extends JFrame {
     private JButton btnLimparApiKey;
     private JLabel lblAvisoModoEconomicoIa;
     private JLabel lblEstimativaIa;
-    private File arquivoWordSelecionado;
     private boolean temaClaroAtivo;
     private JTextField campoRTC;
     private JPopupMenu popupSugestoesRtc;
@@ -209,7 +215,7 @@ public class ExpertDevGUI extends JFrame {
             }
         } catch (Exception e) {}
         
-        trayService = new TrayNotificationService("ExpertDev v2.1", icone, e -> {
+        trayService = new TrayNotificationService("ExpertDev v2.4.0-BETA", icone, e -> {
             setVisible(true);
             setExtendedState(JFrame.NORMAL);
             toFront();
@@ -350,7 +356,7 @@ public class ExpertDevGUI extends JFrame {
             }
         });
 
-        JLabel lblVersao = new JLabel("v 2.2.3-BETA");
+        JLabel lblVersao = new JLabel("v 2.4.0-BETA");
         lblVersao.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblVersao.setForeground(COR_DESTAQUE2);
         lblVersao.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -743,6 +749,37 @@ public class ExpertDevGUI extends JFrame {
         abas.addTab("  📄  Upload Word  ", criarAbaUpload());
         abas.addTab("  📋  Histórico  ", criarAbaHistorico());
         abas.addTab("  📊  Performance & ROI  ", criarAbaPerformance());
+        // RN: somente credencial Premium acessa o Assistente Pro.
+        try {
+            if (authSession != null && authSession.isPremium()) {
+                br.com.expertdev.pro.ui.ProAssistantPanel painelPro = new br.com.expertdev.pro.ui.ProAssistantPanel();
+                JScrollPane scrollPainelPro = new JScrollPane(painelPro);
+                scrollPainelPro.setBorder(null);
+                scrollPainelPro.getVerticalScrollBar().setUnitIncrement(16);
+                abas.addTab("  ⚡  Assistente Pro  ", scrollPainelPro);
+            } else {
+                JPanel painelBloqueado = new JPanel(new BorderLayout());
+                painelBloqueado.setBackground(COR_PAINEL_ALT);
+                JLabel lblBloqueado = new JLabel("Assistente Pro disponivel apenas para credenciais Premium. Upgrade para Premium.", SwingConstants.CENTER);
+                lblBloqueado.setForeground(COR_TEXTO_SUAVE);
+                lblBloqueado.setFont(FONTE_ROTULO);
+                painelBloqueado.add(lblBloqueado, BorderLayout.CENTER);
+
+                abas.addTab("  ⚡  Assistente Pro  ", painelBloqueado);
+                int indicePro = abas.getTabCount() - 1;
+                abas.setEnabledAt(indicePro, false);
+                abas.setToolTipTextAt(indicePro, "Upgrade para Premium");
+
+                SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
+                        this,
+                        "Recurso indisponivel para sua credencial atual.\nUpgrade para Premium para acessar o Assistente Pro.",
+                        "Assistente Pro",
+                        JOptionPane.INFORMATION_MESSAGE
+                ));
+            }
+        } catch (Exception ex) {
+            System.err.println("Erro ao carregar painel Pro: " + ex.getMessage());
+        }
         abas.addChangeListener(e -> {
             atualizarEstimativaIa();
             if (abas.getSelectedIndex() == 3) {
@@ -914,7 +951,7 @@ public class ExpertDevGUI extends JFrame {
         JPanel topo = new JPanel(new BorderLayout(12, 0));
         topo.setOpaque(false);
 
-        JLabel instrucao = criarRotulo("Selecione um arquivo Word (.docx) com as regras de negócio:");
+        JLabel instrucao = criarRotulo("Selecione um arquivo Word (.doc/.docx) com as regras de negócio:");
         topo.add(instrucao, BorderLayout.NORTH);
 
         JPanel seletorPanel = new JPanel(new BorderLayout(10, 0));
@@ -930,7 +967,7 @@ public class ExpertDevGUI extends JFrame {
         labelArquivoWord.setBackground(COR_FUNDO);
         labelArquivoWord.setOpaque(true);
 
-        JButton btnSelecionar = criarBotaoPrimario("📂  Selecionar");
+        JButton btnSelecionar = criarBotaoPrimario("📂  Adicionar");
         btnSelecionar.setPreferredSize(new Dimension(140, 38));
         btnSelecionar.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -938,8 +975,87 @@ public class ExpertDevGUI extends JFrame {
             }
         });
 
-        seletorPanel.add(labelArquivoWord, BorderLayout.CENTER);
-        seletorPanel.add(btnSelecionar, BorderLayout.EAST);
+        JPanel painelAcoesLista = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        painelAcoesLista.setOpaque(false);
+        JButton btnRemoverSelecionado = criarBotaoSecundario("🗑 Remover");
+        btnRemoverSelecionado.addActionListener(e -> {
+            File selecionado = listaArquivosWord == null ? null : listaArquivosWord.getSelectedValue();
+            if (selecionado != null && modeloArquivosWord != null) {
+                modeloArquivosWord.removeElement(selecionado);
+                atualizarResumoArquivosWord();
+                carregarPreviewWord();
+            }
+        });
+        JButton btnLimparLista = criarBotaoSecundario("✖ Limpar");
+        btnLimparLista.addActionListener(e -> {
+            if (modeloArquivosWord != null) {
+                modeloArquivosWord.clear();
+                atualizarResumoArquivosWord();
+                carregarPreviewWord();
+            }
+        });
+        btnAbrirPreviewWord = criarBotaoSecundario("👁 Abrir Prévia");
+        btnAbrirPreviewWord.setToolTipText("Abre a pré-visualização textual do arquivo Word selecionado.");
+        btnAbrirPreviewWord.addActionListener(e -> abrirDialogoPreviewWordSelecionado());
+        btnAbrirPreviewWord.setEnabled(false);
+        painelAcoesLista.add(btnRemoverSelecionado);
+        painelAcoesLista.add(btnLimparLista);
+        painelAcoesLista.add(btnAbrirPreviewWord);
+
+        JPanel esquerda = new JPanel(new BorderLayout(0, 6));
+        esquerda.setOpaque(false);
+        esquerda.add(labelArquivoWord, BorderLayout.NORTH);
+        modeloArquivosWord = new DefaultListModel<File>();
+        listaArquivosWord = new JList<File>(modeloArquivosWord);
+        listaArquivosWord.setBackground(COR_FUNDO);
+        listaArquivosWord.setForeground(COR_TEXTO);
+        listaArquivosWord.setSelectionBackground(COR_DESTAQUE);
+        listaArquivosWord.setSelectionForeground(Color.WHITE);
+        listaArquivosWord.setFont(FONTE_NORMAL);
+        listaArquivosWord.setVisibleRowCount(5);
+        listaArquivosWord.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof File) {
+                    File f = (File) value;
+                    lbl.setText(f.getName() + "  (" + f.getAbsolutePath() + ")");
+                }
+                return lbl;
+            }
+        });
+        listaArquivosWord.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                carregarPreviewWord();
+            }
+        });
+        listaArquivosWord.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2 && listaArquivosWord.getSelectedValue() != null) {
+                    abrirDialogoPreviewWordSelecionado();
+                }
+            }
+        });
+        JScrollPane scrollArquivos = criarScrollPane(listaArquivosWord);
+        scrollArquivos.setPreferredSize(new Dimension(100, 110));
+        configurarDropArquivosWord(scrollArquivos);
+        configurarDropArquivosWord(listaArquivosWord);
+        esquerda.add(scrollArquivos, BorderLayout.CENTER);
+
+        JPanel direita = new JPanel(new BorderLayout(0, 8));
+        direita.setOpaque(false);
+        direita.add(btnSelecionar, BorderLayout.NORTH);
+        direita.add(painelAcoesLista, BorderLayout.SOUTH);
+
+        seletorPanel.add(esquerda, BorderLayout.CENTER);
+        seletorPanel.add(direita, BorderLayout.EAST);
+
+        labelResumoArquivosWord = criarRotulo("Arquivos Word: 0");
+        labelResumoArquivosWord.setFont(FONTE_SUBTITULO);
+        labelResumoArquivosWord.setBorder(new EmptyBorder(4, 2, 0, 0));
+        topo.add(labelResumoArquivosWord, BorderLayout.SOUTH);
         topo.add(seletorPanel, BorderLayout.CENTER);
         painel.add(topo, BorderLayout.NORTH);
 
@@ -952,16 +1068,24 @@ public class ExpertDevGUI extends JFrame {
         areaPreviewWord.setBackground(COR_FUNDO);
         areaPreviewWord.setForeground(new Color(180, 190, 210));
         areaPreviewWord.setEditable(false);
+        areaPreviewWord.setRows(8);
         areaPreviewWord.setLineWrap(true);
         areaPreviewWord.setWrapStyleWord(true);
         areaPreviewWord.setBorder(new EmptyBorder(10, 10, 10, 10));
-        areaPreviewWord.setText("(selecione um arquivo .docx para visualizar o conteúdo aqui)");
+        areaPreviewWord.setText("(adicione um ou mais arquivos .doc/.docx e selecione um item para pré-visualizar)");
 
         JPanel centro = new JPanel(new BorderLayout());
         centro.setOpaque(false);
         centro.add(lblPreview, BorderLayout.NORTH);
-        centro.add(criarScrollPane(areaPreviewWord), BorderLayout.CENTER);
+        JScrollPane scrollPreviewWord = criarScrollPane(areaPreviewWord);
+        scrollPreviewWord.setPreferredSize(new Dimension(100, 160));
+        scrollPreviewWord.setMinimumSize(new Dimension(100, 120));
+        centro.add(scrollPreviewWord, BorderLayout.CENTER);
+        painelPreviewWord = centro;
         painel.add(centro, BorderLayout.CENTER);
+
+        atualizarResumoArquivosWord();
+        atualizarVisibilidadePreviewWord(0);
 
         return painel;
     }
@@ -2042,30 +2166,76 @@ public class ExpertDevGUI extends JFrame {
 
     private void selecionarArquivoWord() {
         JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Selecionar arquivo Word (.docx)");
-        chooser.setFileFilter(new FileNameExtensionFilter("Documentos Word (*.docx)", "docx"));
+        chooser.setDialogTitle("Selecionar arquivos Word (.doc/.docx)");
+        chooser.setFileFilter(new FileNameExtensionFilter("Documentos Word (*.doc, *.docx)", "doc", "docx"));
+        chooser.setMultiSelectionEnabled(true);
         chooser.setCurrentDirectory(new File(System.getProperty("user.home")));
 
         int resultado = chooser.showOpenDialog(this);
         if (resultado == JFileChooser.APPROVE_OPTION) {
-            arquivoWordSelecionado = chooser.getSelectedFile();
-            labelArquivoWord.setText(arquivoWordSelecionado.getAbsolutePath());
-            labelArquivoWord.setForeground(COR_SUCESSO);
+            File[] selecionados = chooser.getSelectedFiles();
+            if (selecionados == null || selecionados.length == 0) {
+                File unico = chooser.getSelectedFile();
+                if (unico != null) {
+                    selecionados = new File[] { unico };
+                }
+            }
+            adicionarArquivosWord(selecionados);
             carregarPreviewWord();
         }
     }
 
     private void carregarPreviewWord() {
+        List<File> arquivos = obterArquivosWordSelecionados();
+        if (arquivos.isEmpty()) {
+            areaPreviewWord.setText("(adicione um ou mais arquivos .doc/.docx e selecione um item para pré-visualizar)");
+            areaPreviewWord.setCaretPosition(0);
+            atualizarEstimativaIa();
+            return;
+        }
+
+        File selecionadoLista = listaArquivosWord != null ? listaArquivosWord.getSelectedValue() : null;
+        if (selecionadoLista == null && listaArquivosWord != null && listaArquivosWord.getModel().getSize() > 0) {
+            listaArquivosWord.setSelectedIndex(0);
+            selecionadoLista = listaArquivosWord.getSelectedValue();
+        }
+        final File arquivoPreview = selecionadoLista != null ? selecionadoLista : arquivos.get(0);
         areaPreviewWord.setText("Carregando pré-visualização...");
         SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
             protected String doInBackground() {
                 WordDocumentReader reader = new WordDocumentReader();
-                ResultadoProcessamento r = reader.ler(arquivoWordSelecionado);
+                ResultadoProcessamento r = reader.ler(arquivoPreview);
                 if (r.isSucesso()) {
                     String texto = r.getTextoExtraido();
-                    return texto.length() > 3000
+                    if (texto == null) {
+                        texto = "";
+                    }
+                    texto = texto.trim();
+
+                    if (texto.isEmpty()) {
+                        StringBuilder vazio = new StringBuilder();
+                        vazio.append("Arquivo de prévia: ").append(arquivoPreview.getName()).append("\n");
+                        vazio.append("Total na fila: ").append(obterArquivosWordSelecionados().size()).append("\n\n");
+                        vazio.append("[Pré-visualização textual indisponível neste arquivo. O conteúdo pode estar em tabelas/imagens ou exigir OCR.]");
+                        return vazio.toString();
+                    }
+
+                    String textoPreview = texto.length() > 3000
                             ? texto.substring(0, 3000) + "\n\n[... conteúdo truncado para pré-visualização ...]"
                             : texto;
+                    List<String> statusIngestao = extrairMensagensStatusWord(r);
+                    if (statusIngestao.isEmpty()) {
+                        return textoPreview;
+                    }
+
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("Arquivo de prévia: ").append(arquivoPreview.getName()).append("\n");
+                    sb.append("Total na fila: ").append(obterArquivosWordSelecionados().size()).append("\n\n");
+                    for (String status : statusIngestao) {
+                        sb.append(status).append("\n");
+                    }
+                    sb.append("\n").append(textoPreview);
+                    return sb.toString();
                 }
                 return "[Erro ao carregar: " + r.getErro() + "]";
             }
@@ -2084,6 +2254,177 @@ public class ExpertDevGUI extends JFrame {
         worker.execute();
     }
 
+    private void adicionarArquivosWord(File[] arquivos) {
+        if (arquivos == null || arquivos.length == 0) {
+            return;
+        }
+        if (modeloArquivosWord == null) {
+            modeloArquivosWord = new DefaultListModel<File>();
+        }
+
+        int adicionados = 0;
+        int ignorados = 0;
+        for (File arquivo : arquivos) {
+            if (!ehArquivoWordValido(arquivo)) {
+                ignorados++;
+                continue;
+            }
+            boolean jaExiste = false;
+            for (int i = 0; i < modeloArquivosWord.size(); i++) {
+                File existente = modeloArquivosWord.get(i);
+                if (existente.getAbsolutePath().equalsIgnoreCase(arquivo.getAbsolutePath())) {
+                    jaExiste = true;
+                    break;
+                }
+            }
+            if (!jaExiste) {
+                modeloArquivosWord.addElement(arquivo);
+                adicionados++;
+            }
+        }
+
+        if (adicionados > 0) {
+            labelArquivoWord.setText("Arquivos carregados para processamento");
+            labelArquivoWord.setForeground(COR_SUCESSO);
+        }
+        if (ignorados > 0) {
+            adicionarCardLog("⚠ Alguns arquivos foram ignorados por formato inválido (use .doc/.docx).");
+        }
+        atualizarResumoArquivosWord();
+    }
+
+    private boolean ehArquivoWordValido(File arquivo) {
+        if (arquivo == null || !arquivo.exists() || !arquivo.isFile()) {
+            return false;
+        }
+        String nome = arquivo.getName().toLowerCase();
+        return nome.endsWith(".doc") || nome.endsWith(".docx");
+    }
+
+    private List<File> obterArquivosWordSelecionados() {
+        List<File> arquivos = new ArrayList<File>();
+        if (modeloArquivosWord == null) {
+            return arquivos;
+        }
+        for (int i = 0; i < modeloArquivosWord.size(); i++) {
+            File arquivo = modeloArquivosWord.get(i);
+            if (arquivo != null && arquivo.exists()) {
+                arquivos.add(arquivo);
+            }
+        }
+        return arquivos;
+    }
+
+    private void atualizarResumoArquivosWord() {
+        int total = modeloArquivosWord == null ? 0 : modeloArquivosWord.getSize();
+        if (labelResumoArquivosWord != null) {
+            labelResumoArquivosWord.setText("Arquivos Word: " + total);
+        }
+        if (labelArquivoWord != null && total == 0) {
+            labelArquivoWord.setText("Nenhum arquivo selecionado");
+            labelArquivoWord.setForeground(COR_TEXTO_SUAVE);
+        }
+        atualizarVisibilidadePreviewWord(total);
+    }
+
+    private void atualizarVisibilidadePreviewWord(int totalArquivos) {
+        boolean mostrarPreviewEmbutida = totalArquivos <= MAX_ARQUIVOS_PREVIEW_EMBUTIDA;
+
+        if (painelPreviewWord != null) {
+            painelPreviewWord.setVisible(mostrarPreviewEmbutida);
+            painelPreviewWord.revalidate();
+            painelPreviewWord.repaint();
+        }
+
+        if (btnAbrirPreviewWord != null) {
+            btnAbrirPreviewWord.setEnabled(totalArquivos > 0);
+            btnAbrirPreviewWord.setVisible(totalArquivos > 0);
+            btnAbrirPreviewWord.setText(totalArquivos > 1 ? "👁 Abrir Prévia (selecionado)" : "👁 Abrir Prévia");
+        }
+    }
+
+    private void abrirDialogoPreviewWordSelecionado() {
+        List<File> arquivos = obterArquivosWordSelecionados();
+        if (arquivos.isEmpty()) {
+            mostrarErro("Nenhum arquivo Word foi selecionado para pré-visualização.");
+            return;
+        }
+
+        File selecionado = listaArquivosWord != null ? listaArquivosWord.getSelectedValue() : null;
+        if (selecionado == null) {
+            selecionado = arquivos.get(0);
+            if (listaArquivosWord != null && listaArquivosWord.getModel().getSize() > 0) {
+                listaArquivosWord.setSelectedIndex(0);
+            }
+            carregarPreviewWord();
+        }
+
+        String textoPreview = areaPreviewWord != null ? areaPreviewWord.getText() : "";
+        if (textoPreview == null || textoPreview.trim().isEmpty()) {
+            textoPreview = "Carregando pré-visualização...";
+        }
+
+        JDialog dialogo = new JDialog(this, "Pré-visualização - " + selecionado.getName(), true);
+        dialogo.setLayout(new BorderLayout(8, 8));
+
+        JTextArea areaDialogo = new JTextArea();
+        areaDialogo.setEditable(false);
+        areaDialogo.setLineWrap(true);
+        areaDialogo.setWrapStyleWord(true);
+        areaDialogo.setFont(FONTE_MONO);
+        areaDialogo.setBackground(COR_FUNDO);
+        areaDialogo.setForeground(COR_TEXTO);
+        areaDialogo.setText(textoPreview);
+        areaDialogo.setCaretPosition(0);
+
+        JLabel lblArquivo = new JLabel("Arquivo: " + selecionado.getAbsolutePath());
+        lblArquivo.setBorder(new EmptyBorder(8, 10, 0, 10));
+        lblArquivo.setFont(FONTE_SUBTITULO);
+        lblArquivo.setForeground(COR_TEXTO_SUAVE);
+
+        JButton btnFechar = criarBotaoSecundario("Fechar");
+        btnFechar.addActionListener(e -> dialogo.dispose());
+        JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        rodape.setOpaque(false);
+        rodape.add(btnFechar);
+
+        dialogo.add(lblArquivo, BorderLayout.NORTH);
+        dialogo.add(criarScrollPane(areaDialogo), BorderLayout.CENTER);
+        dialogo.add(rodape, BorderLayout.SOUTH);
+        dialogo.setSize(900, 620);
+        dialogo.setLocationRelativeTo(this);
+        dialogo.setVisible(true);
+    }
+
+    private void configurarDropArquivosWord(JComponent componente) {
+        if (componente == null) {
+            return;
+        }
+        componente.setTransferHandler(new TransferHandler() {
+            @Override
+            public boolean canImport(TransferSupport support) {
+                return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
+            }
+
+            @Override
+            public boolean importData(TransferSupport support) {
+                if (!canImport(support)) {
+                    return false;
+                }
+                try {
+                    @SuppressWarnings("unchecked")
+                    List<File> arquivos = (List<File>) support.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+                    adicionarArquivosWord(arquivos.toArray(new File[0]));
+                    carregarPreviewWord();
+                    return true;
+                } catch (Exception e) {
+                    adicionarCardLog("⚠ Falha no drag-and-drop de Word: " + e.getMessage());
+                    return false;
+                }
+            }
+        });
+    }
+
     private void iniciarProcessamento() {
         int abaSelecionada = abas.getSelectedIndex();
         // Se a aba Performance & ROI (3) está ativa, detecta automaticamente o modo
@@ -2091,7 +2432,7 @@ public class ExpertDevGUI extends JFrame {
         boolean viaUrl;
         if (abaSelecionada == 3) {
             boolean temUrls = areaUrls != null && !areaUrls.getText().trim().isEmpty();
-            boolean temWord = arquivoWordSelecionado != null && arquivoWordSelecionado.exists();
+            boolean temWord = !obterArquivosWordSelecionados().isEmpty();
             if (!temUrls && !temWord) {
                 mostrarErro("Informe URLs (aba 'Via URLs') ou selecione um arquivo Word (aba 'Upload Word') antes de gerar o prompt.");
                 return;
@@ -2142,8 +2483,8 @@ public class ExpertDevGUI extends JFrame {
                 return;
             }
         } else {
-            if (arquivoWordSelecionado == null || !arquivoWordSelecionado.exists()) {
-                mostrarErro("Selecione um arquivo Word (.docx) antes de processar.");
+            if (obterArquivosWordSelecionados().isEmpty()) {
+                mostrarErro("Adicione ao menos um arquivo Word (.doc ou .docx) antes de processar.");
                 return;
             }
         }
@@ -2216,16 +2557,29 @@ public class ExpertDevGUI extends JFrame {
                     publish("→ Processamento de URLs concluído.");
                 } else {
                     publish("→ Modo: Upload Word");
-                    publish("→ Arquivo: " + arquivoWordSelecionado.getName());
+                    List<File> arquivosWord = obterArquivosWordSelecionados();
+                    publish("→ Arquivos Word na fila: " + arquivosWord.size());
                     WordDocumentReader reader = new WordDocumentReader();
-                    ResultadoProcessamento r = reader.ler(arquivoWordSelecionado);
-                    if (!r.isSucesso()) {
-                        throw new RuntimeException("Falha ao ler o Word: " + r.getErro());
+                    resultados = new ArrayList<ResultadoProcessamento>();
+                    int index = 0;
+                    for (File arquivoWord : arquivosWord) {
+                        index++;
+                        publish("→ Lendo arquivo Word " + index + "/" + arquivosWord.size() + ": " + arquivoWord.getName());
+                        ResultadoProcessamento r = reader.ler(arquivoWord);
+                        if (!r.isSucesso()) {
+                            throw new RuntimeException(montarMensagemErroWord(r.getErro()));
+                        }
+                        publish("→ Documento Word lido com sucesso: " + arquivoWord.getName());
+                        for (String statusWord : extrairMensagensStatusWord(r)) {
+                            publish(statusWord);
+                        }
+                        if (r.getObservacao() != null && !r.getObservacao().trim().isEmpty()) {
+                            publish("→ Rastreamento Word: " + r.getObservacao());
+                        }
+                        publish("→ Caracteres extraídos: " + (r.getTextoExtraido() != null
+                                ? r.getTextoExtraido().length() : 0));
+                        resultados.add(r);
                     }
-                    publish("→ Documento Word lido com sucesso.");
-                    publish("→ Caracteres extraídos: " + (r.getTextoExtraido() != null
-                            ? r.getTextoExtraido().length() : 0));
-                    resultados = Collections.singletonList(r);
                 }
 
                 // Gerar Word (com imagens)
@@ -2269,7 +2623,7 @@ public class ExpertDevGUI extends JFrame {
                     publish("→ Gerador de prompt: " + servicoPrompt.getNomeModo());
                     execucao = new ResultConsolidator(servicoPrompt)
                             .consolidar(resultados, urlsReferencia.size(), inicio, Instant.now(),
-                                    arquivoWordSaida, arquivoPdf);
+                                    arquivoWordSaida, arquivoPdf, rtcNumero);
                 } catch (RuntimeException e) {
                     if (modoIa) {
                         publish("⚠ IA indisponível. Aplicando fallback para modo local...");
@@ -2277,7 +2631,7 @@ public class ExpertDevGUI extends JFrame {
                                 new PromptGenerator(perfilPromptSelecionado));
                         execucao = new ResultConsolidator(fallbackLocal)
                                 .consolidar(resultados, urlsReferencia.size(), inicio, Instant.now(),
-                                        arquivoWordSaida, arquivoPdf);
+                                        arquivoWordSaida, arquivoPdf, rtcNumero);
                         publish("✓ Prompt gerado em fallback local.");
                     } else {
                         throw e;
@@ -2374,6 +2728,47 @@ public class ExpertDevGUI extends JFrame {
         };
 
         worker.execute();
+    }
+
+    private List<String> extrairMensagensStatusWord(ResultadoProcessamento resultado) {
+        List<String> mensagens = new ArrayList<String>();
+        if (resultado == null || resultado.getObservacao() == null) {
+            return mensagens;
+        }
+
+        String obs = resultado.getObservacao();
+        if (obs.contains("Formato DOCX detectado: leitura direta.")) {
+            mensagens.add("✓ Word: ingestão direta de DOCX (sem conversão).");
+        }
+        if (obs.contains("Conversao concluida com sucesso.")) {
+            mensagens.add("✓ Word: conversão DOC -> DOCX concluída via LibreOffice.");
+        }
+        if (obs.contains("Conversao DOC desativada por configuracao.")) {
+            mensagens.add("⚠ Word: conversão DOC desativada por configuração, usando parser DOC direto.");
+        }
+        if (obs.contains("LibreOffice indisponivel") || obs.contains("LibreOffice nao encontrado")) {
+            mensagens.add("⚠ Word: LibreOffice não detectado; aplicado fallback para parser DOC legado.");
+        }
+        if (obs.contains("Fallback direto para parser DOC")) {
+            mensagens.add("⚠ Word: fallback DOC legado acionado.");
+        }
+        return mensagens;
+    }
+
+    private String montarMensagemErroWord(String erroBase) {
+        String erro = erroBase == null ? "Erro desconhecido ao processar Word." : erroBase;
+        String lower = erro.toLowerCase();
+
+        if (lower.contains("libreoffice") && (lower.contains("nao encontrado") || lower.contains("indisponivel"))) {
+            return "Falha ao ler o Word: " + erro
+                    + "\nDica: instale o LibreOffice ou configure 'word.libreoffice.path' em expertdev.properties."
+                    + "\nAlternativa: mantenha 'word.doc.fallback.to.direct.read=true' para parser DOC legado.";
+        }
+        if (lower.contains("conversao de doc desativada")) {
+            return "Falha ao ler o Word: " + erro
+                    + "\nDica: habilite 'word.doc.conversion.enabled=true' para tentar DOC -> DOCX automaticamente.";
+        }
+        return "Falha ao ler o Word: " + erro;
     }
 
     private void copiarPromptParaClipboard() {
@@ -3095,8 +3490,6 @@ public class ExpertDevGUI extends JFrame {
         return new ImageIcon(img);
     }
 
-    // Helpers de UI
-
     private JLabel criarRotulo(String texto) {
         JLabel lbl = new JLabel(texto);
         lbl.setFont(FONTE_ROTULO);
@@ -3106,6 +3499,14 @@ public class ExpertDevGUI extends JFrame {
 
     private JScrollPane criarScrollPane(JTextArea area) {
         JScrollPane scroll = new JScrollPane(area);
+        scroll.setBorder(BorderFactory.createLineBorder(COR_BORDA));
+        scroll.getVerticalScrollBar().setBackground(COR_PAINEL);
+        scroll.setBackground(COR_PAINEL);
+        return scroll;
+    }
+
+    private JScrollPane criarScrollPane(JComponent componente) {
+        JScrollPane scroll = new JScrollPane(componente);
         scroll.setBorder(BorderFactory.createLineBorder(COR_BORDA));
         scroll.getVerticalScrollBar().setBackground(COR_PAINEL);
         scroll.setBackground(COR_PAINEL);
@@ -3189,7 +3590,6 @@ public class ExpertDevGUI extends JFrame {
             btn.setBackground(habilitado ? fundoHabilitado : fundoDesabilitado);
         });
     }
-
 
     // ─── Entry Point ──────────────────────────────────────────────────────────
 

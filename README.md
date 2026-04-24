@@ -1,6 +1,8 @@
 # Expert Dev
 
 Extrai regras de negócio e referências visuais de páginas web, consolida o conteúdo e gera múltiplos formatos de saída (TXT, DOCX, PDF) otimizados para uso com assistentes de código. Possui módulo integrado de medição de ROI e performance.
+Agora também aceita upload Word `.doc` e `.docx` na GUI, com tentativa de conversão de `.doc` para `.docx` quando houver LibreOffice.
+Na aba Upload Word, é possível adicionar múltiplos arquivos (seletor e drag-and-drop) e processar a fila em lote.
 
 ## Stack tecnológica
 
@@ -16,7 +18,7 @@ Extrai regras de negócio e referências visuais de páginas web, consolida o co
 | ![JFreeChart](https://img.shields.io/badge/Charts-JFreeChart-1565C0?style=flat-square) | 1.0.19 | Biblioteca de gráficos em Java. | Exibe o dashboard de tendências e comparativos do módulo de Performance & ROI. |
 | ![Jackson](https://img.shields.io/badge/JSON-Jackson-000000?style=flat-square) | 2.17.2 | Biblioteca de serialização/desserialização JSON. | Constrói e interpreta payloads de integração com provedores de IA (OpenAI/Claude). |
 
-## Versão atual: Expert Dev 2.2.3-BETA
+## Versão atual: Expert Dev 2.4.0-BETA
 
 - **Cache de Contexto**: Armazenamento local (SQLite) de resultados de processamento para evitar re-download e economizar tokens.
 - **Automação de Workflow**: Detecção inteligente de links no clipboard (Jira/RTC) e notificações no System Tray.
@@ -71,17 +73,17 @@ Este módulo permite mensurar o valor real que a ferramenta agrega ao seu workfl
 ### 1. Usando o JAR Executável (Recomendado)
 Para facilitar o uso sem necessidade de uma IDE, agora o Expert Dev pode ser executado diretamente como um arquivo JAR.
 
-1. Baixe ou gere o arquivo `expert-dev-2.1.0.jar` (localizado na pasta `target/`).
+1. Baixe ou gere o arquivo `expert-dev-2.4.0-BETA.jar` (localizado na pasta `target/`).
 2. **Duplo clique**: Em sistemas configurados, basta dar um duplo clique no arquivo `.jar`. O sistema iniciará com a logo oficial como ícone da janela.
 3. **Via Terminal/PowerShell**:
    ```powershell
-   java -jar expert-dev-2.1.0.jar
+   java -jar expert-dev-2.4.0-BETA.jar
    ```
 
 ### 2. Execução via IDE (Desenvolvimento)
 1. Abra o projeto no IntelliJ Ultimate.
 2. Execute a classe `ExpertDev` (ou use `run.bat`).
-3. Cole as URLs do site quando solicitado, **separadas por vírgula**.
+3. Cole as URLs do site quando solicitado, **separadas por vírgula**, ou use upload Word (`.doc`/`.docx`) na GUI.
 
 Exemplo:
 ```
@@ -93,7 +95,37 @@ Para gerar o JAR executável com todas as dependências embutidas (Fat JAR):
 ```powershell
 mvn clean package -DskipTests
 ```
-O arquivo será gerado em `target/expert-dev-2.1.0.jar`.
+O arquivo será gerado em `target/expert-dev-2.4.0-BETA.jar`.
+
+### Validacao Word B2.3 (.doc/.docx)
+
+Use o script de matriz de validacao:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\validate-word-b23.ps1 -DocxPath "C:\caminho\arquivo.docx" -DocPath "C:\caminho\arquivo.doc"
+```
+
+Detalhes em `docs/b2.3-validacao-word.md`.
+
+### B3 - Classificacao de layout IBM + filtro de ruido
+
+Para validar classificacao de tipos IBM em lote:
+
+```powershell
+mvn -f "C:\Users\marcu\workspace\Pessoal\expertDev\pom.xml" -DskipTests exec:java "-Dexec.mainClass=br.com.expertdev.gid.service.IBMB3Probe" "-Dexec.args=C:\caminho\arquivo1.doc C:\caminho\arquivo2.doc"
+```
+
+Detalhes em `docs/b3-classificacao-ruido.md`.
+
+### B4 - Extracao semantica por tipo IBM
+
+Para validar extracao semantica por tipo classificado:
+
+```powershell
+mvn -f "C:\Users\marcu\workspace\Pessoal\expertDev\pom.xml" -DskipTests exec:java "-Dexec.mainClass=br.com.expertdev.gid.service.IBMB4Probe" "-Dexec.args=C:\caminho\doc1.doc C:\caminho\doc2.doc"
+```
+
+Detalhes em `docs/b4-extracao-semantica.md`.
 
 ### Pacote oficial de release (Windows)
 
@@ -170,6 +202,12 @@ ui.theme.light.default=true
 # Modo de geração de prompt
 ui.generation.mode=LOCAL
 
+# Word legado (.doc)
+word.doc.conversion.enabled=true
+word.libreoffice.path=
+word.doc.conversion.timeout.sec=45
+word.doc.fallback.to.direct.read=true
+
 # IA opcional (Expert Dev 2.0)
 ai.enabled=false
 ai.provider=openai
@@ -212,7 +250,7 @@ Na interface, você pode escolher o provider no combo `Provider`.
 
 ## Histórico de versões
 
-- **Expert Dev 2.2.3-BETA** — Autenticação local + Login/Trial 15 dias + Lockout + Expiração de senha (30 dias) + Aviso de renovação + Ícone de usuário no cabeçalho.
+- **Expert Dev 2.4.0-BETA** — Autenticação local + Login/Trial 15 dias + Lockout + Expiração de senha (30 dias) + Aviso de renovação + Ícone de usuário no cabeçalho.
 - **Expert Dev 2.2** — Versão Portátil (JRE Embarcada) + Wrapper Executável (.exe) + Melhorias de Distribuição.
     - Suporte a JRE portátil em `./jre8`.
     - Geração de `ExpertDev.exe` com ícone nativo via Launch4j.
