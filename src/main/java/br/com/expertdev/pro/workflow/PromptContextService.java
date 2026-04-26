@@ -44,7 +44,7 @@ public class PromptContextService {
         if (contexto.getLinhaAlvo() > 0) {
             sb.append("**Linha:** ").append(contexto.getLinhaAlvo()).append("\n");
         }
-        sb.append("**Versão:** ExpertDev 2.4.1-BETA\n\n");
+        sb.append("**Versão:** ExpertDev 2.5.0-BETA\n\n");
 
         sb.append("## Problema\n\n");
         sb.append(contexto.getDescricaoProblema()).append("\n\n");

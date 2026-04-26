@@ -2,7 +2,7 @@
 
 **Data:** 23 de Abril, 2026  
 **Hora:** 19:35  
-**Versão:** 2.4.0-BETA  
+**Versão:** 2.5.0-BETA  
 **Sprint Ativo:** G2-S1 ✅ **CONCLUÍDO**
 
 ---
@@ -14,11 +14,11 @@
 ┌────────────────────────────────────────┐
 │ Etapa | Status      | Versão          │
 ├────────────────────────────────────────┤
-│ B2   | ✅ Estável  | 2.4.0-BETA      │
-│ B3   | ✅ Estável  | 2.4.0-BETA      │
-│ B4   | ✅ Estável  | 2.4.0-BETA      │
-│ G2-S1| ✅ Novo!    | 2.4.0-BETA      │
-│ G2-S2| ⏳ Próximo  | 2.4.1-BETA (est)│
+│ B2   | ✅ Estável  | 2.5.0-BETA      │
+│ B3   | ✅ Estável  | 2.5.0-BETA      │
+│ B4   | ✅ Estável  | 2.5.0-BETA      │
+│ G2-S1| ✅ Novo!    | 2.5.0-BETA      │
+│ G2-S2| ⏳ Próximo  | 2.5.0-BETA (est)│
 └────────────────────────────────────────┘
 ```
 
@@ -134,7 +134,7 @@ Total: 5 documentos | ~3000 linhas
 ### JAR Executável
 
 ```
-✨ target/expert-dev-2.4.0-BETA.jar (43.5 MB)
+✨ target/expert-dev-2.5.0-BETA.jar (43.5 MB)
   └─ Inclui todas as classes G2-S1
   └─ Compatível com Java 8+
   └─ Pronto para distribuição
@@ -156,7 +156,7 @@ Files: 97 sources compilados
 ```bash
 $ mvn clean package -DskipTests
 Result: ✅ BUILD SUCCESS
-JAR: expert-dev-2.4.0-BETA.jar (43.5 MB)
+JAR: expert-dev-2.5.0-BETA.jar (43.5 MB)
 ```
 
 ### Teste 3: Probe com 2 Documentos
@@ -298,7 +298,7 @@ O projeto Expert Dev agora possui:
 
 **Status Final:** 🟢 ✅ **PRONTO PARA PRODUÇÃO**
 
-**Versão:** 2.4.0-BETA  
+**Versão:** 2.5.0-BETA  
 **Sprint:** G2-S1 ✅ Concluído  
 **Data:** 23 de Abril, 2026  
 **Próxima:** G2-S2 (Deduplicação + Grafo)

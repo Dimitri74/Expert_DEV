@@ -22,7 +22,7 @@ public class ExpertDev_vr1_5 {
         Instant inicio = Instant.now();
         ExpertDevConfig config = ExpertDevConfig.carregar();
 
-        System.out.println("=== Expert Dev 2.4.1-BETA (com Paralelismo, PDF e IA opcional na UI) ===\n");
+        System.out.println("=== Expert Dev 2.5.0-BETA (com Paralelismo, PDF e IA opcional na UI) ===\n");
 
         String input = obterInput(args);
         UrlParser urlParser = new UrlParser();

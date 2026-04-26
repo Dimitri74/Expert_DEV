@@ -91,7 +91,7 @@
 
 ### Pelo terminal
 ```powershell
-java -jar target/expert-dev-2.4.1-BETA.jar
+java -jar target/expert-dev-2.5.0-BETA.jar
 ```
 
 ### Build

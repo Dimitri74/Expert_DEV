@@ -128,7 +128,7 @@ class GuiController {
             }
         } catch (Exception ignored) {}
 
-        trayService = new TrayNotificationService("ExpertDev v2.4.1-BETA", icone,
+        trayService = new TrayNotificationService("ExpertDev v2.5.0-BETA", icone,
                 new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent e) {
                         gui.setVisible(true);

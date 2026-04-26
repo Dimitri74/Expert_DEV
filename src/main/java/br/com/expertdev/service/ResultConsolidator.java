@@ -148,7 +148,7 @@ public class ResultConsolidator {
                                        List<String> urlsSucesso,
                                        List<String> urlsFalha) {
         StringBuilder resumo = new StringBuilder();
-        resumo.append("Resumo da execução - Expert Dev 2.4.1-BETA\n");
+        resumo.append("Resumo da execução - Expert Dev 2.5.0-BETA\n");
         resumo.append(repeat("=", 50)).append("\n\n");
         resumo.append("Início: ").append(RESUMO_DATE_FORMAT.format(inicio)).append("\n");
         resumo.append("Fim: ").append(RESUMO_DATE_FORMAT.format(fim)).append("\n\n");

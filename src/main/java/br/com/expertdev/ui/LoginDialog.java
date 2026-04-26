@@ -43,7 +43,7 @@ public class LoginDialog extends JDialog {
     private JLabel lblTrial;
 
     public LoginDialog(Window owner, AuthService authService, ExpertDevConfig config) {
-        super(owner, "Acesso Expert Dev 2.4.1-BETA", ModalityType.APPLICATION_MODAL);
+        super(owner, "Acesso Expert Dev 2.5.0-BETA", ModalityType.APPLICATION_MODAL);
         this.authService = authService;
         this.config = config;
         construir();
@@ -194,7 +194,7 @@ public class LoginDialog extends JDialog {
         lblTrial.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         lblTrial.setForeground(COR_TEXTO_SUAVE);
 
-        JLabel lblVersao = new JLabel("v2.4.1-BETA");
+        JLabel lblVersao = new JLabel("v2.5.0-BETA");
         lblVersao.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         lblVersao.setForeground(COR_TEXTO_SUAVE);
 

@@ -14,7 +14,7 @@ public class PromptBundle {
 
     public PromptBundle() {
         this.timestampCriacao = System.currentTimeMillis();
-        this.versaoExpertDev = "2.4.1-BETA";
+        this.versaoExpertDev = "2.5.0-BETA";
     }
 
     public PromptBundle(String promptGerado, IssueContext contexto) {

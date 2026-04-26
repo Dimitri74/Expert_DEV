@@ -1,4 +1,4 @@
-# Documentação Consolidada — Expert Dev 2.4.0-BETA
+# Documentação Consolidada — Expert Dev 2.5.0-BETA
 
 Este arquivo centraliza os resumos da documentação histórica do projeto.
 
@@ -24,7 +24,7 @@ O repositório acumulou muitos arquivos `.md` criados por etapa, sprint, prova d
 - Modo IA: providers OpenAI e Claude, com fallback local
 
 ### 2. Módulo Pro
-- Entregue na versão `2.4.0-BETA`
+- Entregue na versão `2.5.0-BETA`
 - Inclui aba `Assistente Pro`
 - Recursos principais:
   - abrir arquivo/linha na IDE JetBrains;
@@ -116,7 +116,7 @@ mvn clean package -DskipTests
 
 ### Execução da GUI
 ```powershell
-java -jar target/expert-dev-2.4.0-BETA.jar
+java -jar target/expert-dev-2.5.0-BETA.jar
 ```
 
 ### Geração do pacote distribuível portátil

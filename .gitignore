@@ -8,3 +8,6 @@
 /cache_imagens/
 *.log
 
+# Claude Code
+.claude/
+
