@@ -59,111 +59,49 @@ import java.util.List;
  */
 public class ExpertDevGUI extends JFrame {
 
-    // ─── Cores base (tema escuro) ─────────────────────────────────────────────
-    private static final Color COR_FUNDO_ESCURO       = new Color(18, 18, 30);
-    private static final Color COR_PAINEL_ESCURO      = new Color(28, 28, 45);
-    private static final Color COR_PAINEL_ALT_ESCURO  = new Color(35, 35, 55);
-    private static final Color COR_DESTAQUE_ESCURO    = new Color(99, 102, 241);
-    private static final Color COR_DESTAQUE2_ESCURO   = new Color(139, 92, 246);
-    private static final Color COR_SUCESSO_ESCURO     = new Color(52, 211, 153);
-    private static final Color COR_ERRO_ESCURO        = new Color(248, 113, 113);
-    private static final Color COR_TEXTO_ESCURO       = new Color(226, 232, 240);
-    private static final Color COR_TEXTO_SUAVE_ESCURO = new Color(148, 163, 184);
-    private static final Color COR_BORDA_ESCURO       = new Color(51, 65, 85);
+    // ─── Tema, fábrica e controller ──────────────────────────────────────────
+    private AppTheme theme;
+    private UiFactory uiFactory;
+    GuiController controller;
 
-    // ─── Cores base (tema claro/fundo branco) ────────────────────────────────
-    private static final Color COR_FUNDO_CLARO       = new Color(245, 247, 251);
-    private static final Color COR_PAINEL_CLARO      = new Color(255, 255, 255);
-    private static final Color COR_PAINEL_ALT_CLARO  = new Color(250, 251, 255);
-    private static final Color COR_DESTAQUE_CLARO    = new Color(79, 70, 229);
-    private static final Color COR_DESTAQUE2_CLARO   = new Color(124, 58, 237);
-    private static final Color COR_SUCESSO_CLARO     = new Color(22, 163, 74);
-    private static final Color COR_ERRO_CLARO        = new Color(220, 38, 38);
-    private static final Color COR_TEXTO_CLARO       = new Color(15, 23, 42);
-    private static final Color COR_TEXTO_SUAVE_CLARO = new Color(71, 85, 105);
-    private static final Color COR_BORDA_CLARO       = new Color(203, 213, 225);
-
-    // ─── Cores ativas (mudam conforme o tema) ─────────────────────────────────
-    private Color COR_FUNDO;
-    private Color COR_PAINEL;
-    private Color COR_PAINEL_ALT;
-    private Color COR_DESTAQUE;
-    private Color COR_DESTAQUE2;
-    private Color COR_SUCESSO;
-    private Color COR_ERRO;
-    private Color COR_TEXTO;
-    private Color COR_TEXTO_SUAVE;
-    private Color COR_BORDA;
-
-    // ─── Fontes ───────────────────────────────────────────────────────────────
-    private static final Font FONTE_TITULO      = new Font("Segoe UI", Font.BOLD, 22);
-    private static final Font FONTE_SUBTITULO   = new Font("Segoe UI", Font.PLAIN, 12);
-    private static final Font FONTE_ROTULO      = new Font("Segoe UI", Font.BOLD, 13);
-    private static final Font FONTE_NORMAL      = new Font("Segoe UI", Font.PLAIN, 13);
-    private static final Font FONTE_MONO        = new Font("Consolas", Font.PLAIN, 12);
-    private static final Font FONTE_BOTAO       = new Font("Segoe UI", Font.BOLD, 13);
-    private static final int HEADER_LOGO_LARGURA = 320;
-    private static final int HEADER_LOGO_ALTURA = 74;
-    private static final int MAX_ARQUIVOS_PREVIEW_EMBUTIDA = 1;
-
-    // ─── Componentes principais ───────────────────────────────────────────────
-    private JTabbedPane abas;
-    private JTextArea areaUrls;
-    private JLabel labelArquivoWord;
-    private JLabel labelResumoArquivosWord;
-    private JTextArea areaPreviewWord;
-    private JPanel painelPreviewWord;
-    private JButton btnAbrirPreviewWord;
-    private DefaultListModel<File> modeloArquivosWord;
-    private JList<File> listaArquivosWord;
-    private JPanel painelLogCards;
-    private JScrollPane scrollLog;
-    private JTextArea areaPrompt;
-    private JProgressBar barraProgresso;
-    private JButton btnProcessar;
-    private JButton btnCopiarPrompt;
-    private JButton btnSalvar;
-    private JComboBox<String> comboModoGeracao;
-    private JComboBox<String> comboProviderIa;
-    private JComboBox<String> comboPerfilPrompt;
-    private JPasswordField campoApiKey;
-    private JCheckBox chkSalvarApiKey;
-    private JButton btnTestarConexaoIa;
-    private JButton btnLimparApiKey;
-    private JLabel lblAvisoModoEconomicoIa;
-    private JLabel lblEstimativaIa;
-    private boolean temaClaroAtivo;
-    private JTextField campoRTC;
-    private JPopupMenu popupSugestoesRtc;
-    private JList<String> listaSugestoesRtc;
-    private Timer timerSugestoesRtc;
-    private boolean atualizandoRtcProgramaticamente;
-    private static final int RTC_AUTOCOMPLETE_DEBOUNCE_MS = 220;
-    private JTextField campoUC;
-    private JTextArea areaHistorico;
-    private AuditoriaService auditoriaService;
-    private PerformanceService performanceService;
-    private ReportService reportService;
-    private ClipboardMonitor clipboardMonitor;
-    private TrayNotificationService trayService;
-    private Timer timerNotificacao;
-    private JTextField campoEstimativaPoker;
-    private JTextField campoSprint;
-    private JComboBox<String> comboComplexidade;
-    private JPanel painelGrafico;
-    private JPanel painelTendencia;
-    private JFreeChart chartTendenciaAtual;
-    private JLabel lblGanhoProdutividade;
-    private JButton btnIniciarScrum;
-    private JButton btnFinalizarScrum;
-    private JButton btnFinalizarExpertDev;
-    private long ultimoRegistroAuditoriaId = -1;
-    private String promptComAuditoria = "";  // Para guardar prompt com auditoria
-    private String modoGeracaoSelecionado = "LOCAL";
-    private String providerIaSelecionado = "openai";
-    private String perfilPromptSelecionado = "tecnico";
-    private boolean salvarApiKeySelecionada;
-    private String apiKeyDigitada = "";
+    // ─── Componentes principais (package-private para acesso pelo controller) ─
+    JTabbedPane abas;
+    JTextArea areaUrls;
+    JLabel labelArquivoWord;
+    JLabel labelResumoArquivosWord;
+    JTextArea areaPreviewWord;
+    JPanel painelPreviewWord;
+    JButton btnAbrirPreviewWord;
+    DefaultListModel<File> modeloArquivosWord;
+    JList<File> listaArquivosWord;
+    JPanel painelLogCards;
+    JScrollPane scrollLog;
+    JTextArea areaPrompt;
+    JProgressBar barraProgresso;
+    JButton btnProcessar;
+    JButton btnCopiarPrompt;
+    JButton btnSalvar;
+    JComboBox<String> comboModoGeracao;
+    JComboBox<String> comboProviderIa;
+    JComboBox<String> comboPerfilPrompt;
+    JPasswordField campoApiKey;
+    JCheckBox chkSalvarApiKey;
+    JButton btnTestarConexaoIa;
+    JButton btnLimparApiKey;
+    JLabel lblAvisoModoEconomicoIa;
+    JLabel lblEstimativaIa;
+    JTextField campoRTC;
+    JTextField campoUC;
+    JTextArea areaHistorico;
+    JTextField campoEstimativaPoker;
+    JTextField campoSprint;
+    JComboBox<String> comboComplexidade;
+    JPanel painelGrafico;
+    JPanel painelTendencia;
+    JLabel lblGanhoProdutividade;
+    JButton btnIniciarScrum;
+    JButton btnFinalizarScrum;
+    JButton btnFinalizarExpertDev;
     private final AuthSession authSession;
     private final PresentationMessageService presentationMessageService;
 
@@ -176,102 +114,24 @@ public class ExpertDevGUI extends JFrame {
                 ? new AuthSession("Local", "", LicenseStatus.PREMIUM, 0)
                 : authSession;
         this.presentationMessageService = new PresentationMessageService(this);
-        auditoriaService = new AuditoriaService();
-        performanceService = new PerformanceService(auditoriaService);
-        reportService = new ReportService(performanceService);
-        inicializarServicosWorkflow();
+        theme = new AppTheme(true); // Sempre inicia no modo Light
+        uiFactory = new UiFactory(theme);
+        controller = new GuiController(this, theme, uiFactory, this.authSession);
         ExpertDevConfig configUi = ExpertDevConfig.carregar();
-        aplicarTema(true); // Sempre inicia no modo Light
-        modoGeracaoSelecionado = configUi.getUiModoGeracao().equalsIgnoreCase("IA") ? "IA" : "LOCAL";
-        providerIaSelecionado = normalizarProvider(configUi.getAiProvider());
-        perfilPromptSelecionado = configUi.getPromptProfile();
+        controller.modoGeracaoSelecionado = configUi.getUiModoGeracao().equalsIgnoreCase("IA") ? "IA" : "LOCAL";
+        controller.providerIaSelecionado = controller.normalizarProvider(configUi.getAiProvider());
+        controller.perfilPromptSelecionado = configUi.getPromptProfile();
         configurarJanela();
         construirInterface();
-        preencherConfigIaInicial(configUi);
-        atualizarEstadoOpcoesIa();
+        controller.inicializar(); // inicia clipboard monitor e tray (precisa de componentes prontos)
+        controller.preencherConfigIaInicial(configUi);
+        controller.atualizarEstadoOpcoesIa();
         setVisible(true);
     }
 
-    private void inicializarServicosWorkflow() {
-        // Inicializar Clipboard Monitor
-        clipboardMonitor = new ClipboardMonitor((rtc, titulo) -> {
-            SwingUtilities.invokeLater(() -> {
-                if (campoRTC.getText().trim().isEmpty()) {
-                    definirCampoRtcProgramaticamente(rtc);
-                    verificarEPrefilPerformance();
-                     if (titulo != null && !titulo.isEmpty() && campoUC.getText().trim().isEmpty()) {
-                        campoUC.setText(titulo);
-                    }
-                    trayService.notificar("Tarefa Detectada", "RTC " + rtc + " capturado do clipboard.", TrayIcon.MessageType.INFO);
-                }
-            });
-        });
-        new Thread(clipboardMonitor, "ClipboardMonitorThread").start();
-
-        // Inicializar Tray Service
-        Image icone = null;
-        try {
-            icone = carregarImagemRecurso("/icons/ia_icon.png"); // Tenta carregar ícone existente
-            if (icone == null) {
-                // Fallback para uma versão redimensionada da logo se existir
-                BufferedImage logo = carregarImagemLogoPorTema();
-                if (logo != null) icone = logo.getScaledInstance(16, 16, Image.SCALE_SMOOTH);
-            }
-        } catch (Exception e) {}
-        
-        trayService = new TrayNotificationService("ExpertDev v2.4.1-BETA", icone, e -> {
-            setVisible(true);
-            setExtendedState(JFrame.NORMAL);
-            toFront();
-        });
-
-        // Timer para notificações de tempo excedido (verifica a cada 1 minuto)
-        timerNotificacao = new Timer(60000, e -> verificarTempoExcedido());
-        timerNotificacao.start();
-    }
-
-    private void verificarTempoExcedido() {
-        List<MetricaPerformance> metricas = performanceService.listarTodosPorUsuario(obterUsuarioSessao());
-        for (MetricaPerformance m : metricas) {
-            // Se tem início ExpertDev mas não tem fimExpertDev, está em andamento
-            if (m.getInicioExpertDev() != null && m.getFimExpertDev() == null && m.getEstimativaPoker() > 0) {
-                long minutosDecorridos = java.time.Duration.between(m.getInicioExpertDev(), LocalDateTime.now()).toMinutes();
-                double horasDecorridas = minutosDecorridos / 60.0;
-                
-                if (horasDecorridas > m.getEstimativaPoker()) {
-                    trayService.notificar("Tempo Excedido", 
-                        "A tarefa RTC " + m.getRtcNumero() + " excedeu o tempo estimado no Poker!", 
-                        TrayIcon.MessageType.WARNING);
-                }
-            }
-        }
-    }
 
     private void aplicarTema(boolean claro) {
-        temaClaroAtivo = claro;
-        if (claro) {
-            COR_FUNDO = COR_FUNDO_CLARO;
-            COR_PAINEL = COR_PAINEL_CLARO;
-            COR_PAINEL_ALT = COR_PAINEL_ALT_CLARO;
-            COR_DESTAQUE = COR_DESTAQUE_CLARO;
-            COR_DESTAQUE2 = COR_DESTAQUE2_CLARO;
-            COR_SUCESSO = COR_SUCESSO_CLARO;
-            COR_ERRO = COR_ERRO_CLARO;
-            COR_TEXTO = COR_TEXTO_CLARO;
-            COR_TEXTO_SUAVE = COR_TEXTO_SUAVE_CLARO;
-            COR_BORDA = COR_BORDA_CLARO;
-        } else {
-            COR_FUNDO = COR_FUNDO_ESCURO;
-            COR_PAINEL = COR_PAINEL_ESCURO;
-            COR_PAINEL_ALT = COR_PAINEL_ALT_ESCURO;
-            COR_DESTAQUE = COR_DESTAQUE_ESCURO;
-            COR_DESTAQUE2 = COR_DESTAQUE2_ESCURO;
-            COR_SUCESSO = COR_SUCESSO_ESCURO;
-            COR_ERRO = COR_ERRO_ESCURO;
-            COR_TEXTO = COR_TEXTO_ESCURO;
-            COR_TEXTO_SUAVE = COR_TEXTO_SUAVE_ESCURO;
-            COR_BORDA = COR_BORDA_ESCURO;
-        }
+        theme.aplicar(claro);
     }
 
     // ─── Configuração da Janela ────────────────────────────────────────────────
@@ -282,10 +142,10 @@ public class ExpertDevGUI extends JFrame {
         setSize(1100, 780);
         setMinimumSize(new Dimension(900, 650));
         setLocationRelativeTo(null);
-        getContentPane().setBackground(COR_FUNDO);
+        getContentPane().setBackground(theme.corFundo);
 
         // Define a logo do projeto como ícone da janela (ícone do .jar ao rodar)
-        BufferedImage logo = carregarImagemLogoPorTema();
+        BufferedImage logo = uiFactory.carregarImagemLogoPorTema();
         if (logo != null) {
             setIconImage(logo);
         }
@@ -312,7 +172,7 @@ public class ExpertDevGUI extends JFrame {
     /** Cabeçalho com título e subtítulo */
     private JPanel criarCabecalho() {
         JPanel cabecalho = new JPanel(new BorderLayout());
-        cabecalho.setBackground(COR_PAINEL);
+        cabecalho.setBackground(theme.corPainel);
         cabecalho.setBorder(new EmptyBorder(20, 28, 16, 28));
 
         JPanel textosPanel = new JPanel();
@@ -320,22 +180,22 @@ public class ExpertDevGUI extends JFrame {
         textosPanel.setOpaque(false);
 
         JLabel lblTitulo = new JLabel("Expert Dev");
-        Icon logoProjeto = carregarLogoProjeto(HEADER_LOGO_LARGURA, HEADER_LOGO_ALTURA);
+        Icon logoProjeto = uiFactory.carregarLogoProjeto(AppTheme.HEADER_LOGO_LARGURA, AppTheme.HEADER_LOGO_ALTURA);
         if (logoProjeto != null) {
             lblTitulo.setText("");
             lblTitulo.setIcon(logoProjeto);
-            lblTitulo.setPreferredSize(new Dimension(HEADER_LOGO_LARGURA, HEADER_LOGO_ALTURA));
+            lblTitulo.setPreferredSize(new Dimension(AppTheme.HEADER_LOGO_LARGURA, AppTheme.HEADER_LOGO_ALTURA));
         } else {
-            lblTitulo.setIcon(criarIconeJava(22));
+            lblTitulo.setIcon(uiFactory.criarIconeJava(22));
             lblTitulo.setIconTextGap(8);
         }
-        lblTitulo.setFont(FONTE_TITULO);
-        lblTitulo.setForeground(COR_DESTAQUE);
+        lblTitulo.setFont(AppTheme.FONTE_TITULO);
+        lblTitulo.setForeground(theme.corDestaque);
         lblTitulo.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel lblSubtitulo = new JLabel("Automatizador inteligente de contexto e gerador de prompts para IA ");
-        lblSubtitulo.setFont(FONTE_SUBTITULO);
-        lblSubtitulo.setForeground(COR_TEXTO_SUAVE);
+        lblSubtitulo.setFont(AppTheme.FONTE_SUBTITULO);
+        lblSubtitulo.setForeground(theme.corTextoSuave);
         lblSubtitulo.setBorder(new EmptyBorder(2, 2, 0, 0));
         lblSubtitulo.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -348,9 +208,9 @@ public class ExpertDevGUI extends JFrame {
         direita.setOpaque(false);
 
         JCheckBox chkTemaClaro = new JCheckBox("Fundo branco");
-        chkTemaClaro.setSelected(temaClaroAtivo);
-        chkTemaClaro.setBackground(COR_PAINEL);
-        chkTemaClaro.setForeground(COR_TEXTO);
+        chkTemaClaro.setSelected(theme.isClaroAtivo());
+        chkTemaClaro.setBackground(theme.corPainel);
+        chkTemaClaro.setForeground(theme.corTexto);
         chkTemaClaro.setFocusPainted(false);
         chkTemaClaro.setFont(new Font("Segoe UI", Font.BOLD, 12));
         chkTemaClaro.setVisible(false); // Mantendo o código, mas deixando invisível
@@ -362,22 +222,22 @@ public class ExpertDevGUI extends JFrame {
 
         JLabel lblVersao = new JLabel("v 2.4.1-BETA");
         lblVersao.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lblVersao.setForeground(COR_DESTAQUE2);
+        lblVersao.setForeground(theme.corDestaque2);
         lblVersao.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        JLabel lblLicenca = new JLabel(obterTextoLicenca());
+        JLabel lblLicenca = new JLabel(controller.obterTextoLicenca());
         lblLicenca.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lblLicenca.setForeground(obterCorLicenca());
+        lblLicenca.setForeground(controller.obterCorLicenca());
         lblLicenca.setBorder(new EmptyBorder(0, 8, 0, 8));
 
         // ── Bloco de usuario: ícone circular + nome ──────────────────────────
-        ImageIcon iconeUsuario = criarIconeUsuarioCircular(36);
+        ImageIcon iconeUsuario = uiFactory.criarIconeUsuarioCircular(36);
         JLabel lblIconeUsuario = new JLabel(iconeUsuario);
         lblIconeUsuario.setBorder(new EmptyBorder(0, 0, 0, 4));
 
         JLabel lblNomeUsuario = new JLabel(authSession.getDisplayName());
         lblNomeUsuario.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        lblNomeUsuario.setForeground(COR_TEXTO);
+        lblNomeUsuario.setForeground(theme.corTexto);
 
         String emailSessao = authSession.getEmail();
         String tooltipUsuario = emailSessao != null && !emailSessao.trim().isEmpty()
@@ -399,331 +259,17 @@ public class ExpertDevGUI extends JFrame {
 
         // Linha separadora inferior
         JSeparator sep = new JSeparator();
-        sep.setForeground(COR_BORDA);
-        sep.setBackground(COR_BORDA);
+        sep.setForeground(theme.corBorda);
+        sep.setBackground(theme.corBorda);
 
         JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setBackground(COR_PAINEL);
+        wrapper.setBackground(theme.corPainel);
         wrapper.add(cabecalho, BorderLayout.CENTER);
         wrapper.add(sep, BorderLayout.SOUTH);
         return wrapper;
     }
 
-    private String obterTextoLicenca() {
-        if (authSession == null) {
-            return "[PREMIUM]";
-        }
-        if (authSession.isPremium()) {
-            return "[PREMIUM]";
-        }
-        if (authSession.isTrial()) {
-            return "[TRIAL " + authSession.getTrialDaysRemaining() + "d]";
-        }
-        return "[EXPIRADO]";
-    }
 
-    private Color obterCorLicenca() {
-        if (authSession == null) {
-            return COR_SUCESSO;
-        }
-        if (authSession.isPremium()) {
-            return COR_SUCESSO;
-        }
-        if (authSession.isTrial()) {
-            return new Color(217, 119, 6);
-        }
-        return COR_ERRO;
-    }
-
-    private String obterUsuarioSessao() {
-        if (authSession == null) {
-            return "Visitante";
-        }
-        String username = authSession.getDisplayName();
-        if (username == null || username.trim().isEmpty()) {
-            return "Visitante";
-        }
-        return username.trim();
-    }
-
-    private String obterEmailSessao() {
-        if (authSession == null || authSession.getEmail() == null) {
-            return "";
-        }
-        return authSession.getEmail().trim();
-    }
-
-    private void configurarAutocompleteRtc() {
-        timerSugestoesRtc = new Timer(RTC_AUTOCOMPLETE_DEBOUNCE_MS, e -> atualizarSugestoesRtc());
-        timerSugestoesRtc.setRepeats(false);
-
-        popupSugestoesRtc = new JPopupMenu();
-        popupSugestoesRtc.setBorder(BorderFactory.createLineBorder(COR_BORDA));
-
-        listaSugestoesRtc = new JList<String>();
-        listaSugestoesRtc.setFont(FONTE_NORMAL);
-        listaSugestoesRtc.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        listaSugestoesRtc.setBackground(COR_PAINEL);
-        listaSugestoesRtc.setForeground(COR_TEXTO);
-        listaSugestoesRtc.setSelectionBackground(COR_DESTAQUE);
-        listaSugestoesRtc.setSelectionForeground(Color.WHITE);
-
-        // Renderer customizado para cores de status
-        listaSugestoesRtc.setCellRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                String val = (value != null) ? value.toString() : "";
-
-                if (val.startsWith("[PENDENTE]")) {
-                    label.setForeground(new Color(255, 180, 0)); // Laranja/Amarelo para Pendente
-                } else if (val.startsWith("[CONCLUÍDO]")) {
-                    label.setForeground(COR_SUCESSO); // Verde para Concluído
-                }
-
-                if (isSelected) {
-                    label.setBackground(COR_DESTAQUE);
-                    label.setForeground(Color.WHITE);
-                } else {
-                    label.setBackground(COR_PAINEL);
-                }
-                label.setBorder(new EmptyBorder(4, 8, 4, 8));
-                return label;
-            }
-        });
-
-        JScrollPane scroll = new JScrollPane(listaSugestoesRtc);
-        scroll.setBorder(BorderFactory.createEmptyBorder());
-        scroll.setPreferredSize(new Dimension(Math.max(260, campoRTC.getPreferredSize().width), 150));
-        popupSugestoesRtc.add(scroll);
-
-        listaSugestoesRtc.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mousePressed(java.awt.event.MouseEvent e) {
-                aplicarRtcSelecionado();
-            }
-        });
-
-        campoRTC.addKeyListener(new java.awt.event.KeyAdapter() {
-            @Override
-            public void keyPressed(java.awt.event.KeyEvent e) {
-                if (popupSugestoesRtc == null || !popupSugestoesRtc.isVisible()) {
-                    if (e.getKeyCode() == java.awt.event.KeyEvent.VK_DOWN && isAbaPerformanceSelecionada()) {
-                        solicitarAtualizacaoSugestoesRtc();
-                        e.consume();
-                    }
-                    return;
-                }
-
-                int idx = listaSugestoesRtc.getSelectedIndex();
-                int tamanho = listaSugestoesRtc.getModel().getSize();
-                switch (e.getKeyCode()) {
-                    case java.awt.event.KeyEvent.VK_DOWN:
-                        if (tamanho > 0) {
-                            listaSugestoesRtc.setSelectedIndex(Math.min(idx + 1, tamanho - 1));
-                            listaSugestoesRtc.ensureIndexIsVisible(listaSugestoesRtc.getSelectedIndex());
-                        }
-                        e.consume();
-                        break;
-                    case java.awt.event.KeyEvent.VK_UP:
-                        if (tamanho > 0) {
-                            listaSugestoesRtc.setSelectedIndex(Math.max(idx - 1, 0));
-                            listaSugestoesRtc.ensureIndexIsVisible(listaSugestoesRtc.getSelectedIndex());
-                        }
-                        e.consume();
-                        break;
-                    case java.awt.event.KeyEvent.VK_ENTER:
-                        aplicarRtcSelecionado();
-                        e.consume();
-                        break;
-                    case java.awt.event.KeyEvent.VK_ESCAPE:
-                        ocultarPopupSugestoesRtc();
-                        e.consume();
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
-
-        campoRTC.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusGained(java.awt.event.FocusEvent e) {
-                solicitarAtualizacaoSugestoesRtc();
-            }
-
-            @Override
-            public void focusLost(java.awt.event.FocusEvent e) {
-                // Pequeno delay para permitir cliques no popup antes de fechar
-                Timer timerFechar = new Timer(200, evt -> {
-                    if (popupSugestoesRtc != null && !popupSugestoesRtc.isFocusOwner() && !listaSugestoesRtc.isFocusOwner()) {
-                        ocultarPopupSugestoesRtc();
-                    }
-                });
-                timerFechar.setRepeats(false);
-                timerFechar.start();
-            }
-        });
-    }
-
-    private void atualizarSugestoesRtc() {
-        if (campoRTC == null || popupSugestoesRtc == null || listaSugestoesRtc == null) {
-            return;
-        }
-
-        if (!isAbaPerformanceSelecionada() || !campoRTC.isFocusOwner() || atualizandoRtcProgramaticamente) {
-            // Se o popup já está visível, não ocultar agressivamente se o foco estiver nele ou na lista
-            if (popupSugestoesRtc.isVisible() && (popupSugestoesRtc.isFocusOwner() || listaSugestoesRtc.isFocusOwner())) {
-                return;
-            }
-            ocultarPopupSugestoesRtc();
-            return;
-        }
-
-        String filtro = campoRTC.getText() == null ? "" : campoRTC.getText().trim();
-        List<String> sugestoes = performanceService.sugerirRtcsPorUsuario(obterUsuarioSessao(), filtro, 30);
-        if (sugestoes.isEmpty()) {
-            ocultarPopupSugestoesRtc();
-            return;
-        }
-
-        listaSugestoesRtc.setListData(sugestoes.toArray(new String[0]));
-        listaSugestoesRtc.setSelectedIndex(0);
-
-        if (!popupSugestoesRtc.isVisible()) {
-            // Configurações para evitar que o popup roube o foco mas permita interação
-            popupSugestoesRtc.setFocusable(false);
-            popupSugestoesRtc.show(campoRTC, 0, campoRTC.getHeight());
-        }
-    }
-
-    private void aplicarRtcSelecionado() {
-        if (listaSugestoesRtc == null) {
-            return;
-        }
-        String rtcSelecionado = listaSugestoesRtc.getSelectedValue();
-        if (rtcSelecionado == null || rtcSelecionado.trim().isEmpty()) {
-            return;
-        }
-
-        // Remover prefixos [PENDENTE] ou [CONCLUÍDO] antes de setar no campo
-        String rtcLimpo = rtcSelecionado;
-        if (rtcLimpo.startsWith("[PENDENTE] ")) {
-            rtcLimpo = rtcLimpo.substring("[PENDENTE] ".length());
-        } else if (rtcLimpo.startsWith("[CONCLUÍDO] ")) {
-            rtcLimpo = rtcLimpo.substring("[CONCLUÍDO] ".length());
-        }
-
-        definirCampoRtcProgramaticamente(rtcLimpo);
-        ocultarPopupSugestoesRtc();
-        verificarEPrefilPerformance();
-        buscarEVincularCasoDeUso(rtcLimpo);
-    }
-
-    private void buscarEVincularCasoDeUso(String rtc) {
-        if (rtc == null || rtc.trim().isEmpty()) return;
-
-        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
-            @Override
-            protected String doInBackground() throws Exception {
-                List<RegistroAuditoria> historico = auditoriaService.obterPorRTC(rtc);
-                for (RegistroAuditoria reg : historico) {
-                    String cod = reg.getUcCodigo();
-                    String desc = reg.getUcDescricao();
-                    if (cod != null && !cod.trim().isEmpty()) {
-                        if (desc != null && !desc.trim().isEmpty()) {
-                            return cod + " - " + desc;
-                        }
-                        return cod;
-                    }
-                }
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    String uc = get();
-                    if (uc != null && campoUC != null) {
-                        campoUC.setText(uc);
-                    }
-                } catch (Exception e) {}
-            }
-        };
-        worker.execute();
-    }
-
-    private void solicitarAtualizacaoSugestoesRtc() {
-        if (!isAbaPerformanceSelecionada()) {
-            ocultarPopupSugestoesRtc();
-            return;
-        }
-
-        if (timerSugestoesRtc == null) {
-            atualizarSugestoesRtc();
-            return;
-        }
-        timerSugestoesRtc.restart();
-    }
-    private void ocultarPopupSugestoesRtc() {
-        if (timerSugestoesRtc != null) {
-            timerSugestoesRtc.stop();
-        }
-        if (popupSugestoesRtc != null) {
-            popupSugestoesRtc.setVisible(false);
-        }
-    }
-
-    private void definirCampoRtcProgramaticamente(String rtc) {
-        atualizandoRtcProgramaticamente = true;
-        try {
-            campoRTC.setText(rtc == null ? "" : rtc);
-        } finally {
-            atualizandoRtcProgramaticamente = false;
-        }
-    }
-
-    private boolean isAbaPerformanceSelecionada() {
-        return abas != null && abas.getSelectedIndex() == 3;
-    }
-
-    /**
-     * Gera um ícone circular estilo "avatar" com silhueta de usuário,
-     * desenhado em tempo de execucao sem dependencia de arquivo externo.
-     */
-    private ImageIcon criarIconeUsuarioCircular(int size) {
-        BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = img.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
-        // Circulo de fundo azul (cor identica ao icone mostrado pelo usuario)
-        g.setColor(new Color(30, 120, 240));
-        g.fillOval(0, 0, size, size);
-
-        // Sombra interna no circulo (degrade sutil)
-        g.setColor(new Color(0, 0, 0, 30));
-        g.fillOval(size / 6, size / 4, size * 2 / 3, size * 3 / 4);
-
-        // Silhueta branca
-        g.setColor(Color.WHITE);
-
-        // Cabeca
-        int headDiam = size * 38 / 100;
-        int headX = (size - headDiam) / 2;
-        int headY = size * 14 / 100;
-        g.fillOval(headX, headY, headDiam, headDiam);
-
-        // Corpo (meio circulo inferior)
-        int bodyW = size * 62 / 100;
-        int bodyH = size * 38 / 100;
-        int bodyX = (size - bodyW) / 2;
-        int bodyY = size * 53 / 100;
-        g.fillArc(bodyX, bodyY, bodyW, bodyH, 0, 180);
-
-        g.dispose();
-        return new ImageIcon(img);
-    }
 
     /** Corpo principal — painel esquerdo (entrada) + direito (saída) */
     private JSplitPane criarCorpo() {
@@ -731,8 +277,8 @@ public class ExpertDevGUI extends JFrame {
                 criarPainelEntrada(), criarPainelSaida());
         split.setDividerLocation(490);
         split.setDividerSize(6);
-        split.setBackground(COR_FUNDO);
-        split.setForeground(COR_BORDA);
+        split.setBackground(theme.corFundo);
+        split.setForeground(theme.corBorda);
         split.setBorder(null);
         return split;
     }
@@ -741,7 +287,7 @@ public class ExpertDevGUI extends JFrame {
 
     private JPanel criarPainelEntrada() {
         JPanel painel = new JPanel(new BorderLayout(0, 12));
-        painel.setBackground(COR_FUNDO);
+        painel.setBackground(theme.corFundo);
         painel.setBorder(new EmptyBorder(16, 16, 0, 8));
 
         // Painel de auditoria (RTC + UC)
@@ -765,10 +311,10 @@ public class ExpertDevGUI extends JFrame {
                 abas.addTab("  ⚡  Assistente Pro  ", scrollPainelPro);
             } else {
                 JPanel painelBloqueado = new JPanel(new BorderLayout());
-                painelBloqueado.setBackground(COR_PAINEL_ALT);
+                painelBloqueado.setBackground(theme.corPainelAlt);
                 JLabel lblBloqueado = new JLabel("Assistente Pro disponivel apenas para credenciais Premium. Upgrade para Premium.", SwingConstants.CENTER);
-                lblBloqueado.setForeground(COR_TEXTO_SUAVE);
-                lblBloqueado.setFont(FONTE_ROTULO);
+                lblBloqueado.setForeground(theme.corTextoSuave);
+                lblBloqueado.setFont(AppTheme.FONTE_ROTULO);
                 painelBloqueado.add(lblBloqueado, BorderLayout.CENTER);
 
                 abas.addTab("  ⚡  Assistente Pro  ", painelBloqueado);
@@ -791,10 +337,10 @@ public class ExpertDevGUI extends JFrame {
             if (abas.getSelectedIndex() == 3) {
                 atualizarGraficoPerformance();
                 if (campoRTC != null && campoRTC.isFocusOwner()) {
-                    solicitarAtualizacaoSugestoesRtc();
+                    controller.solicitarAtualizacaoSugestoesRtc();
                 }
             } else {
-                ocultarPopupSugestoesRtc();
+                controller.ocultarPopupSugestoesRtc();
              }
         });
         painel.add(abas, BorderLayout.CENTER);
@@ -804,19 +350,19 @@ public class ExpertDevGUI extends JFrame {
     }
 
     private void estilizarAbas(JTabbedPane abas) {
-        abas.setBackground(COR_PAINEL);
-        abas.setForeground(COR_TEXTO);
-        abas.setFont(FONTE_ROTULO);
+        abas.setBackground(theme.corPainel);
+        abas.setForeground(theme.corTexto);
+        abas.setFont(AppTheme.FONTE_ROTULO);
         abas.setOpaque(true);
-        UIManager.put("TabbedPane.selected", COR_PAINEL_ALT);
-        UIManager.put("TabbedPane.contentAreaColor", COR_PAINEL_ALT);
+        UIManager.put("TabbedPane.selected", theme.corPainelAlt);
+        UIManager.put("TabbedPane.contentAreaColor", theme.corPainelAlt);
     }
 
     private JPanel criarPainelAuditoria() {
         JPanel painel = new JPanel(new GridBagLayout());
-        painel.setBackground(COR_PAINEL_ALT);
+        painel.setBackground(theme.corPainelAlt);
         painel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COR_BORDA),
+                BorderFactory.createLineBorder(theme.corBorda),
                 new EmptyBorder(8, 10, 8, 10)
         ));
 
@@ -824,23 +370,23 @@ public class ExpertDevGUI extends JFrame {
         gbc.insets = new Insets(2, 3, 2, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel lblRTC = criarRotulo("RTC:");
-        lblRTC.setFont(FONTE_ROTULO);
+        JLabel lblRTC = uiFactory.criarRotulo("RTC:");
+        lblRTC.setFont(AppTheme.FONTE_ROTULO);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
         painel.add(lblRTC, gbc);
 
         campoRTC = new JTextField();
-        campoRTC.setFont(FONTE_NORMAL);
+        campoRTC.setFont(AppTheme.FONTE_NORMAL);
         campoRTC.setToolTipText("Ex: 256421");
-        campoRTC.setBackground(COR_FUNDO);
-        campoRTC.setForeground(COR_TEXTO);
-        campoRTC.setCaretColor(COR_DESTAQUE);
-        campoRTC.setSelectionColor(COR_DESTAQUE);
+        campoRTC.setBackground(theme.corFundo);
+        campoRTC.setForeground(theme.corTexto);
+        campoRTC.setCaretColor(theme.corDestaque);
+        campoRTC.setSelectionColor(theme.corDestaque);
         campoRTC.setSelectedTextColor(Color.WHITE);
         campoRTC.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COR_BORDA),
+                BorderFactory.createLineBorder(theme.corBorda),
                 new EmptyBorder(6, 8, 6, 8)
         ));
         campoRTC.getDocument().addDocumentListener(new DocumentListener() {
@@ -850,32 +396,32 @@ public class ExpertDevGUI extends JFrame {
 
             private void aoAlterarCampoRtc() {
                 verificarEPrefilPerformance();
-                if (!atualizandoRtcProgramaticamente) {
-                    solicitarAtualizacaoSugestoesRtc();
+                if (!controller.atualizandoRtcProgramaticamente) {
+                    controller.solicitarAtualizacaoSugestoesRtc();
                 }
             }
          });
-         configurarAutocompleteRtc();
+         controller.configurarAutocompleteRtc();
         gbc.gridx = 1;
         gbc.weightx = 0.4;
         painel.add(campoRTC, gbc);
 
-        JLabel lblUC = criarRotulo("Caso de Uso:");
-        lblUC.setFont(FONTE_ROTULO);
+        JLabel lblUC = uiFactory.criarRotulo("Caso de Uso:");
+        lblUC.setFont(AppTheme.FONTE_ROTULO);
         gbc.gridx = 2;
         gbc.weightx = 0;
         painel.add(lblUC, gbc);
 
         campoUC = new JTextField();
-        campoUC.setFont(FONTE_NORMAL);
+        campoUC.setFont(AppTheme.FONTE_NORMAL);
         campoUC.setToolTipText("Ex: UC01 – Registrar Usuário");
-        campoUC.setBackground(COR_FUNDO);
-        campoUC.setForeground(COR_TEXTO);
-        campoUC.setCaretColor(COR_DESTAQUE);
-        campoUC.setSelectionColor(COR_DESTAQUE);
+        campoUC.setBackground(theme.corFundo);
+        campoUC.setForeground(theme.corTexto);
+        campoUC.setCaretColor(theme.corDestaque);
+        campoUC.setSelectionColor(theme.corDestaque);
         campoUC.setSelectedTextColor(Color.WHITE);
         campoUC.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COR_BORDA),
+                BorderFactory.createLineBorder(theme.corBorda),
                 new EmptyBorder(6, 8, 6, 8)
         ));
         gbc.gridx = 3;
@@ -888,18 +434,18 @@ public class ExpertDevGUI extends JFrame {
     /** Aba para entrada de URLs */
     private JPanel criarAbaUrls() {
         JPanel painel = new JPanel(new BorderLayout(0, 10));
-        painel.setBackground(COR_PAINEL_ALT);
+        painel.setBackground(theme.corPainelAlt);
         painel.setBorder(new EmptyBorder(16, 16, 16, 16));
 
-        JLabel instrucao = criarRotulo(
+        JLabel instrucao = uiFactory.criarRotulo(
                 "Cole uma ou mais URLs (uma por linha ou separadas por vírgula):");
         painel.add(instrucao, BorderLayout.NORTH);
 
         areaUrls = new JTextArea();
-        areaUrls.setFont(FONTE_MONO);
-        areaUrls.setBackground(COR_FUNDO);
-        areaUrls.setForeground(COR_TEXTO);
-        areaUrls.setCaretColor(COR_DESTAQUE);
+        areaUrls.setFont(AppTheme.FONTE_MONO);
+        areaUrls.setBackground(theme.corFundo);
+        areaUrls.setForeground(theme.corTexto);
+        areaUrls.setCaretColor(theme.corDestaque);
         areaUrls.setLineWrap(true);
         areaUrls.setWrapStyleWord(true);
         areaUrls.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -921,18 +467,18 @@ public class ExpertDevGUI extends JFrame {
             }
         });
 
-        JScrollPane scroll = criarScrollPane(areaUrls);
+        JScrollPane scroll = uiFactory.criarScrollPane(areaUrls);
         painel.add(scroll, BorderLayout.CENTER);
 
         // Botão de limpar
         JPanel botoesUrl = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         botoesUrl.setOpaque(false);
-        JButton btnLimpar = criarBotaoSecundario("✖  Limpar");
+        JButton btnLimpar = uiFactory.criarBotaoSecundario("✖  Limpar");
         btnLimpar.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 areaUrls.setText("");
                 if (campoRTC != null) {
-                    definirCampoRtcProgramaticamente("");
+                    controller.definirCampoRtcProgramaticamente("");
                     verificarEPrefilPerformance();
                  }
                 if (campoUC != null) {
@@ -950,14 +496,14 @@ public class ExpertDevGUI extends JFrame {
     /** Aba para upload de Word */
     private JPanel criarAbaUpload() {
         JPanel painel = new JPanel(new BorderLayout(0, 10));
-        painel.setBackground(COR_PAINEL_ALT);
+        painel.setBackground(theme.corPainelAlt);
         painel.setBorder(new EmptyBorder(16, 16, 16, 16));
 
         // Topo: instrução + botão selecionar
         JPanel topo = new JPanel(new BorderLayout(12, 0));
         topo.setOpaque(false);
 
-        JLabel instrucao = criarRotulo("Selecione um arquivo Word (.doc/.docx) com as regras de negócio:");
+        JLabel instrucao = uiFactory.criarRotulo("Selecione um arquivo Word (.doc/.docx) com as regras de negócio:");
         topo.add(instrucao, BorderLayout.NORTH);
 
         JPanel seletorPanel = new JPanel(new BorderLayout(10, 0));
@@ -965,15 +511,15 @@ public class ExpertDevGUI extends JFrame {
         seletorPanel.setBorder(new EmptyBorder(8, 0, 0, 0));
 
         labelArquivoWord = new JLabel("Nenhum arquivo selecionado");
-        labelArquivoWord.setFont(FONTE_MONO);
-        labelArquivoWord.setForeground(COR_TEXTO_SUAVE);
+        labelArquivoWord.setFont(AppTheme.FONTE_MONO);
+        labelArquivoWord.setForeground(theme.corTextoSuave);
         labelArquivoWord.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COR_BORDA),
+                BorderFactory.createLineBorder(theme.corBorda),
                 new EmptyBorder(8, 12, 8, 12)));
-        labelArquivoWord.setBackground(COR_FUNDO);
+        labelArquivoWord.setBackground(theme.corFundo);
         labelArquivoWord.setOpaque(true);
 
-        JButton btnSelecionar = criarBotaoPrimario("📂  Adicionar");
+        JButton btnSelecionar = uiFactory.criarBotaoPrimario("📂  Adicionar");
         btnSelecionar.setPreferredSize(new Dimension(140, 38));
         btnSelecionar.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -983,7 +529,7 @@ public class ExpertDevGUI extends JFrame {
 
         JPanel painelAcoesLista = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         painelAcoesLista.setOpaque(false);
-        JButton btnRemoverSelecionado = criarBotaoSecundario("🗑 Remover");
+        JButton btnRemoverSelecionado = uiFactory.criarBotaoSecundario("🗑 Remover");
         btnRemoverSelecionado.addActionListener(e -> {
             File selecionado = listaArquivosWord == null ? null : listaArquivosWord.getSelectedValue();
             if (selecionado != null && modeloArquivosWord != null) {
@@ -992,7 +538,7 @@ public class ExpertDevGUI extends JFrame {
                 carregarPreviewWord();
             }
         });
-        JButton btnLimparLista = criarBotaoSecundario("✖ Limpar");
+        JButton btnLimparLista = uiFactory.criarBotaoSecundario("✖ Limpar");
         btnLimparLista.addActionListener(e -> {
             if (modeloArquivosWord != null) {
                 modeloArquivosWord.clear();
@@ -1000,7 +546,7 @@ public class ExpertDevGUI extends JFrame {
                 carregarPreviewWord();
             }
         });
-        btnAbrirPreviewWord = criarBotaoSecundario("👁 Abrir Prévia");
+        btnAbrirPreviewWord = uiFactory.criarBotaoSecundario("👁 Abrir Prévia");
         btnAbrirPreviewWord.setToolTipText("Abre a pré-visualização textual do arquivo Word selecionado.");
         btnAbrirPreviewWord.addActionListener(e -> abrirDialogoPreviewWordSelecionado());
         btnAbrirPreviewWord.setEnabled(false);
@@ -1013,11 +559,11 @@ public class ExpertDevGUI extends JFrame {
         esquerda.add(labelArquivoWord, BorderLayout.NORTH);
         modeloArquivosWord = new DefaultListModel<File>();
         listaArquivosWord = new JList<File>(modeloArquivosWord);
-        listaArquivosWord.setBackground(COR_FUNDO);
-        listaArquivosWord.setForeground(COR_TEXTO);
-        listaArquivosWord.setSelectionBackground(COR_DESTAQUE);
+        listaArquivosWord.setBackground(theme.corFundo);
+        listaArquivosWord.setForeground(theme.corTexto);
+        listaArquivosWord.setSelectionBackground(theme.corDestaque);
         listaArquivosWord.setSelectionForeground(Color.WHITE);
-        listaArquivosWord.setFont(FONTE_NORMAL);
+        listaArquivosWord.setFont(AppTheme.FONTE_NORMAL);
         listaArquivosWord.setVisibleRowCount(5);
         listaArquivosWord.setCellRenderer(new DefaultListCellRenderer() {
             @Override
@@ -1044,7 +590,7 @@ public class ExpertDevGUI extends JFrame {
                 }
             }
         });
-        JScrollPane scrollArquivos = criarScrollPane(listaArquivosWord);
+        JScrollPane scrollArquivos = uiFactory.criarScrollPane(listaArquivosWord);
         scrollArquivos.setPreferredSize(new Dimension(100, 110));
         configurarDropArquivosWord(scrollArquivos);
         configurarDropArquivosWord(listaArquivosWord);
@@ -1058,20 +604,20 @@ public class ExpertDevGUI extends JFrame {
         seletorPanel.add(esquerda, BorderLayout.CENTER);
         seletorPanel.add(direita, BorderLayout.EAST);
 
-        labelResumoArquivosWord = criarRotulo("Arquivos Word: 0");
-        labelResumoArquivosWord.setFont(FONTE_SUBTITULO);
+        labelResumoArquivosWord = uiFactory.criarRotulo("Arquivos Word: 0");
+        labelResumoArquivosWord.setFont(AppTheme.FONTE_SUBTITULO);
         labelResumoArquivosWord.setBorder(new EmptyBorder(4, 2, 0, 0));
         topo.add(labelResumoArquivosWord, BorderLayout.SOUTH);
         topo.add(seletorPanel, BorderLayout.CENTER);
         painel.add(topo, BorderLayout.NORTH);
 
         // Área de preview do conteúdo Word
-        JLabel lblPreview = criarRotulo("Pré-visualização do conteúdo:");
+        JLabel lblPreview = uiFactory.criarRotulo("Pré-visualização do conteúdo:");
         lblPreview.setBorder(new EmptyBorder(12, 0, 4, 0));
 
         areaPreviewWord = new JTextArea();
-        areaPreviewWord.setFont(FONTE_MONO);
-        areaPreviewWord.setBackground(COR_FUNDO);
+        areaPreviewWord.setFont(AppTheme.FONTE_MONO);
+        areaPreviewWord.setBackground(theme.corFundo);
         areaPreviewWord.setForeground(new Color(180, 190, 210));
         areaPreviewWord.setEditable(false);
         areaPreviewWord.setRows(8);
@@ -1083,7 +629,7 @@ public class ExpertDevGUI extends JFrame {
         JPanel centro = new JPanel(new BorderLayout());
         centro.setOpaque(false);
         centro.add(lblPreview, BorderLayout.NORTH);
-        JScrollPane scrollPreviewWord = criarScrollPane(areaPreviewWord);
+        JScrollPane scrollPreviewWord = uiFactory.criarScrollPane(areaPreviewWord);
         scrollPreviewWord.setPreferredSize(new Dimension(100, 160));
         scrollPreviewWord.setMinimumSize(new Dimension(100, 120));
         centro.add(scrollPreviewWord, BorderLayout.CENTER);
@@ -1099,31 +645,31 @@ public class ExpertDevGUI extends JFrame {
     /** Aba para exibição do histórico */
     private JPanel criarAbaHistorico() {
         JPanel painel = new JPanel(new BorderLayout(0, 10));
-        painel.setBackground(COR_PAINEL_ALT);
+        painel.setBackground(theme.corPainelAlt);
         painel.setBorder(new EmptyBorder(16, 16, 16, 16));
 
-        JLabel instrucao = criarRotulo("Histórico de processamentos (últimos 100):");
+        JLabel instrucao = uiFactory.criarRotulo("Histórico de processamentos (últimos 100):");
         instrucao.setBorder(new EmptyBorder(0, 0, 8, 0));
         painel.add(instrucao, BorderLayout.NORTH);
 
         areaHistorico = new JTextArea();
-        areaHistorico.setFont(FONTE_MONO);
-        areaHistorico.setBackground(COR_FUNDO);
-        areaHistorico.setForeground(COR_TEXTO_SUAVE);
+        areaHistorico.setFont(AppTheme.FONTE_MONO);
+        areaHistorico.setBackground(theme.corFundo);
+        areaHistorico.setForeground(theme.corTextoSuave);
         areaHistorico.setEditable(false);
         areaHistorico.setLineWrap(true);
         areaHistorico.setWrapStyleWord(true);
         areaHistorico.setBorder(new EmptyBorder(10, 10, 10, 10));
         areaHistorico.setText("(histórico será preenchido após o primeiro processamento)");
-        painel.add(criarScrollPane(areaHistorico), BorderLayout.CENTER);
+        painel.add(uiFactory.criarScrollPane(areaHistorico), BorderLayout.CENTER);
 
         JPanel botoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         botoes.setOpaque(false);
-        JButton btnAtualizarHistorico = criarBotaoSecundario("🔄  Atualizar");
+        JButton btnAtualizarHistorico = uiFactory.criarBotaoSecundario("🔄  Atualizar");
         btnAtualizarHistorico.addActionListener(e -> atualizarAbaHistorico());
         botoes.add(btnAtualizarHistorico);
 
-        JButton btnLimparCache = criarBotaoSecundario("🧹  Limpar Cache");
+        JButton btnLimparCache = uiFactory.criarBotaoSecundario("🧹  Limpar Cache");
         btnLimparCache.setToolTipText("Apaga o cache local de URLs processadas para forçar novo download");
         btnLimparCache.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this,
@@ -1144,36 +690,36 @@ public class ExpertDevGUI extends JFrame {
 
     private JPanel criarAbaPerformance() {
         JPanel painel = new JPanel(new BorderLayout(0, 10));
-        painel.setBackground(COR_PAINEL_ALT);
+        painel.setBackground(theme.corPainelAlt);
         painel.setBorder(new EmptyBorder(16, 16, 16, 16));
 
         // Topo: Entrada de dados
         JPanel topo = new JPanel(new GridBagLayout());
-        topo.setBackground(COR_PAINEL_ALT);
+        topo.setBackground(theme.corPainelAlt);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.gridx = 0; gbc.gridy = 0;
-        topo.add(criarRotulo("Estimativa Poker (Horas):"), gbc);
+        topo.add(uiFactory.criarRotulo("Estimativa Poker (Horas):"), gbc);
 
         campoEstimativaPoker = new JTextField(5);
-        campoEstimativaPoker.setBackground(COR_FUNDO);
-        campoEstimativaPoker.setForeground(COR_TEXTO);
+        campoEstimativaPoker.setBackground(theme.corFundo);
+        campoEstimativaPoker.setForeground(theme.corTexto);
         gbc.gridx = 1;
         topo.add(campoEstimativaPoker, gbc);
 
         gbc.gridx = 2;
-        topo.add(criarRotulo("Sprint:"), gbc);
+        topo.add(uiFactory.criarRotulo("Sprint:"), gbc);
 
         campoSprint = new JTextField(5);
-        campoSprint.setBackground(COR_FUNDO);
-        campoSprint.setForeground(COR_TEXTO);
+        campoSprint.setBackground(theme.corFundo);
+        campoSprint.setForeground(theme.corTexto);
         gbc.gridx = 3;
         topo.add(campoSprint, gbc);
 
         gbc.gridx = 4;
-        topo.add(criarRotulo("Complexidade:"), gbc);
+        topo.add(uiFactory.criarRotulo("Complexidade:"), gbc);
 
         comboComplexidade = new JComboBox<>(new String[]{"Baixa", "Média", "Alta"});
         gbc.gridx = 5;
@@ -1183,40 +729,40 @@ public class ExpertDevGUI extends JFrame {
 
         // Centro: Gráfico e Dashboard
         JPanel centro = new JPanel(new GridLayout(1, 2, 10, 0));
-        centro.setBackground(COR_PAINEL_ALT);
+        centro.setBackground(theme.corPainelAlt);
 
         painelGrafico = new JPanel(new BorderLayout());
-        painelGrafico.setBackground(COR_PAINEL);
-        painelGrafico.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(COR_BORDA), "RTC Atual", 0, 0, FONTE_ROTULO, COR_TEXTO));
+        painelGrafico.setBackground(theme.corPainel);
+        painelGrafico.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(theme.corBorda), "RTC Atual", 0, 0, AppTheme.FONTE_ROTULO, theme.corTexto));
         centro.add(painelGrafico);
 
         painelTendencia = new JPanel(new BorderLayout());
-        painelTendencia.setBackground(COR_PAINEL);
-        painelTendencia.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(COR_BORDA), "Tendência de Aprendizado", 0, 0, FONTE_ROTULO, COR_TEXTO));
+        painelTendencia.setBackground(theme.corPainel);
+        painelTendencia.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(theme.corBorda), "Tendência de Aprendizado", 0, 0, AppTheme.FONTE_ROTULO, theme.corTexto));
         centro.add(painelTendencia);
 
         painel.add(centro, BorderLayout.CENTER);
 
         // Base: Ações e KPI
         JPanel base = new JPanel(new BorderLayout(10, 0));
-        base.setBackground(COR_PAINEL_ALT);
+        base.setBackground(theme.corPainelAlt);
 
         JPanel botoes = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        botoes.setBackground(COR_PAINEL_ALT);
+        botoes.setBackground(theme.corPainelAlt);
 
-        btnIniciarScrum = criarBotaoSecundario("Iniciar Scrum");
+        btnIniciarScrum = uiFactory.criarBotaoSecundario("Iniciar Scrum");
         btnIniciarScrum.setToolTipText("Inicia cronômetro do Scrum. ExpertDev já foi iniciado automaticamente ao processar.");
         btnIniciarScrum.addActionListener(e -> gerenciarAcaoPerformance("INICIAR_SCRUM"));
         
-        btnFinalizarScrum = criarBotaoSecundario("Finalizar Scrum");
+        btnFinalizarScrum = uiFactory.criarBotaoSecundario("Finalizar Scrum");
         btnFinalizarScrum.setToolTipText("Finaliza cronômetro do Scrum manualmente (fecha automaticamente ao finalizar ExpertDev).");
         btnFinalizarScrum.addActionListener(e -> gerenciarAcaoPerformance("FINALIZAR_SCRUM"));
 
-        btnFinalizarExpertDev = criarBotaoSecundario("Finalizar ExpertDev");
+        btnFinalizarExpertDev = uiFactory.criarBotaoSecundario("Finalizar ExpertDev");
         btnFinalizarExpertDev.setToolTipText("Finaliza ExpertDev, Scrum (se ativo) e marca tarefa como CONCLUIDO. Exibe economia se foi mais rápido que estimado.");
         btnFinalizarExpertDev.addActionListener(e -> gerenciarAcaoPerformance("FINALIZAR_EXPERTDEV"));
 
-        JButton btnExportarRelatorio = criarBotaoSecundario("📊 Exportar ROI");
+        JButton btnExportarRelatorio = uiFactory.criarBotaoSecundario("📊 Exportar ROI");
         btnExportarRelatorio.addActionListener(e -> exportarRelatorioROI());
 
         botoes.add(btnIniciarScrum);
@@ -1225,9 +771,9 @@ public class ExpertDevGUI extends JFrame {
         botoes.add(btnExportarRelatorio);
         base.add(botoes, BorderLayout.WEST);
 
-        lblGanhoProdutividade = criarRotulo("Ganho: 0%");
-        lblGanhoProdutividade.setFont(FONTE_TITULO);
-        lblGanhoProdutividade.setForeground(COR_SUCESSO);
+        lblGanhoProdutividade = uiFactory.criarRotulo("Ganho: 0%");
+        lblGanhoProdutividade.setFont(AppTheme.FONTE_TITULO);
+        lblGanhoProdutividade.setForeground(theme.corSucesso);
         base.add(lblGanhoProdutividade, BorderLayout.EAST);
 
         painel.add(base, BorderLayout.SOUTH);
@@ -1254,10 +800,10 @@ public class ExpertDevGUI extends JFrame {
         String rtc = campoRTC.getText().trim();
         if (rtc.isEmpty()) return;
 
-        String authUsername = obterUsuarioSessao();
-        String authEmail = obterEmailSessao();
+        String authUsername = controller.obterUsuarioSessao();
+        String authEmail = controller.obterEmailSessao();
 
-        MetricaPerformance m = performanceService.obterPorRTCeUsuario(rtc, authUsername);
+        MetricaPerformance m = controller.performanceService.obterPorRTCeUsuario(rtc, authUsername);
         if (m == null) m = new MetricaPerformance(rtc, authUsername, authEmail);
         m.setAuthUsername(authUsername);
         m.setAuthEmail(authEmail);
@@ -1280,7 +826,7 @@ public class ExpertDevGUI extends JFrame {
 
         m.setComplexidade((String) comboComplexidade.getSelectedItem());
         
-        performanceService.salvarOuAtualizar(m);
+        controller.performanceService.salvarOuAtualizar(m);
         atualizarGraficoPerformance();
     }
 
@@ -1291,10 +837,10 @@ public class ExpertDevGUI extends JFrame {
             return;
         }
 
-        String authUsername = obterUsuarioSessao();
-        String authEmail = obterEmailSessao();
+        String authUsername = controller.obterUsuarioSessao();
+        String authEmail = controller.obterEmailSessao();
 
-        MetricaPerformance m = performanceService.obterPorRTCeUsuario(rtc, authUsername);
+        MetricaPerformance m = controller.performanceService.obterPorRTCeUsuario(rtc, authUsername);
         if (m == null) {
             m = new MetricaPerformance(rtc, authUsername, authEmail);
         }
@@ -1356,7 +902,7 @@ public class ExpertDevGUI extends JFrame {
                  break;
          }
 
-         performanceService.salvarOuAtualizar(m);
+         controller.performanceService.salvarOuAtualizar(m);
          atualizarGraficoPerformance();
     }
 
@@ -1369,7 +915,7 @@ public class ExpertDevGUI extends JFrame {
             return;
         }
 
-        MetricaPerformance m = performanceService.obterPorRTCeUsuario(rtc, obterUsuarioSessao());
+        MetricaPerformance m = controller.performanceService.obterPorRTCeUsuario(rtc, controller.obterUsuarioSessao());
         if (m != null) {
             if (campoEstimativaPoker != null) {
                 campoEstimativaPoker.setText(m.getEstimativaPoker() != null ? String.valueOf(m.getEstimativaPoker()) : "");
@@ -1394,12 +940,12 @@ public class ExpertDevGUI extends JFrame {
 
     private void exportarRelatorioROI() {
         try {
-            List<MetricaPerformance> metricas = performanceService.listarTodosPorUsuario(obterUsuarioSessao());
+            List<MetricaPerformance> metricas = controller.performanceService.listarTodosPorUsuario(controller.obterUsuarioSessao());
             if (metricas.isEmpty()) {
                 mostrarAviso("Não há dados de performance para exportar.");
                 return;
             }
-            String path = reportService.exportarRelatorioExecutivo(metricas, chartTendenciaAtual);
+            String path = controller.reportService.exportarRelatorioExecutivo(metricas, controller.chartTendenciaAtual);
             mostrarMensagem("Relatório exportado com sucesso!\nCaminho: " + path);
             
             // Abrir no browser
@@ -1425,7 +971,7 @@ public class ExpertDevGUI extends JFrame {
     }
 
     private void atualizarDashboardTendencia() {
-        List<MetricaPerformance> metricas = performanceService.listarTodosPorUsuario(obterUsuarioSessao());
+        List<MetricaPerformance> metricas = controller.performanceService.listarTodosPorUsuario(controller.obterUsuarioSessao());
         if (metricas.isEmpty()) {
             painelTendencia.removeAll();
             painelTendencia.add(new JLabel("Sem dados históricos", SwingConstants.CENTER));
@@ -1469,25 +1015,25 @@ public class ExpertDevGUI extends JFrame {
                 false, true, false
         );
 
-        chart.setBackgroundPaint(COR_PAINEL);
+        chart.setBackgroundPaint(theme.corPainel);
         org.jfree.chart.plot.XYPlot plot = chart.getXYPlot();
-        plot.setBackgroundPaint(COR_FUNDO);
-        plot.setDomainGridlinePaint(COR_BORDA);
-        plot.setRangeGridlinePaint(COR_BORDA);
+        plot.setBackgroundPaint(theme.corFundo);
+        plot.setDomainGridlinePaint(theme.corBorda);
+        plot.setRangeGridlinePaint(theme.corBorda);
 
         XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
-        renderer.setSeriesPaint(0, COR_SUCESSO);
+        renderer.setSeriesPaint(0, theme.corSucesso);
         renderer.setSeriesStroke(0, new BasicStroke(2.0f));
         plot.setRenderer(renderer);
 
         DateAxis axis = (DateAxis) plot.getDomainAxis();
         axis.setDateFormatOverride(new SimpleDateFormat("dd/MM"));
 
-        chartTendenciaAtual = chart; // Guardar para o relatório PDF
+        controller.chartTendenciaAtual = chart; // Guardar para o relatório PDF
 
         painelTendencia.removeAll();
         ChartPanel cp = new ChartPanel(chart);
-        cp.setBackground(COR_PAINEL);
+        cp.setBackground(theme.corPainel);
         painelTendencia.add(cp, BorderLayout.CENTER);
         painelTendencia.revalidate();
         painelTendencia.repaint();
@@ -1497,7 +1043,7 @@ public class ExpertDevGUI extends JFrame {
         String rtc = campoRTC.getText().trim();
         if (rtc.isEmpty()) return;
 
-        MetricaPerformance m = performanceService.obterPorRTCeUsuario(rtc, obterUsuarioSessao());
+        MetricaPerformance m = controller.performanceService.obterPorRTCeUsuario(rtc, controller.obterUsuarioSessao());
         if (m == null) {
             painelGrafico.removeAll();
             painelGrafico.add(new JLabel("Sem dados para o RTC " + rtc, SwingConstants.CENTER));
@@ -1536,17 +1082,17 @@ public class ExpertDevGUI extends JFrame {
                 false, true, false
         );
 
-        chart.setBackgroundPaint(COR_PAINEL);
+        chart.setBackgroundPaint(theme.corPainel);
         CategoryPlot plot = chart.getCategoryPlot();
-        plot.setBackgroundPaint(COR_FUNDO);
-        plot.setRangeGridlinePaint(COR_BORDA);
+        plot.setBackgroundPaint(theme.corFundo);
+        plot.setRangeGridlinePaint(theme.corBorda);
 
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, COR_DESTAQUE);
+        renderer.setSeriesPaint(0, theme.corDestaque);
         
         painelGrafico.removeAll();
         ChartPanel cp = new ChartPanel(chart);
-        cp.setBackground(COR_PAINEL);
+        cp.setBackground(theme.corPainel);
         painelGrafico.add(cp, BorderLayout.CENTER);
         painelGrafico.revalidate();
         painelGrafico.repaint();
@@ -1569,7 +1115,7 @@ public class ExpertDevGUI extends JFrame {
         SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
             @Override
             protected String doInBackground() throws Exception {
-                java.util.List<RegistroAuditoria> registros = auditoriaService.obterTodosPorUsuario(obterUsuarioSessao());
+                java.util.List<RegistroAuditoria> registros = controller.auditoriaService.obterTodosPorUsuario(controller.obterUsuarioSessao());
                 if (registros.isEmpty()) {
                     return "(nenhum registro encontrado)";
                 }
@@ -1606,16 +1152,16 @@ public class ExpertDevGUI extends JFrame {
         barraProgresso = new JProgressBar(0, 100);
         barraProgresso.setStringPainted(true);
         barraProgresso.setString("Aguardando...");
-        barraProgresso.setFont(FONTE_NORMAL);
-        barraProgresso.setBackground(COR_PAINEL);
-        barraProgresso.setForeground(COR_DESTAQUE);
+        barraProgresso.setFont(AppTheme.FONTE_NORMAL);
+        barraProgresso.setBackground(theme.corPainel);
+        barraProgresso.setForeground(theme.corDestaque);
         barraProgresso.setBorderPainted(false);
         barraProgresso.setPreferredSize(new Dimension(0, 22));
         topoAcoes.add(barraProgresso, BorderLayout.SOUTH);
 
         painel.add(topoAcoes, BorderLayout.NORTH);
 
-        btnProcessar = criarBotaoAcao("▶  Gerar Prompt");
+        btnProcessar = uiFactory.criarBotaoAcao("▶  Gerar Prompt");
         btnProcessar.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 iniciarProcessamento();
@@ -1628,9 +1174,9 @@ public class ExpertDevGUI extends JFrame {
 
     private JPanel criarPainelConfigGeracao() {
         JPanel painel = new JPanel(new GridBagLayout());
-        painel.setBackground(COR_PAINEL_ALT);
+        painel.setBackground(theme.corPainelAlt);
         painel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COR_BORDA),
+                BorderFactory.createLineBorder(theme.corBorda),
                 new EmptyBorder(8, 10, 8, 10)
         ));
 
@@ -1638,9 +1184,9 @@ public class ExpertDevGUI extends JFrame {
         gbc.insets = new Insets(2, 3, 2, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        JLabel lblModo = criarRotulo("Modo:");
-        lblModo.setFont(FONTE_SUBTITULO);
-        lblModo.setIcon(criarIconeIa(14));
+        JLabel lblModo = uiFactory.criarRotulo("Modo:");
+        lblModo.setFont(AppTheme.FONTE_SUBTITULO);
+        lblModo.setIcon(uiFactory.criarIconeIa(14));
         lblModo.setIconTextGap(5);
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1648,10 +1194,10 @@ public class ExpertDevGUI extends JFrame {
         painel.add(lblModo, gbc);
 
         comboModoGeracao = new JComboBox<String>(new String[]{"LOCAL", "IA"});
-        comboModoGeracao.setSelectedItem(modoGeracaoSelecionado);
-        comboModoGeracao.setFont(FONTE_NORMAL);
-        final Icon iconIaCombo = criarIconeIa(14);
-        final Icon iconLocalCombo = criarIconeLocal(14);
+        comboModoGeracao.setSelectedItem(controller.modoGeracaoSelecionado);
+        comboModoGeracao.setFont(AppTheme.FONTE_NORMAL);
+        final Icon iconIaCombo = uiFactory.criarIconeIa(14);
+        final Icon iconLocalCombo = uiFactory.criarIconeLocal(14);
         comboModoGeracao.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list,
@@ -1669,8 +1215,8 @@ public class ExpertDevGUI extends JFrame {
         });
         comboModoGeracao.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                modoGeracaoSelecionado = String.valueOf(comboModoGeracao.getSelectedItem());
-                ExpertDevConfig.salvarPreferenciaModoGeracao(modoGeracaoSelecionado);
+                controller.modoGeracaoSelecionado = String.valueOf(comboModoGeracao.getSelectedItem());
+                ExpertDevConfig.salvarPreferenciaModoGeracao(controller.modoGeracaoSelecionado);
                 ExpertDevConfig.salvarPreferenciaAiHabilitada(isModoIaSelecionado());
                 atualizarEstadoOpcoesIa();
                 atualizarEstimativaIa();
@@ -1680,19 +1226,19 @@ public class ExpertDevGUI extends JFrame {
         gbc.weightx = 0.3;
         painel.add(comboModoGeracao, gbc);
 
-        JLabel lblPerfil = criarRotulo("Perfil:");
-        lblPerfil.setFont(FONTE_SUBTITULO);
+        JLabel lblPerfil = uiFactory.criarRotulo("Perfil:");
+        lblPerfil.setFont(AppTheme.FONTE_SUBTITULO);
         gbc.gridx = 4;
         gbc.weightx = 0;
         painel.add(lblPerfil, gbc);
 
         comboPerfilPrompt = new JComboBox<String>(new String[]{"tecnico", "negocial"});
-        comboPerfilPrompt.setSelectedItem(perfilPromptSelecionado);
-        comboPerfilPrompt.setFont(FONTE_NORMAL);
+        comboPerfilPrompt.setSelectedItem(controller.perfilPromptSelecionado);
+        comboPerfilPrompt.setFont(AppTheme.FONTE_NORMAL);
         comboPerfilPrompt.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                perfilPromptSelecionado = String.valueOf(comboPerfilPrompt.getSelectedItem());
-                ExpertDevConfig.salvarPromptProfile(perfilPromptSelecionado);
+                controller.perfilPromptSelecionado = String.valueOf(comboPerfilPrompt.getSelectedItem());
+                ExpertDevConfig.salvarPromptProfile(controller.perfilPromptSelecionado);
                 atualizarEstimativaIa();
             }
         });
@@ -1700,17 +1246,17 @@ public class ExpertDevGUI extends JFrame {
         gbc.weightx = 0.2;
         painel.add(comboPerfilPrompt, gbc);
 
-        JLabel lblProvider = criarRotulo("Provider:");
-        lblProvider.setFont(FONTE_SUBTITULO);
-        lblProvider.setIcon(criarIconeIa(14));
+        JLabel lblProvider = uiFactory.criarRotulo("Provider:");
+        lblProvider.setFont(AppTheme.FONTE_SUBTITULO);
+        lblProvider.setIcon(uiFactory.criarIconeIa(14));
         lblProvider.setIconTextGap(5);
         gbc.gridx = 2;
         gbc.weightx = 0;
         painel.add(lblProvider, gbc);
 
         comboProviderIa = new JComboBox<String>(new String[]{"openai", "claude"});
-        comboProviderIa.setSelectedItem(providerIaSelecionado);
-        comboProviderIa.setFont(FONTE_NORMAL);
+        comboProviderIa.setSelectedItem(controller.providerIaSelecionado);
+        comboProviderIa.setFont(AppTheme.FONTE_NORMAL);
         comboProviderIa.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list,
@@ -1721,15 +1267,15 @@ public class ExpertDevGUI extends JFrame {
                 JLabel label = (JLabel) super.getListCellRendererComponent(
                         list, value, index, isSelected, cellHasFocus);
                 String provider = value == null ? "" : value.toString();
-                label.setIcon("claude".equalsIgnoreCase(provider) ? criarIconeClaude(14) : criarIconeIa(14));
+                label.setIcon("claude".equalsIgnoreCase(provider) ? uiFactory.criarIconeClaude(14) : uiFactory.criarIconeIa(14));
                 label.setIconTextGap(6);
                 return label;
             }
         });
         comboProviderIa.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                providerIaSelecionado = normalizarProvider(String.valueOf(comboProviderIa.getSelectedItem()));
-                ExpertDevConfig.salvarConfiguracaoAiProvider(providerIaSelecionado);
+                controller.providerIaSelecionado = normalizarProvider(String.valueOf(comboProviderIa.getSelectedItem()));
+                ExpertDevConfig.salvarConfiguracaoAiProvider(controller.providerIaSelecionado);
                 atualizarEstimativaIa();
             }
         });
@@ -1737,22 +1283,22 @@ public class ExpertDevGUI extends JFrame {
         gbc.weightx = 0.3;
         painel.add(comboProviderIa, gbc);
 
-        JLabel lblApi = criarRotulo("API Key:");
-        lblApi.setFont(FONTE_SUBTITULO);
+        JLabel lblApi = uiFactory.criarRotulo("API Key:");
+        lblApi.setFont(AppTheme.FONTE_SUBTITULO);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
         painel.add(lblApi, gbc);
 
         campoApiKey = new JPasswordField();
-        campoApiKey.setFont(FONTE_NORMAL);
+        campoApiKey.setFont(AppTheme.FONTE_NORMAL);
         gbc.gridx = 1;
         gbc.gridwidth = 2;
         gbc.weightx = 0.8;
         painel.add(campoApiKey, gbc);
 
-        btnLimparApiKey = criarBotaoSecundario("Limpar");
-        btnLimparApiKey.setFont(FONTE_SUBTITULO);
+        btnLimparApiKey = uiFactory.criarBotaoSecundario("Limpar");
+        btnLimparApiKey.setFont(AppTheme.FONTE_SUBTITULO);
         btnLimparApiKey.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 limparApiKey();
@@ -1763,9 +1309,9 @@ public class ExpertDevGUI extends JFrame {
         gbc.weightx = 0;
         painel.add(btnLimparApiKey, gbc);
 
-        btnTestarConexaoIa = criarBotaoSecundario("Testar IA");
-        btnTestarConexaoIa.setFont(FONTE_SUBTITULO);
-        btnTestarConexaoIa.setIcon(criarIconeIa(14));
+        btnTestarConexaoIa = uiFactory.criarBotaoSecundario("Testar IA");
+        btnTestarConexaoIa.setFont(AppTheme.FONTE_SUBTITULO);
+        btnTestarConexaoIa.setIcon(uiFactory.criarIconeIa(14));
         btnTestarConexaoIa.setIconTextGap(5);
         btnTestarConexaoIa.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -1778,11 +1324,11 @@ public class ExpertDevGUI extends JFrame {
 
         chkSalvarApiKey = new JCheckBox("Salvar chave localmente");
         chkSalvarApiKey.setOpaque(false);
-        chkSalvarApiKey.setForeground(COR_TEXTO_SUAVE);
-        chkSalvarApiKey.setFont(FONTE_SUBTITULO);
+        chkSalvarApiKey.setForeground(theme.corTextoSuave);
+        chkSalvarApiKey.setFont(AppTheme.FONTE_SUBTITULO);
         chkSalvarApiKey.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                salvarApiKeySelecionada = chkSalvarApiKey.isSelected();
+                controller.salvarApiKeySelecionada = chkSalvarApiKey.isSelected();
             }
         });
         gbc.gridx = 1;
@@ -1792,9 +1338,9 @@ public class ExpertDevGUI extends JFrame {
         painel.add(chkSalvarApiKey, gbc);
 
         lblAvisoModoEconomicoIa = new JLabel("Modo econômico de IA ativo: contexto reduzido e menos tokens.");
-        lblAvisoModoEconomicoIa.setFont(FONTE_SUBTITULO);
-        lblAvisoModoEconomicoIa.setForeground(COR_DESTAQUE2);
-        lblAvisoModoEconomicoIa.setIcon(criarIconeEconomico(14));
+        lblAvisoModoEconomicoIa.setFont(AppTheme.FONTE_SUBTITULO);
+        lblAvisoModoEconomicoIa.setForeground(theme.corDestaque2);
+        lblAvisoModoEconomicoIa.setIcon(uiFactory.criarIconeEconomico(14));
         lblAvisoModoEconomicoIa.setIconTextGap(5);
         gbc.gridx = 0;
         gbc.gridy = 3;
@@ -1803,9 +1349,9 @@ public class ExpertDevGUI extends JFrame {
         painel.add(lblAvisoModoEconomicoIa, gbc);
 
         lblEstimativaIa = new JLabel("Estimativa IA: aguardando contexto...");
-        lblEstimativaIa.setFont(FONTE_SUBTITULO);
-        lblEstimativaIa.setForeground(COR_TEXTO_SUAVE);
-        lblEstimativaIa.setIcon(criarIconeEconomico(14));
+        lblEstimativaIa.setFont(AppTheme.FONTE_SUBTITULO);
+        lblEstimativaIa.setForeground(theme.corTextoSuave);
+        lblEstimativaIa.setIcon(uiFactory.criarIconeEconomico(14));
         lblEstimativaIa.setIconTextGap(5);
         gbc.gridx = 3;
         gbc.gridy = 3;
@@ -1820,14 +1366,14 @@ public class ExpertDevGUI extends JFrame {
 
     private JPanel criarPainelSaida() {
         JPanel painel = new JPanel(new BorderLayout(0, 0));
-        painel.setBackground(COR_FUNDO);
+        painel.setBackground(theme.corFundo);
         painel.setBorder(new EmptyBorder(16, 8, 0, 16));
 
         JSplitPane splitVertical = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
                 criarPainelLog(), criarPainelPrompt());
         splitVertical.setDividerLocation(200);
         splitVertical.setDividerSize(6);
-        splitVertical.setBackground(COR_FUNDO);
+        splitVertical.setBackground(theme.corFundo);
         splitVertical.setBorder(null);
 
         painel.add(splitVertical, BorderLayout.CENTER);
@@ -1837,18 +1383,18 @@ public class ExpertDevGUI extends JFrame {
     /** Painel de log de execução */
     private JPanel criarPainelLog() {
         JPanel painel = new JPanel(new BorderLayout(0, 6));
-        painel.setBackground(COR_FUNDO);
+        painel.setBackground(theme.corFundo);
 
-        JLabel lbl = criarRotulo("📋  Log de Execução");
+        JLabel lbl = uiFactory.criarRotulo("📋  Log de Execução");
         lbl.setBorder(new EmptyBorder(0, 0, 4, 0));
         painel.add(lbl, BorderLayout.NORTH);
 
         painelLogCards = new JPanel();
         painelLogCards.setLayout(new BoxLayout(painelLogCards, BoxLayout.Y_AXIS));
-        painelLogCards.setBackground(temaClaroAtivo ? Color.WHITE : new Color(10, 10, 18));
+        painelLogCards.setBackground(theme.isClaroAtivo() ? Color.WHITE : new Color(10, 10, 18));
         
         scrollLog = new JScrollPane(painelLogCards);
-        scrollLog.setBorder(new LineBorder(COR_BORDA, 1));
+        scrollLog.setBorder(new LineBorder(theme.corBorda, 1));
         scrollLog.getVerticalScrollBar().setUnitIncrement(16);
         
         // Inicializar com mensagem de pronto
@@ -1859,7 +1405,7 @@ public class ExpertDevGUI extends JFrame {
     }
 
     /** Adiciona um card de log ao painel */
-    private void adicionarCardLog(String msg) {
+    void adicionarCardLog(String msg) {
         if (msg == null || msg.trim().isEmpty()) return;
         
         SwingUtilities.invokeLater(() -> {
@@ -1880,141 +1426,70 @@ public class ExpertDevGUI extends JFrame {
         public LogCard(String msg) {
             setLayout(new BorderLayout(10, 0));
             setBorder(new EmptyBorder(8, 12, 8, 12));
-            setBackground(temaClaroAtivo ? new Color(250, 250, 252) : new Color(20, 20, 30));
+            setBackground(theme.isClaroAtivo() ? new Color(250, 250, 252) : new Color(20, 20, 30));
             setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
             setAlignmentX(Component.LEFT_ALIGNMENT);
 
             // Identificar status pelo prefixo
             String texto = msg;
             Icon icone = null;
-            Color corTexto = COR_TEXTO;
+            Color corTexto = theme.corTexto;
             
             if (msg.startsWith("→")) {
-                icone = criarIconeInfo(14);
+                icone = uiFactory.criarIconeInfo(14);
                 texto = msg.substring(1).trim();
             } else if (msg.startsWith("✓") || msg.startsWith("✅")) {
-                icone = criarIconeSucesso(14);
-                corTexto = COR_SUCESSO;
+                icone = uiFactory.criarIconeSucesso(14);
+                corTexto = theme.corSucesso;
                 texto = msg.substring(1).trim();
             } else if (msg.startsWith("⚠")) {
-                icone = criarIconeAlerta(14);
+                icone = uiFactory.criarIconeAlerta(14);
                 corTexto = new Color(210, 140, 0);
                 texto = msg.substring(1).trim();
             } else if (msg.startsWith("❌") || msg.startsWith("ERRO:")) {
-                icone = criarIconeErro(14);
-                corTexto = COR_ERRO;
+                icone = uiFactory.criarIconeErro(14);
+                corTexto = theme.corErro;
                 texto = msg.replace("❌", "").replace("ERRO:", "").trim();
             } else {
-                icone = criarIconeInfo(14); // Padrão
+                icone = uiFactory.criarIconeInfo(14); // Padrão
             }
 
             JLabel lblIcone = new JLabel(icone);
             add(lblIcone, BorderLayout.WEST);
 
             JLabel lblTexto = new JLabel(texto);
-            lblTexto.setFont(FONTE_NORMAL);
+            lblTexto.setFont(AppTheme.FONTE_NORMAL);
             lblTexto.setForeground(corTexto);
             add(lblTexto, BorderLayout.CENTER);
             
             // Adicionar borda inferior sutil
             setBorder(BorderFactory.createCompoundBorder(
-                new MatteBorder(0, 0, 1, 0, COR_BORDA),
+                new MatteBorder(0, 0, 1, 0, theme.corBorda),
                 new EmptyBorder(8, 12, 8, 12)
             ));
         }
     }
 
-    private Icon criarIconeInfo(int tam) {
-        return new Icon() {
-            public void paintIcon(Component c, Graphics g, int x, int y) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(COR_DESTAQUE);
-                g2.fillOval(x, y, tam, tam);
-                g2.setColor(Color.WHITE);
-                g2.setFont(new Font("Monospaced", Font.BOLD, tam-2));
-                g2.drawString("i", x + tam/3 + 1, y + tam - 2);
-                g2.dispose();
-            }
-            public int getIconWidth() { return tam; }
-            public int getIconHeight() { return tam; }
-        };
-    }
-
-    private Icon criarIconeSucesso(int tam) {
-        return new Icon() {
-            public void paintIcon(Component c, Graphics g, int x, int y) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(COR_SUCESSO);
-                g2.fillOval(x, y, tam, tam);
-                g2.setColor(Color.WHITE);
-                g2.setStroke(new BasicStroke(2));
-                g2.drawLine(x+3, y+tam/2, x+tam/2-1, y+tam-4);
-                g2.drawLine(x+tam/2-1, y+tam-4, x+tam-3, y+3);
-                g2.dispose();
-            }
-            public int getIconWidth() { return tam; }
-            public int getIconHeight() { return tam; }
-        };
-    }
-
-    private Icon criarIconeAlerta(int tam) {
-        return new Icon() {
-            public void paintIcon(Component c, Graphics g, int x, int y) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(255, 180, 0));
-                int[] px = {x + tam/2, x, x + tam};
-                int[] py = {y, y + tam, y + tam};
-                g2.fillPolygon(px, py, 3);
-                g2.setColor(Color.BLACK);
-                g2.setFont(new Font("Monospaced", Font.BOLD, tam-4));
-                g2.drawString("!", x + tam/2 - 2, y + tam - 2);
-                g2.dispose();
-            }
-            public int getIconWidth() { return tam; }
-            public int getIconHeight() { return tam; }
-        };
-    }
-
-    private Icon criarIconeErro(int tam) {
-        return new Icon() {
-            public void paintIcon(Component c, Graphics g, int x, int y) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(COR_ERRO);
-                g2.fillOval(x, y, tam, tam);
-                g2.setColor(Color.WHITE);
-                g2.setStroke(new BasicStroke(2));
-                g2.drawLine(x+4, y+4, x+tam-4, y+tam-4);
-                g2.drawLine(x+tam-4, y+4, x+4, y+tam-4);
-                g2.dispose();
-            }
-            public int getIconWidth() { return tam; }
-            public int getIconHeight() { return tam; }
-        };
-    }
 
     /** Painel com o prompt gerado e botões de ação */
     private JPanel criarPainelPrompt() {
         JPanel painel = new JPanel(new BorderLayout(0, 6));
-        painel.setBackground(COR_FUNDO);
+        painel.setBackground(theme.corFundo);
         painel.setBorder(new EmptyBorder(8, 0, 0, 0));
 
         // Cabeçalho do prompt
         JPanel cabecalhoPrompt = new JPanel(new BorderLayout());
         cabecalhoPrompt.setOpaque(false);
 
-        JLabel lbl = criarRotulo("Prompt Gerado");
-        lbl.setIcon(criarIconeIa(14));
+        JLabel lbl = uiFactory.criarRotulo("Prompt Gerado");
+        lbl.setIcon(uiFactory.criarIconeIa(14));
         lbl.setIconTextGap(6);
         cabecalhoPrompt.add(lbl, BorderLayout.WEST);
 
         JPanel botoesSaida = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         botoesSaida.setOpaque(false);
 
-        btnCopiarPrompt = criarBotaoSecundario("📋  Copiar");
+        btnCopiarPrompt = uiFactory.criarBotaoSecundario("📋  Copiar");
         btnCopiarPrompt.setEnabled(false);
         btnCopiarPrompt.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -2022,7 +1497,7 @@ public class ExpertDevGUI extends JFrame {
             }
         });
 
-        btnSalvar = criarBotaoSecundario("💾  Salvar Arquivos");
+        btnSalvar = uiFactory.criarBotaoSecundario("💾  Salvar Arquivos");
         btnSalvar.setEnabled(false);
         btnSalvar.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -2036,41 +1511,41 @@ public class ExpertDevGUI extends JFrame {
         painel.add(cabecalhoPrompt, BorderLayout.NORTH);
 
         areaPrompt = new JTextArea();
-        areaPrompt.setFont(FONTE_MONO);
-        areaPrompt.setBackground(COR_PAINEL);
-        areaPrompt.setForeground(COR_TEXTO);
+        areaPrompt.setFont(AppTheme.FONTE_MONO);
+        areaPrompt.setBackground(theme.corPainel);
+        areaPrompt.setForeground(theme.corTexto);
         areaPrompt.setEditable(false);
         areaPrompt.setLineWrap(true);
         areaPrompt.setWrapStyleWord(true);
         areaPrompt.setBorder(new EmptyBorder(10, 10, 10, 10));
         areaPrompt.setText("O prompt aparecerá aqui após o processamento...");
 
-        painel.add(criarScrollPane(areaPrompt), BorderLayout.CENTER);
+        painel.add(uiFactory.criarScrollPane(areaPrompt), BorderLayout.CENTER);
         return painel;
     }
 
     /** Rodapé com status */
     private JPanel criarRodape() {
         JPanel rodape = new JPanel(new BorderLayout());
-        rodape.setBackground(COR_PAINEL);
+        rodape.setBackground(theme.corPainel);
         rodape.setBorder(new EmptyBorder(6, 16, 6, 16));
 
         JLabel lblStatus = new JLabel("Expert Dev  •  Enterprise Ready  •  Apache POI + JSoup + PDFBox");
         lblStatus.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        lblStatus.setForeground(COR_TEXTO_SUAVE);
+        lblStatus.setForeground(theme.corTextoSuave);
         rodape.add(lblStatus, BorderLayout.WEST);
 
         JLabel lblAssinatura = new JLabel(" A solution engineered by Marcus Dimitri");
         lblAssinatura.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lblAssinatura.setForeground(COR_DESTAQUE2);
+        lblAssinatura.setForeground(theme.corDestaque2);
         lblAssinatura.setHorizontalAlignment(SwingConstants.RIGHT);
         rodape.add(lblAssinatura, BorderLayout.EAST);
 
         JSeparator sep = new JSeparator();
-        sep.setForeground(COR_BORDA);
+        sep.setForeground(theme.corBorda);
 
         JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setBackground(COR_PAINEL);
+        wrapper.setBackground(theme.corPainel);
         wrapper.add(sep, BorderLayout.NORTH);
         wrapper.add(rodape, BorderLayout.CENTER);
         return wrapper;
@@ -2079,11 +1554,11 @@ public class ExpertDevGUI extends JFrame {
     // ─── Diálogo de Confirmação de Saída ────────────────────────────────────
     private void confirmarSaidaExpertDev() {
         // Cores para o diálogo
-        Color corFundo = COR_FUNDO;
-        Color corPainel = COR_PAINEL;
+        Color corFundo = theme.corFundo;
+        Color corPainel = theme.corPainel;
         Color corVerde = new Color(34, 197, 94);      // Verde
         Color corVermelho = new Color(239, 68, 68);   // Vermelho
-        Color corTexto = COR_TEXTO;
+        Color corTexto = theme.corTexto;
 
         // Criar painel com mensagem e botões customizados
         JPanel painelDialogo = new JPanel(new BorderLayout(15, 15));
@@ -2100,10 +1575,10 @@ public class ExpertDevGUI extends JFrame {
         painelBotoes.setBackground(corPainel);
 
         // Botão SIM (Verde com texto preto) - FECHA A APLICAÇÃO
-        JButton btnSim = criarBotaoDialogo("Sim", corVerde);
+        JButton btnSim = uiFactory.criarBotaoDialogo("Sim", corVerde);
 
         // Botão NÃO (Vermelho com texto preto) - PERMANECE NO SISTEMA
-        JButton btnNao = criarBotaoDialogo("Não", corVermelho);
+        JButton btnNao = uiFactory.criarBotaoDialogo("Não", corVermelho);
 
         btnSim.addActionListener(e -> {
             // SIM = Sair da aplicação (fechar)
@@ -2133,40 +1608,6 @@ public class ExpertDevGUI extends JFrame {
         dialogConfirmacao.setVisible(true);
     }
 
-    private JButton criarBotaoDialogo(String texto, Color cor) {
-        JButton botao = new JButton(texto);
-        botao.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        botao.setBackground(cor);
-        botao.setForeground(new Color(15, 23, 42));  // Texto preto
-        botao.setBorder(BorderFactory.createLineBorder(cor, 2));
-        botao.setFocusPainted(false);
-        botao.setContentAreaFilled(true);
-        botao.setOpaque(true);
-        botao.setPreferredSize(new Dimension(150, 45));
-        botao.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        // Efeito hover
-        botao.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                botao.setBackground(aumentarBrilhoDialogo(cor, 1.1f));
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                botao.setBackground(cor);
-            }
-        });
-
-        return botao;
-    }
-
-    private Color aumentarBrilhoDialogo(Color cor, float fator) {
-        int r = Math.min(255, (int) (cor.getRed() * fator));
-        int g = Math.min(255, (int) (cor.getGreen() * fator));
-        int b = Math.min(255, (int) (cor.getBlue() * fator));
-        return new Color(r, g, b);
-    }
 
     // ─── Lógica de Processamento ───────────────────────────────────────────────
 
@@ -2291,7 +1732,7 @@ public class ExpertDevGUI extends JFrame {
 
         if (adicionados > 0) {
             labelArquivoWord.setText("Arquivos carregados para processamento");
-            labelArquivoWord.setForeground(COR_SUCESSO);
+            labelArquivoWord.setForeground(theme.corSucesso);
         }
         if (ignorados > 0) {
             adicionarCardLog("⚠ Alguns arquivos foram ignorados por formato inválido (use .doc/.docx).");
@@ -2328,13 +1769,13 @@ public class ExpertDevGUI extends JFrame {
         }
         if (labelArquivoWord != null && total == 0) {
             labelArquivoWord.setText("Nenhum arquivo selecionado");
-            labelArquivoWord.setForeground(COR_TEXTO_SUAVE);
+            labelArquivoWord.setForeground(theme.corTextoSuave);
         }
         atualizarVisibilidadePreviewWord(total);
     }
 
     private void atualizarVisibilidadePreviewWord(int totalArquivos) {
-        boolean mostrarPreviewEmbutida = totalArquivos <= MAX_ARQUIVOS_PREVIEW_EMBUTIDA;
+        boolean mostrarPreviewEmbutida = totalArquivos <= AppTheme.MAX_ARQUIVOS_PREVIEW_EMBUTIDA;
 
         if (painelPreviewWord != null) {
             painelPreviewWord.setVisible(mostrarPreviewEmbutida);
@@ -2377,25 +1818,25 @@ public class ExpertDevGUI extends JFrame {
         areaDialogo.setEditable(false);
         areaDialogo.setLineWrap(true);
         areaDialogo.setWrapStyleWord(true);
-        areaDialogo.setFont(FONTE_MONO);
-        areaDialogo.setBackground(COR_FUNDO);
-        areaDialogo.setForeground(COR_TEXTO);
+        areaDialogo.setFont(AppTheme.FONTE_MONO);
+        areaDialogo.setBackground(theme.corFundo);
+        areaDialogo.setForeground(theme.corTexto);
         areaDialogo.setText(textoPreview);
         areaDialogo.setCaretPosition(0);
 
         JLabel lblArquivo = new JLabel("Arquivo: " + selecionado.getAbsolutePath());
         lblArquivo.setBorder(new EmptyBorder(8, 10, 0, 10));
-        lblArquivo.setFont(FONTE_SUBTITULO);
-        lblArquivo.setForeground(COR_TEXTO_SUAVE);
+        lblArquivo.setFont(AppTheme.FONTE_SUBTITULO);
+        lblArquivo.setForeground(theme.corTextoSuave);
 
-        JButton btnFechar = criarBotaoSecundario("Fechar");
+        JButton btnFechar = uiFactory.criarBotaoSecundario("Fechar");
         btnFechar.addActionListener(e -> dialogo.dispose());
         JPanel rodape = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         rodape.setOpaque(false);
         rodape.add(btnFechar);
 
         dialogo.add(lblArquivo, BorderLayout.NORTH);
-        dialogo.add(criarScrollPane(areaDialogo), BorderLayout.CENTER);
+        dialogo.add(uiFactory.criarScrollPane(areaDialogo), BorderLayout.CENTER);
         dialogo.add(rodape, BorderLayout.SOUTH);
         dialogo.setSize(900, 620);
         dialogo.setLocationRelativeTo(this);
@@ -2520,20 +1961,20 @@ public class ExpertDevGUI extends JFrame {
                 // Registrar auditoria
                 String rtcNumero = campoRTC != null ? campoRTC.getText().trim() : "";
                 String ucCodigo = campoUC != null ? campoUC.getText().trim() : "";
-                String modoGeracao = modoGeracaoSelecionado;
-                String provider = providerIaSelecionado;
-                String authUsername = obterUsuarioSessao();
-                String authEmail = obterEmailSessao();
+                String modoGeracao = controller.modoGeracaoSelecionado;
+                String provider = controller.providerIaSelecionado;
+                String authUsername = controller.obterUsuarioSessao();
+                String authEmail = controller.obterEmailSessao();
 
                 publish("→ RTC: " + (rtcNumero.isEmpty() ? "(não informado)" : rtcNumero));
                 publish("→ UC: " + (ucCodigo.isEmpty() ? "(não informado)" : ucCodigo));
 
                 RegistroAuditoria regAuditoria = new RegistroAuditoria(rtcNumero, ucCodigo, ucCodigo,
                         modoGeracao, provider, "", authUsername, authEmail);
-                ultimoRegistroAuditoriaId = auditoriaService.inserir(regAuditoria);
+                controller.ultimoRegistroAuditoriaId = controller.auditoriaService.inserir(regAuditoria);
 
                 // Métricas de performance
-                MetricaPerformance mPerf = performanceService.obterPorRTCeUsuario(rtcNumero, authUsername);
+                MetricaPerformance mPerf = controller.performanceService.obterPorRTCeUsuario(rtcNumero, authUsername);
                 if (mPerf == null) {
                     mPerf = new MetricaPerformance(rtcNumero, authUsername, authEmail);
                 }
@@ -2542,7 +1983,7 @@ public class ExpertDevGUI extends JFrame {
                 if (mPerf.getInicioExpertDev() == null) {
                     mPerf.setInicioExpertDev(LocalDateTime.now());
                 }
-                performanceService.salvarOuAtualizar(mPerf);
+                controller.performanceService.salvarOuAtualizar(mPerf);
 
                 if (modoUrl) {
                     publish("→ Modo: Via URLs");
@@ -2634,7 +2075,7 @@ public class ExpertDevGUI extends JFrame {
                     if (modoIa) {
                         publish("⚠ IA indisponível. Aplicando fallback para modo local...");
                         PromptGenerationService fallbackLocal = new LocalPromptGenerationService(
-                                new PromptGenerator(perfilPromptSelecionado));
+                                new PromptGenerator(controller.perfilPromptSelecionado));
                         execucao = new ResultConsolidator(fallbackLocal)
                                 .consolidar(resultados, urlsReferencia.size(), inicio, Instant.now(),
                                         arquivoWordSaida, arquivoPdf, rtcNumero);
@@ -2661,12 +2102,12 @@ public class ExpertDevGUI extends JFrame {
                 }
 
                 // Atualizar registro de auditoria com status final
-                if (ultimoRegistroAuditoriaId > 0) {
-                    auditoriaService.atualizar(ultimoRegistroAuditoriaId, "CONCLUIDO", promptFinal);
+                if (controller.ultimoRegistroAuditoriaId > 0) {
+                    controller.auditoriaService.atualizar(controller.ultimoRegistroAuditoriaId, "CONCLUIDO", promptFinal);
                 }
 
                 // Guardar prompt com auditoria em variável de instância para exibir no done()
-                promptComAuditoria = promptFinal;
+                controller.promptComAuditoria = promptFinal;
 
                 // Salvar arquivos de texto
                 publish("→ Salvando arquivos de saída...");
@@ -2712,13 +2153,13 @@ public class ExpertDevGUI extends JFrame {
                 try {
                     ExecucaoConsolidada execucao = get();
                     // Exibe o prompt que ja inclui auditoria (RTC + UC)
-                    areaPrompt.setText(promptComAuditoria);
+                    areaPrompt.setText(controller.promptComAuditoria);
                     areaPrompt.setCaretPosition(0);
                     atualizarAbaHistorico();
                     areaPrompt.setCaretPosition(0);
                     barraProgresso.setValue(100);
                     barraProgresso.setString("Concluído com sucesso!");
-                    barraProgresso.setForeground(COR_SUCESSO);
+                    barraProgresso.setForeground(theme.corSucesso);
                     btnCopiarPrompt.setEnabled(true);
                     btnSalvar.setEnabled(true);
                 } catch (Exception e) {
@@ -2727,7 +2168,7 @@ public class ExpertDevGUI extends JFrame {
                     areaPrompt.setText("Ocorreu um erro durante o processamento.\nVerifique o log.");
                     barraProgresso.setValue(0);
                     barraProgresso.setString("Erro!");
-                    barraProgresso.setForeground(COR_ERRO);
+                    barraProgresso.setForeground(theme.corErro);
                     mostrarErro("Erro no processamento:\n" + msg);
                 }
             }
@@ -2816,13 +2257,14 @@ public class ExpertDevGUI extends JFrame {
         boolean salvarKey = chkSalvarApiKey != null && chkSalvarApiKey.isSelected();
         String modoSelecionado = comboModoGeracao != null
                 ? String.valueOf(comboModoGeracao.getSelectedItem())
-                : modoGeracaoSelecionado;
+                : controller.modoGeracaoSelecionado;
         int abaSelecionada = abas != null ? abas.getSelectedIndex() : 0;
 
         aplicarTema(claro);
+        uiFactory = new UiFactory(theme);
 
         getContentPane().removeAll();
-        getContentPane().setBackground(COR_FUNDO);
+        getContentPane().setBackground(theme.corFundo);
         construirInterface();
 
         if (areaUrls != null) {
@@ -2836,20 +2278,20 @@ public class ExpertDevGUI extends JFrame {
         }
         if (comboModoGeracao != null) {
             comboModoGeracao.setSelectedItem(modoSelecionado);
-            modoGeracaoSelecionado = modoSelecionado;
+            controller.modoGeracaoSelecionado = modoSelecionado;
         }
         if (comboProviderIa != null) {
-            comboProviderIa.setSelectedItem(providerIaSelecionado);
+            comboProviderIa.setSelectedItem(controller.providerIaSelecionado);
         }
         if (comboPerfilPrompt != null) {
-            comboPerfilPrompt.setSelectedItem(perfilPromptSelecionado);
+            comboPerfilPrompt.setSelectedItem(controller.perfilPromptSelecionado);
         }
         if (campoApiKey != null) {
             campoApiKey.setText(apiKeyTexto);
         }
         if (chkSalvarApiKey != null) {
             chkSalvarApiKey.setSelected(salvarKey);
-            salvarApiKeySelecionada = salvarKey;
+            controller.salvarApiKeySelecionada = salvarKey;
         }
         atualizarEstadoOpcoesIa();
         if (abas != null && abaSelecionada >= 0 && abaSelecionada < abas.getTabCount()) {
@@ -2862,23 +2304,23 @@ public class ExpertDevGUI extends JFrame {
 
     private void preencherConfigIaInicial(ExpertDevConfig configUi) {
         if (comboModoGeracao != null) {
-            comboModoGeracao.setSelectedItem(modoGeracaoSelecionado);
+            comboModoGeracao.setSelectedItem(controller.modoGeracaoSelecionado);
         }
         if (comboProviderIa != null) {
-            comboProviderIa.setSelectedItem(providerIaSelecionado);
+            comboProviderIa.setSelectedItem(controller.providerIaSelecionado);
         }
         if (comboPerfilPrompt != null) {
-            comboPerfilPrompt.setSelectedItem(perfilPromptSelecionado);
+            comboPerfilPrompt.setSelectedItem(controller.perfilPromptSelecionado);
         }
         if (campoApiKey != null) {
             campoApiKey.setText(configUi.getAiApiKeyResolvida());
-            apiKeyDigitada = new String(campoApiKey.getPassword());
+            controller.apiKeyDigitada = new String(campoApiKey.getPassword());
         }
         if (chkSalvarApiKey != null) {
             boolean possuiKeySalva = configUi.getAiApiKeyResolvida() != null
                     && !configUi.getAiApiKeyResolvida().trim().isEmpty();
             chkSalvarApiKey.setSelected(possuiKeySalva);
-            salvarApiKeySelecionada = possuiKeySalva;
+            controller.salvarApiKeySelecionada = possuiKeySalva;
         }
         if (lblAvisoModoEconomicoIa != null) {
             lblAvisoModoEconomicoIa.setVisible(configUi.isAiModoEconomico());
@@ -2916,7 +2358,7 @@ public class ExpertDevGUI extends JFrame {
 
     private boolean isModoIaSelecionado() {
         if (comboModoGeracao == null || comboModoGeracao.getSelectedItem() == null) {
-            return "IA".equalsIgnoreCase(modoGeracaoSelecionado);
+            return "IA".equalsIgnoreCase(controller.modoGeracaoSelecionado);
         }
         return "IA".equalsIgnoreCase(String.valueOf(comboModoGeracao.getSelectedItem()));
     }
@@ -2934,7 +2376,7 @@ public class ExpertDevGUI extends JFrame {
 
     private PromptGenerationService criarServicoPrompt(ExpertDevConfig config, boolean modoIa) {
         if (!modoIa) {
-            return new LocalPromptGenerationService(new PromptGenerator(perfilPromptSelecionado));
+            return new LocalPromptGenerationService(new PromptGenerator(controller.perfilPromptSelecionado));
         }
 
         String apiKeyInformada = campoApiKey != null ? new String(campoApiKey.getPassword()).trim() : "";
@@ -2943,12 +2385,12 @@ public class ExpertDevGUI extends JFrame {
             throw new IllegalStateException("Modo IA selecionado, mas nenhuma API Key foi informada.");
         }
 
-        if (salvarApiKeySelecionada && !apiKeyInformada.isEmpty()) {
+        if (controller.salvarApiKeySelecionada && !apiKeyInformada.isEmpty()) {
             ExpertDevConfig.salvarApiKeyIA(apiKeyInformada);
         }
 
         return new AiPromptGenerationService(
-                providerIaSelecionado,
+                controller.providerIaSelecionado,
                 config.getAiEndpoint(),
                 config.getAiModel(),
                 apiKey,
@@ -2957,7 +2399,7 @@ public class ExpertDevGUI extends JFrame {
                 config.getAiMaxTokens(),
                 config.getAiMaxContextChars(),
                 config.isAiModoEconomico(),
-                perfilPromptSelecionado
+                controller.perfilPromptSelecionado
         );
     }
 
@@ -2977,7 +2419,7 @@ public class ExpertDevGUI extends JFrame {
             @Override
             protected Void doInBackground() throws Exception {
                 AiPromptGenerationService ia = new AiPromptGenerationService(
-                        providerIaSelecionado,
+                        controller.providerIaSelecionado,
                         config.getAiEndpoint(),
                         config.getAiModel(),
                         apiKey,
@@ -2986,7 +2428,7 @@ public class ExpertDevGUI extends JFrame {
                         config.getAiMaxTokens(),
                         config.getAiMaxContextChars(),
                         config.isAiModoEconomico(),
-                        perfilPromptSelecionado
+                        controller.perfilPromptSelecionado
                 );
                 ia.testarConexao();
                 return null;
@@ -2998,7 +2440,7 @@ public class ExpertDevGUI extends JFrame {
                 try {
                     get();
                     adicionarCardLog("✓ Conexão com IA validada com sucesso.");
-                    if (salvarApiKeySelecionada && !apiKeyInformada.isEmpty()) {
+                    if (controller.salvarApiKeySelecionada && !apiKeyInformada.isEmpty()) {
                         ExpertDevConfig.salvarApiKeyIA(apiKeyInformada);
                     }
                 } catch (Exception e) {
@@ -3015,8 +2457,8 @@ public class ExpertDevGUI extends JFrame {
         if (campoApiKey != null) {
             campoApiKey.setText("");
         }
-        apiKeyDigitada = "";
-        salvarApiKeySelecionada = false;
+        controller.apiKeyDigitada = "";
+        controller.salvarApiKeySelecionada = false;
         if (chkSalvarApiKey != null) {
             chkSalvarApiKey.setSelected(false);
         }
@@ -3024,291 +2466,7 @@ public class ExpertDevGUI extends JFrame {
         adicionarCardLog("→ API Key de IA limpa da interface e da configuração local.");
     }
 
-    private Icon carregarLogoProjeto(int largura, int altura) {
-        BufferedImage logoOriginal = carregarImagemLogoPorTema();
-        if (logoOriginal == null) {
-            return null;
-        }
 
-        BufferedImage logoRecortado = recortarTransparencia(logoOriginal);
-        BufferedImage logoAjustado = aplicarContrasteLogo(logoRecortado);
-
-        int margemX = Math.max(8, (int) Math.round(largura * 0.035));
-        int margemY = Math.max(6, (int) Math.round(altura * 0.08));
-        int areaUtilLargura = Math.max(1, largura - margemX * 2);
-        int areaUtilAltura = Math.max(1, altura - margemY * 2);
-
-        int ow = Math.max(1, logoAjustado.getWidth());
-        int oh = Math.max(1, logoAjustado.getHeight());
-        double escala = Math.min((double) areaUtilLargura / ow, (double) areaUtilAltura / oh);
-        int w = Math.max(1, (int) Math.round(ow * escala));
-        int h = Math.max(1, (int) Math.round(oh * escala));
-
-        BufferedImage canvas = new BufferedImage(largura, altura, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = canvas.createGraphics();
-        try {
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            int x = margemX + (areaUtilLargura - w) / 2;
-            int y = margemY + (areaUtilAltura - h) / 2;
-            g2.drawImage(logoAjustado, x, y, w, h, null);
-        } finally {
-            g2.dispose();
-        }
-        return new ImageIcon(canvas);
-    }
-
-    private BufferedImage carregarImagemLogoPorTema() {
-        String[] candidatosTema = temaClaroAtivo
-                ? new String[]{
-                "/icons/logo_fundo_branco.png",
-                "/icons/logo_transparente.png",
-                "/icons/expertdev_logo_light.png",
-                "/icons/expertdev_logo_horizontal.png",
-                "/icons/expertdev_logo.png"
-        }
-                : new String[]{
-                "/icons/logo_fundo_preto.png",
-                "/icons/logo_transparente.png",
-                "/icons/expertdev_logo_horizontal_dark.png",
-                "/icons/expertdev_logo_dark.png",
-                "/icons/expertdev_logo.png"
-        };
-
-        String[] fallbackGeral = new String[]{
-                "/icons/logo_transparente.png",
-                "/icons/logo_fundo_branco.png",
-                "/icons/logo_fundo_preto.png",
-                "/icons/expertdev_logo_light.png",
-                "/icons/expertdev_logo_dark.png",
-                "/icons/expertdev_logo_horizontal.png",
-                "/icons/expertdev_logo_horizontal_dark.png",
-                "/icons/expertdev_logo.png"
-        };
-
-        for (String caminho : candidatosTema) {
-            BufferedImage imagem = carregarImagemRecurso(caminho);
-            if (imagem != null) {
-                return imagem;
-            }
-        }
-        for (String caminho : fallbackGeral) {
-            BufferedImage imagem = carregarImagemRecurso(caminho);
-            if (imagem != null) {
-                return imagem;
-            }
-        }
-        return null;
-    }
-
-    private BufferedImage carregarImagemRecurso(String caminhoClasspath) {
-        try {
-            URL recurso = getClass().getResource(caminhoClasspath);
-            if (recurso != null) {
-                return ImageIO.read(recurso);
-            }
-
-            String nomeArquivo = caminhoClasspath.substring(caminhoClasspath.lastIndexOf('/') + 1);
-            File[] candidatosLocais = new File[]{
-                    new File("icons", nomeArquivo),
-                    new File("src/main/resources/icons", nomeArquivo)
-            };
-
-            for (File candidato : candidatosLocais) {
-                if (candidato.exists() && candidato.isFile()) {
-                    return ImageIO.read(candidato);
-                }
-            }
-        } catch (IOException ignored) {
-            // Continua fallback para os proximos candidatos.
-        }
-        return null;
-    }
-
-    private BufferedImage recortarTransparencia(BufferedImage origem) {
-        Rectangle bounds = encontrarBoundsPorAlpha(origem, 12);
-        if (bounds == null || ocupaImagemInteira(bounds, origem)) {
-            // Fallback para logos opacas com fundo uniforme (branco, preto, cinza etc.).
-            bounds = encontrarBoundsPorCorDeFundo(origem, 30);
-        }
-
-        if (bounds == null || ocupaImagemInteira(bounds, origem)) {
-            return origem;
-        }
-
-        int padX = Math.max(2, (int) Math.round(bounds.width * 0.01));
-        int padY = Math.max(2, (int) Math.round(bounds.height * 0.02));
-        int sx = Math.max(0, bounds.x - padX);
-        int sy = Math.max(0, bounds.y - padY);
-        int ex = Math.min(origem.getWidth(), bounds.x + bounds.width + padX);
-        int ey = Math.min(origem.getHeight(), bounds.y + bounds.height + padY);
-
-        int w = Math.max(1, ex - sx);
-        int h = Math.max(1, ey - sy);
-        BufferedImage recorte = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = recorte.createGraphics();
-        try {
-            g2.drawImage(origem, 0, 0, w, h, sx, sy, ex, ey, null);
-        } finally {
-            g2.dispose();
-        }
-        return recorte;
-    }
-
-    private Rectangle encontrarBoundsPorAlpha(BufferedImage origem, int alphaMinimo) {
-        int largura = origem.getWidth();
-        int altura = origem.getHeight();
-        int minX = largura;
-        int minY = altura;
-        int maxX = -1;
-        int maxY = -1;
-
-        for (int y = 0; y < altura; y++) {
-            for (int x = 0; x < largura; x++) {
-                int alpha = (origem.getRGB(x, y) >>> 24) & 0xFF;
-                if (alpha > alphaMinimo) {
-                    if (x < minX) {
-                        minX = x;
-                    }
-                    if (y < minY) {
-                        minY = y;
-                    }
-                    if (x > maxX) {
-                        maxX = x;
-                    }
-                    if (y > maxY) {
-                        maxY = y;
-                    }
-                }
-            }
-        }
-
-        if (maxX < minX || maxY < minY) {
-            return null;
-        }
-        return new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
-    }
-
-    private Rectangle encontrarBoundsPorCorDeFundo(BufferedImage origem, int tolerancia) {
-        int largura = origem.getWidth();
-        int altura = origem.getHeight();
-        int[] fundo = obterCorMediaDosCantos(origem);
-
-        int minX = largura;
-        int minY = altura;
-        int maxX = -1;
-        int maxY = -1;
-
-        for (int y = 0; y < altura; y++) {
-            for (int x = 0; x < largura; x++) {
-                int argb = origem.getRGB(x, y);
-                int alpha = (argb >>> 24) & 0xFF;
-                if (alpha <= 10) {
-                    continue;
-                }
-
-                int r = (argb >>> 16) & 0xFF;
-                int g = (argb >>> 8) & 0xFF;
-                int b = argb & 0xFF;
-                int distancia = Math.abs(r - fundo[0]) + Math.abs(g - fundo[1]) + Math.abs(b - fundo[2]);
-                if (distancia > tolerancia) {
-                    if (x < minX) {
-                        minX = x;
-                    }
-                    if (y < minY) {
-                        minY = y;
-                    }
-                    if (x > maxX) {
-                        maxX = x;
-                    }
-                    if (y > maxY) {
-                        maxY = y;
-                    }
-                }
-            }
-        }
-
-        if (maxX < minX || maxY < minY) {
-            return null;
-        }
-        return new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
-    }
-
-    private int[] obterCorMediaDosCantos(BufferedImage origem) {
-        int largura = origem.getWidth();
-        int altura = origem.getHeight();
-        int[] amostras = new int[]{
-                origem.getRGB(0, 0),
-                origem.getRGB(largura - 1, 0),
-                origem.getRGB(0, altura - 1),
-                origem.getRGB(largura - 1, altura - 1)
-        };
-
-        int somaR = 0;
-        int somaG = 0;
-        int somaB = 0;
-        int pesoTotal = 0;
-
-        for (int argb : amostras) {
-            int a = (argb >>> 24) & 0xFF;
-            int r = (argb >>> 16) & 0xFF;
-            int g = (argb >>> 8) & 0xFF;
-            int b = argb & 0xFF;
-            int peso = Math.max(1, a);
-            somaR += r * peso;
-            somaG += g * peso;
-            somaB += b * peso;
-            pesoTotal += peso;
-        }
-
-        if (pesoTotal == 0) {
-            return new int[]{0, 0, 0};
-        }
-        return new int[]{
-                somaR / pesoTotal,
-                somaG / pesoTotal,
-                somaB / pesoTotal
-        };
-    }
-
-    private boolean ocupaImagemInteira(Rectangle bounds, BufferedImage origem) {
-        return bounds != null
-                && bounds.x <= 0
-                && bounds.y <= 0
-                && bounds.width >= origem.getWidth()
-                && bounds.height >= origem.getHeight();
-    }
-
-    private BufferedImage aplicarContrasteLogo(BufferedImage origem) {
-        // Ajuste suave para preservar identidade da marca e melhorar legibilidade no header.
-        float contraste = temaClaroAtivo ? 1.01f : 1.03f;
-        int brilho = 0;
-        BufferedImage saida = new BufferedImage(origem.getWidth(), origem.getHeight(), BufferedImage.TYPE_INT_ARGB);
-
-        for (int y = 0; y < origem.getHeight(); y++) {
-            for (int x = 0; x < origem.getWidth(); x++) {
-                int argb = origem.getRGB(x, y);
-                int a = (argb >>> 24) & 0xFF;
-                int r = (argb >>> 16) & 0xFF;
-                int g = (argb >>> 8) & 0xFF;
-                int b = argb & 0xFF;
-
-                int novoR = ajustarCanalContraste(r, contraste, brilho);
-                int novoG = ajustarCanalContraste(g, contraste, brilho);
-                int novoB = ajustarCanalContraste(b, contraste, brilho);
-
-                int ajustado = (a << 24) | (novoR << 16) | (novoG << 8) | novoB;
-                saida.setRGB(x, y, ajustado);
-            }
-        }
-        return saida;
-    }
-
-    private int ajustarCanalContraste(int valor, float contraste, int brilho) {
-        int ajustado = (int) Math.round((valor - 128) * contraste + 128 + brilho);
-        return Math.max(0, Math.min(255, ajustado));
-    }
 
     private void atualizarEstimativaIa() {
         if (lblEstimativaIa == null) {
@@ -3332,7 +2490,7 @@ public class ExpertDevGUI extends JFrame {
 
         double inputRate;
         double outputRate;
-        if ("claude".equalsIgnoreCase(providerIaSelecionado)) {
+        if ("claude".equalsIgnoreCase(controller.providerIaSelecionado)) {
             inputRate = 3.0d;   // USD por 1M input tokens (estimativa)
             outputRate = 15.0d; // USD por 1M output tokens (estimativa)
         } else {
@@ -3348,269 +2506,6 @@ public class ExpertDevGUI extends JFrame {
                 + " tok, custo~US$" + df.format(estimativaCusto));
     }
 
-    // Tenta carregar o icone Java oficial local do projeto; se falhar, usa fallback desenhado.
-    private Icon criarIconeJava(int tamanho) {
-        URL recurso = getClass().getResource("/icons/java_official.png");
-        if (recurso != null) {
-            ImageIcon original = new ImageIcon(recurso);
-            int larguraOriginal = Math.max(1, original.getIconWidth());
-            int alturaOriginal = Math.max(1, original.getIconHeight());
-
-            double escala = Math.min((double) tamanho / larguraOriginal, (double) tamanho / alturaOriginal);
-            int larguraFinal = Math.max(1, (int) Math.round(larguraOriginal * escala));
-            int alturaFinal = Math.max(1, (int) Math.round(alturaOriginal * escala));
-            int x = (tamanho - larguraFinal) / 2;
-            int y = (tamanho - alturaFinal) / 2;
-
-            BufferedImage canvas = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
-            Graphics2D g2 = canvas.createGraphics();
-            try {
-                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.drawImage(original.getImage(), x, y, larguraFinal, alturaFinal, null);
-            } finally {
-                g2.dispose();
-            }
-            return new ImageIcon(canvas);
-        }
-
-        // Fallback desenhado caso o recurso local não exista.
-        BufferedImage img = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = img.createGraphics();
-        try {
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            Color azul = temaClaroAtivo ? new Color(37, 99, 235) : new Color(125, 211, 252);
-            Color vermelho = temaClaroAtivo ? new Color(220, 38, 38) : new Color(248, 113, 113);
-
-            // Pires
-            g2.setColor(azul);
-            g2.drawArc(4, tamanho - 7, tamanho - 8, 4, 0, 180);
-
-            // Xicara
-            g2.draw(new RoundRectangle2D.Double(6, tamanho - 13, 10, 7, 2, 2));
-            g2.drawArc(15, tamanho - 12, 4, 5, -60, 230);
-
-            // Vapor
-            g2.setColor(vermelho);
-            g2.draw(new QuadCurve2D.Double(9, tamanho - 14, 6, tamanho - 18, 9, tamanho - 21));
-            g2.draw(new QuadCurve2D.Double(13, tamanho - 14, 16, tamanho - 18, 13, tamanho - 21));
-        } finally {
-            g2.dispose();
-        }
-        return new ImageIcon(img);
-    }
-
-    // Icone de IA desenhado localmente para evitar dependencia de emoji/fonte do SO.
-    private Icon criarIconeIa(int tamanho) {
-        BufferedImage img = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = img.createGraphics();
-        try {
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            Color base = temaClaroAtivo ? new Color(79, 70, 229) : new Color(125, 211, 252);
-            Color detalhe = temaClaroAtivo ? new Color(124, 58, 237) : new Color(196, 181, 253);
-
-            // Base "chip"
-            g2.setColor(base);
-            g2.fill(new RoundRectangle2D.Double(2, 2, tamanho - 4, tamanho - 4, 4, 4));
-
-            // Nucleo interno
-            g2.setColor(new Color(255, 255, 255, 235));
-            double centroTam = Math.max(4, tamanho * 0.28);
-            double centroPos = (tamanho - centroTam) / 2.0;
-            g2.fill(new Ellipse2D.Double(centroPos, centroPos, centroTam, centroTam));
-
-            // Trilhas simples
-            g2.setColor(detalhe);
-            g2.setStroke(new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            int m = tamanho / 2;
-            g2.drawLine(m, 2, m, 5);
-            g2.drawLine(m, tamanho - 3, m, tamanho - 6);
-            g2.drawLine(2, m, 5, m);
-            g2.drawLine(tamanho - 3, m, tamanho - 6, m);
-        } finally {
-            g2.dispose();
-        }
-        return new ImageIcon(img);
-    }
-
-    private Icon criarIconeClaude(int tamanho) {
-        BufferedImage img = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = img.createGraphics();
-        try {
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            Color base = temaClaroAtivo ? new Color(120, 53, 15) : new Color(251, 191, 36);
-            Color detalhe = temaClaroAtivo ? new Color(146, 64, 14) : new Color(254, 240, 138);
-            g2.setColor(base);
-            g2.fill(new RoundRectangle2D.Double(2, 2, tamanho - 4, tamanho - 4, 4, 4));
-            g2.setColor(detalhe);
-            g2.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            g2.drawArc(3, 3, tamanho - 6, tamanho - 6, 25, 290);
-            g2.drawLine(tamanho / 2, 4, tamanho / 2, tamanho - 4);
-        } finally {
-            g2.dispose();
-        }
-        return new ImageIcon(img);
-    }
-
-    private Icon criarIconeEconomico(int tamanho) {
-        BufferedImage img = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = img.createGraphics();
-        try {
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            Color verde = temaClaroAtivo ? new Color(22, 163, 74) : new Color(74, 222, 128);
-            Color detalhe = temaClaroAtivo ? new Color(21, 128, 61) : new Color(187, 247, 208);
-            g2.setColor(verde);
-            g2.fill(new RoundRectangle2D.Double(2, 2, tamanho - 4, tamanho - 4, 4, 4));
-            g2.setColor(detalhe);
-            g2.setStroke(new BasicStroke(1.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            g2.drawLine(tamanho / 2, 3, tamanho / 2, tamanho - 3);
-            g2.drawLine(4, tamanho / 2, tamanho - 4, tamanho / 2);
-            g2.drawArc(4, 4, tamanho - 8, tamanho - 8, 40, 100);
-        } finally {
-            g2.dispose();
-        }
-        return new ImageIcon(img);
-    }
-
-    private Icon criarIconeLocal(int tamanho) {
-        BufferedImage img = new BufferedImage(tamanho, tamanho, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2 = img.createGraphics();
-        try {
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            Color base = temaClaroAtivo ? new Color(15, 23, 42) : new Color(226, 232, 240);
-            Color detalhe = temaClaroAtivo ? new Color(71, 85, 105) : new Color(148, 163, 184);
-
-            // Monitor simples para representar processamento local
-            g2.setColor(base);
-            g2.setStroke(new BasicStroke(1.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            g2.draw(new RoundRectangle2D.Double(1.5, 1.5, tamanho - 3.0, tamanho - 5.5, 2.5, 2.5));
-            g2.drawLine(tamanho / 2, tamanho - 4, tamanho / 2, tamanho - 2);
-            g2.setColor(detalhe);
-            g2.drawLine(tamanho / 2 - 3, tamanho - 1, tamanho / 2 + 3, tamanho - 1);
-        } finally {
-            g2.dispose();
-        }
-        return new ImageIcon(img);
-    }
-
-    private JLabel criarRotulo(String texto) {
-        JLabel lbl = new JLabel(texto);
-        lbl.setFont(FONTE_ROTULO);
-        lbl.setForeground(COR_TEXTO);
-        return lbl;
-    }
-
-    private JScrollPane criarScrollPane(JTextArea area) {
-        JScrollPane scroll = new JScrollPane(area);
-        scroll.setBorder(BorderFactory.createLineBorder(COR_BORDA));
-        scroll.getVerticalScrollBar().setBackground(COR_PAINEL);
-        scroll.setBackground(COR_PAINEL);
-        return scroll;
-    }
-
-    private JScrollPane criarScrollPane(JComponent componente) {
-        JScrollPane scroll = new JScrollPane(componente);
-        scroll.setBorder(BorderFactory.createLineBorder(COR_BORDA));
-        scroll.getVerticalScrollBar().setBackground(COR_PAINEL);
-        scroll.setBackground(COR_PAINEL);
-        return scroll;
-    }
-
-    private JButton criarBotaoAcao(String texto) {
-        JButton btn = new JButton(texto) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                try {
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                    g2.setColor(getBackground());
-                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 14, 14);
-                } finally {
-                    g2.dispose();
-                }
-                super.paintComponent(g);
-            }
-        };
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        configurarPaletaBotao(
-                btn,
-                Color.WHITE,
-                temaClaroAtivo ? new Color(226, 232, 240) : new Color(203, 213, 225),
-                COR_DESTAQUE,
-                temaClaroAtivo ? new Color(148, 163, 184) : new Color(71, 85, 105)
-        );
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setContentAreaFilled(false);
-        btn.setOpaque(false);
-        btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(0, 44));
-        return btn;
-    }
-
-    private JButton criarBotaoPrimario(String texto) {
-        JButton btn = new JButton(texto);
-        btn.setFont(FONTE_BOTAO);
-        configurarPaletaBotao(
-                btn,
-                Color.WHITE,
-                temaClaroAtivo ? new Color(226, 232, 240) : new Color(203, 213, 225),
-                COR_DESTAQUE2,
-                temaClaroAtivo ? new Color(148, 163, 184) : new Color(71, 85, 105)
-        );
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setOpaque(true);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
-
-    private JButton criarBotaoSecundario(String texto) {
-        JButton btn = new JButton(texto);
-        btn.setFont(FONTE_BOTAO);
-        if (temaClaroAtivo) {
-            configurarPaletaBotao(
-                    btn,
-                    COR_TEXTO,
-                    new Color(100, 116, 139),
-                    COR_PAINEL,
-                    new Color(226, 232, 240)
-            );
-        } else {
-            configurarPaletaBotao(
-                    btn,
-                    new Color(241, 245, 249),
-                    new Color(186, 196, 213),
-                    new Color(42, 48, 70),
-                    new Color(60, 68, 92)
-            );
-        }
-        btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COR_BORDA),
-                new EmptyBorder(6, 14, 6, 14)));
-        btn.setOpaque(true);
-        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        return btn;
-    }
-
-    private void configurarPaletaBotao(final JButton btn,
-                                       final Color textoHabilitado,
-                                       final Color textoDesabilitado,
-                                       final Color fundoHabilitado,
-                                       final Color fundoDesabilitado) {
-        btn.setForeground(textoHabilitado);
-        btn.setBackground(fundoHabilitado);
-        btn.addPropertyChangeListener("enabled", evt -> {
-            boolean habilitado = Boolean.TRUE.equals(evt.getNewValue());
-            btn.setForeground(habilitado ? textoHabilitado : textoDesabilitado);
-            btn.setBackground(habilitado ? fundoHabilitado : fundoDesabilitado);
-        });
-    }
 
     // ─── Entry Point ──────────────────────────────────────────────────────────
 

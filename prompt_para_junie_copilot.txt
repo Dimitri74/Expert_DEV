@@ -7,72 +7,23 @@ Objetivo:
 Analisar o contexto extraido e transformar os requisitos em um plano de implementacao tecnico acionavel.
 
 Resumo intermediario do contexto:
-- Caracteres de regras refinadas: 2330
-- Caracteres de referencias visuais: 1324
+- Caracteres de regras refinadas: 431
+- Caracteres de referencias visuais: 24
 - Principais blocos por relevancia:
-- [score 4] O objetivo deste documento é detalhar os campos e regras das interfaces relacionadas ao caso de uso “Mantém Parâmetro de Mensagem Digital”.
+- Sem blocos de alta relevancia detectados automaticamente.
 - Objetivo: converter contexto bruto em plano tecnico executavel com perguntas objetivas para lacunas.
 
 Contexto consolidado (regras e requisitos):
 
-URL: upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc
+URL: https://github.com/professorisidro/IoT_library_examples/blob/master/README.md
 
-Observação: Importado do arquivo Word: SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc | Arquivo recebido: SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc | Formato DOC legado detectado. | Tentando detectar LibreOffice em: soffice | Tentando detectar LibreOffice em: C:\Program Files\LibreOffice\program\soffice.exe | Tentando detectar LibreOffice em: C:\Program Files (x86)\LibreOffice\program\soffice.exe | LibreOffice indisponivel nos caminhos avaliados. | Fallback direto para parser DOC habilitado.
+# Exemplos de códigos utilizando a biblioteca IoT_library
 
-SIPCS – Sistema de Processamento de Cartões e Serviços
-Mantém Parâmetro de Mensagem Digital
-2.1.	Interface Consulta Parâmetro Mensagem Digital	5
-2.2.	Interface Apresenta Resultado da Consulta Parâmetro Mensagem Digital	6
-2.3.	Interface Detalha Parâmetro de Mensagem Digital	9
-2.4.	Interface Inclui Parâmetro Mensagem Digital	11
-2.5.	Interface Altera Parâmetro Mensagem Digital	14
-2.6.	Interface Exclui Parâmetro Mensagem Digital	17
-O objetivo deste documento é detalhar os campos e regras das interfaces relacionadas ao caso de uso “Mantém Parâmetro de Mensagem Digital”.
-O acesso a esta funcionalidade se dá através do menu: Parâmetros >> Mensagens Digitais.
-2.1.	Interface Consulta Parâmetro Mensagem Digital
-2.1.1.	Campos
--	Nome do campo na interface: “Estímulo”;
--	Campo editável;
--	Campo não obrigatório;
--	Campo do tipo caixa de seleção.
--	Nome do campo na interface: “Usuário”;
--	Campo não editável.
--	Descrição: Quando acionada, limpa os campos de consulta.
--	Descrição: Quando acionada, apresenta a interface “2.2 - Interface Apresenta Resultado da Consulta Parâmetro Mensagem Digital”.
--	Descrição: Quando acionada, apresenta a interface “2.44 - Interface Inclui Parâmetro Mensagem Digital”.
-2.2.	Interface Apresenta Resultado da Consulta Parâmetro Mensagem Digital
-2.2.1.	Campos
-Os campos dos filtros de consulta e do rodapé são os mesmos descritos em 2.1.1.
-Os demais campos da interface estão abaixo:
--	Nome do campo na interface: “XXX Registro(s) encontrado(s)”, onde XXX representa o número de registros encontrados;
--	Campo não editável;
--	Campo permite acesso à interface “2.3 - Interface Detalha Parâmetro de Mensagem Digital”.
--	Nome do campo na interface: “Título da Mensagem”;
--...
+Aqui reunimos vários exemplos de uso da bilioteca IoT em ambiente de sala de aula. O propósito é que seja um conjunto de experimentos didáticos para quem nunca teve contato com Programação, Arduino ou Internet das Coisas, iniciar seus estudos, minimizando o impacto das novas tecnologias.
 
 Referências visuais encontradas:
 
---- Imagens encontradas na página: upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc ---
-Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/1-a8f.png
-Descrição: a8f.png
-Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/2-30e90.png
-Descrição: 30e90.png
-Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/3-700be.png
-Descrição: 700be.png
-Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/4-b5f2a.png
-Descrição: b5f2a.png
-Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/5-100e16.png
-Descrição: 100e16.png
-Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/6-144b5c.png
-Descrição: 144b5c.png
-Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/7-19328a.png
-Descrição: 19328a.png
-Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/8-1c8766.emf
-Descrição: 1c8766.emf
-Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/9-1c93b4.emf
-Descrição: 1c93b4.emf
-Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/10-1ca2fd.png
-Descrição: 1ca2fd.png
+[Sem imagens detectadas]
 
 Restrições obrigatórias:
 - Manter aderencia ao contexto extraido.
@@ -82,6 +33,7 @@ Restrições obrigatórias:
 Lacunas e pontos para confirmação:
 - Confirmar requisitos de autenticacao/autorizacao.
 - Confirmar persistencia e banco de dados esperados.
+- Validar referencias visuais ausentes ou insuficientes.
 
 Diretrizes obrigatórias de implementação:
 - O desenvolvimento deve seguir rigorosamente as tecnologias, padrões e arquitetura já adotados no projeto existente.

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep *)",
+      "Bash(xargs wc *)",
+      "Bash(mvn compile *)",
+      "Bash(grep -n \"^    private\\\\|^    public\\\\|^    protected\\\\|^    /\\\\*\\\\*\\\\|^    //\" \"C:\\\\Users\\\\marcu\\\\workspace\\\\Pessoal\\\\expertDev\\\\src\\\\main\\\\java\\\\br\\\\com\\\\expertdev\\\\ui\\\\ExpertDevGUI.java\")"
+    ]
+  }
+}

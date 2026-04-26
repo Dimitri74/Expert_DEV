@@ -1,18 +1,18 @@
 Resumo da execução - Expert Dev 2.4.1-BETA
 ==================================================
 
-Início: 2026-04-24 17:57:19
-Fim: 2026-04-24 17:57:21
+Início: 2026-04-25 21:23:01
+Fim: 2026-04-25 21:23:06
 
 Totais:
  - URLs recebidas: 1
  - URLs com sucesso: 1
  - URLs com falha: 0
- - Imagens únicas coletadas: 10
- - Tempo total (s): 1
+ - Imagens únicas coletadas: 0
+ - Tempo total (s): 4
 
 URLs processadas com sucesso:
- - upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc
+ - https://github.com/professorisidro/IoT_library_examples/blob/master/README.md
 
 URLs com falha:
  - Nenhuma
