@@ -240,7 +240,8 @@ public class ExpertDevGUI extends JFrame {
                             System.exit(0);
                             return;
                         }
-                        new MainFrame(session);
+                        ModeSelectorFrame selector = new ModeSelectorFrame(session);
+                        selector.setVisible(true);
                     }
                 });
                 loginFrame.setVisible(true);

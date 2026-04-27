@@ -4,7 +4,10 @@
       "Bash(xargs grep *)",
       "Bash(xargs wc *)",
       "Bash(mvn compile *)",
-      "Bash(grep -n \"^    private\\\\|^    public\\\\|^    protected\\\\|^    /\\\\*\\\\*\\\\|^    //\" \"C:\\\\Users\\\\marcu\\\\workspace\\\\Pessoal\\\\expertDev\\\\src\\\\main\\\\java\\\\br\\\\com\\\\expertdev\\\\ui\\\\ExpertDevGUI.java\")"
+      "Bash(grep -n \"^    private\\\\|^    public\\\\|^    protected\\\\|^    /\\\\*\\\\*\\\\|^    //\" \"C:\\\\Users\\\\marcu\\\\workspace\\\\Pessoal\\\\expertDev\\\\src\\\\main\\\\java\\\\br\\\\com\\\\expertdev\\\\ui\\\\ExpertDevGUI.java\")",
+      "mcp__ide__getDiagnostics",
+      "Bash(ls \"C:\\\\Users\\\\marcu\\\\workspace\\\\Pessoal\\\\expertDev\\\\target\\\\classes\\\\br\\\\com\\\\expertdev\\\\ui\"\" 2>/dev/null | grep -E \"ModeSelectorFrame)",
+      "Bash(util\" || echo \"Classes not found \")"
     ]
   }
 }

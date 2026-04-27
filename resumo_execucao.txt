@@ -1,20 +1,20 @@
 Resumo da execução - Expert Dev 2.5.0-BETA
 ==================================================
 
-Início: 2026-04-27 12:34:16
-Fim: 2026-04-27 12:34:19
+Início: 2026-04-27 18:10:14
+Fim: 2026-04-27 18:10:16
 
 Totais:
  - URLs recebidas: 3
  - URLs com sucesso: 3
  - URLs com falha: 0
- - Imagens únicas coletadas: 5
+ - Imagens únicas coletadas: 14
  - Tempo total (s): 2
 
 URLs processadas com sucesso:
- - upload://SIPCS_API_Quarkus_Catalogo_Servico.doc
- - upload://SIPCS_Canais_UC_Disponibiliza_Informacao_Mensagem_Digital.doc
- - upload://SIPCS_Especificacao_Suplementar.doc
+ - upload://SIPCS_Msg_Sistema.doc
+ - upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc
+ - upload://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc
 
 URLs com falha:
  - Nenhuma

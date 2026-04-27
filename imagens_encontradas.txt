@@ -1,16 +1,34 @@
 
---- Imagens encontradas na página: upload://SIPCS_API_Quarkus_Catalogo_Servico.doc ---
-Imagem: embedded://SIPCS_API_Quarkus_Catalogo_Servico.doc/1-387b7.png
-   Descrição: 387b7.png
+--- Imagens encontradas na página: upload://SIPCS_Msg_Sistema.doc ---
+Imagem: embedded://SIPCS_Msg_Sistema.doc/1-1c01b.emf
+   Descrição: 1c01b.emf
+Imagem: embedded://SIPCS_Msg_Sistema.doc/2-1cc69.emf
+   Descrição: 1cc69.emf
 
---- Imagens encontradas na página: upload://SIPCS_Canais_UC_Disponibiliza_Informacao_Mensagem_Digital.doc ---
-Imagem: embedded://SIPCS_Canais_UC_Disponibiliza_Informacao_Mensagem_Digital.doc/1-304f.png
-   Descrição: 304f.png
-Imagem: embedded://SIPCS_Canais_UC_Disponibiliza_Informacao_Mensagem_Digital.doc/2-3994.emf
-   Descrição: 3994.emf
+--- Imagens encontradas na página: upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc ---
+Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/1-a8f.png
+   Descrição: a8f.png
+Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/2-30e90.png
+   Descrição: 30e90.png
+Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/3-700be.png
+   Descrição: 700be.png
+Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/4-b5f2a.png
+   Descrição: b5f2a.png
+Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/5-100e16.png
+   Descrição: 100e16.png
+Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/6-144b5c.png
+   Descrição: 144b5c.png
+Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/7-19328a.png
+   Descrição: 19328a.png
+Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/8-1c8766.emf
+   Descrição: 1c8766.emf
+Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/9-1c93b4.emf
+   Descrição: 1c93b4.emf
+Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/10-1ca2fd.png
+   Descrição: 1ca2fd.png
 
---- Imagens encontradas na página: upload://SIPCS_Especificacao_Suplementar.doc ---
-Imagem: embedded://SIPCS_Especificacao_Suplementar.doc/1-18ab0.emf
-   Descrição: 18ab0.emf
-Imagem: embedded://SIPCS_Especificacao_Suplementar.doc/2-196fe.emf
-   Descrição: 196fe.emf
+--- Imagens encontradas na página: upload://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc ---
+Imagem: embedded://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc/1-512d.png
+   Descrição: 512d.png
+Imagem: embedded://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc/2-5a72.emf
+   Descrição: 5a72.emf
