@@ -1,0 +1,16 @@
+
+--- Imagens encontradas na página: upload://SIPCS_API_Quarkus_Catalogo_Servico.doc ---
+Imagem: embedded://SIPCS_API_Quarkus_Catalogo_Servico.doc/1-387b7.png
+   Descrição: 387b7.png
+
+--- Imagens encontradas na página: upload://SIPCS_Canais_UC_Disponibiliza_Informacao_Mensagem_Digital.doc ---
+Imagem: embedded://SIPCS_Canais_UC_Disponibiliza_Informacao_Mensagem_Digital.doc/1-304f.png
+   Descrição: 304f.png
+Imagem: embedded://SIPCS_Canais_UC_Disponibiliza_Informacao_Mensagem_Digital.doc/2-3994.emf
+   Descrição: 3994.emf
+
+--- Imagens encontradas na página: upload://SIPCS_Especificacao_Suplementar.doc ---
+Imagem: embedded://SIPCS_Especificacao_Suplementar.doc/1-18ab0.emf
+   Descrição: 18ab0.emf
+Imagem: embedded://SIPCS_Especificacao_Suplementar.doc/2-196fe.emf
+   Descrição: 196fe.emf

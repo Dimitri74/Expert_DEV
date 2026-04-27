@@ -40,6 +40,10 @@ import java.util.List;
  */
 class GuiController {
 
+    private static final long BYTES_POR_MB = 1024L * 1024L;
+    private static final long LIMITE_BYTES_POR_ARQUIVO_WORD = 100L * BYTES_POR_MB;
+    private static final long LIMITE_BYTES_TOTAL_FILA_WORD = 300L * BYTES_POR_MB;
+
     // ─── Referências injetadas ────────────────────────────────────────────────
     final ExpertDevGUI gui;
     private final AppTheme theme;
@@ -128,7 +132,7 @@ class GuiController {
             }
         } catch (Exception ignored) {}
 
-        trayService = new TrayNotificationService("ExpertDev v2.5.0-BETA", icone,
+        trayService = new TrayNotificationService("ExpertDev v2.6.0-BETA", icone,
                 new java.awt.event.ActionListener() {
                     public void actionPerformed(java.awt.event.ActionEvent e) {
                         gui.setVisible(true);
@@ -806,9 +810,20 @@ class GuiController {
         if (gui.modeloArquivosWord == null) gui.modeloArquivosWord = new DefaultListModel<File>();
 
         int adicionados = 0;
-        int ignorados = 0;
+        int ignoradosFormato = 0;
+        int ignoradosDuplicados = 0;
+        int ignoradosPorArquivoGrande = 0;
+        int ignoradosPorLimiteFila = 0;
+        long bytesFilaAtual = calcularBytesFilaWord();
         for (File arquivo : arquivos) {
-            if (!ehArquivoWordValido(arquivo)) { ignorados++; continue; }
+            if (!ehArquivoWordValido(arquivo)) { ignoradosFormato++; continue; }
+
+            long tamanhoArquivo = arquivo.length();
+            if (tamanhoArquivo > LIMITE_BYTES_POR_ARQUIVO_WORD) {
+                ignoradosPorArquivoGrande++;
+                continue;
+            }
+
             boolean jaExiste = false;
             for (int i = 0; i < gui.modeloArquivosWord.size(); i++) {
                 if (gui.modeloArquivosWord.get(i).getAbsolutePath()
@@ -816,14 +831,51 @@ class GuiController {
                     jaExiste = true; break;
                 }
             }
-            if (!jaExiste) { gui.modeloArquivosWord.addElement(arquivo); adicionados++; }
+            if (jaExiste) {
+                ignoradosDuplicados++;
+                continue;
+            }
+
+            if (bytesFilaAtual + tamanhoArquivo > LIMITE_BYTES_TOTAL_FILA_WORD) {
+                ignoradosPorLimiteFila++;
+                continue;
+            }
+
+            gui.modeloArquivosWord.addElement(arquivo);
+            bytesFilaAtual += tamanhoArquivo;
+            adicionados++;
         }
         if (adicionados > 0) {
             gui.labelArquivoWord.setText("Arquivos carregados para processamento");
             gui.labelArquivoWord.setForeground(theme.corSucesso);
         }
-        if (ignorados > 0) gui.adicionarCardLog("⚠ Alguns arquivos foram ignorados por formato inválido (use .doc/.docx).");
+        if (ignoradosFormato > 0) {
+            gui.adicionarCardLog("⚠ Alguns arquivos foram ignorados por formato inválido (use .doc/.docx).");
+        }
+        if (ignoradosPorArquivoGrande > 0) {
+            gui.adicionarCardLog("⚠ " + ignoradosPorArquivoGrande
+                    + " arquivo(s) excedem o limite de 100MB por arquivo.");
+        }
+        if (ignoradosPorLimiteFila > 0) {
+            gui.adicionarCardLog("⚠ Limite total da fila atingido (300MB). "
+                    + ignoradosPorLimiteFila + " arquivo(s) não foram adicionados.");
+        }
+        if (ignoradosDuplicados > 0) {
+            gui.adicionarCardLog("⚠ " + ignoradosDuplicados + " arquivo(s) já estavam na fila e foram ignorados.");
+        }
         atualizarResumoArquivosWord();
+    }
+
+    private long calcularBytesFilaWord() {
+        long total = 0L;
+        if (gui.modeloArquivosWord == null) return total;
+        for (int i = 0; i < gui.modeloArquivosWord.size(); i++) {
+            File arquivo = gui.modeloArquivosWord.get(i);
+            if (arquivo != null && arquivo.exists() && arquivo.isFile()) {
+                total += Math.max(0L, arquivo.length());
+            }
+        }
+        return total;
     }
 
     private boolean ehArquivoWordValido(File arquivo) {
@@ -853,7 +905,8 @@ class GuiController {
     }
 
     void atualizarVisibilidadePreviewWord(int totalArquivos) {
-        boolean mostrar = totalArquivos <= AppTheme.MAX_ARQUIVOS_PREVIEW_EMBUTIDA;
+        // Mantem a previa embutida sempre visivel para evitar perda de rolagem/contexto na aba.
+        boolean mostrar = true;
         if (gui.painelPreviewWord != null) {
             gui.painelPreviewWord.setVisible(mostrar);
             gui.painelPreviewWord.revalidate();

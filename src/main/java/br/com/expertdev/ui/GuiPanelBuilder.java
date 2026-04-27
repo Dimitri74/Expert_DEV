@@ -86,7 +86,7 @@ class GuiPanelBuilder {
             }
         });
 
-        JLabel lblVersao = new JLabel("v 2.5.0-BETA");
+        JLabel lblVersao = new JLabel("v 2.6.0-BETA");
         lblVersao.setFont(new Font("Segoe UI", Font.BOLD, 11));
         lblVersao.setForeground(theme.corDestaque2);
         lblVersao.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -194,7 +194,7 @@ class GuiPanelBuilder {
                 JScrollPane scrollPainelPro = new JScrollPane(painelPro);
                 scrollPainelPro.setBorder(null);
                 scrollPainelPro.getVerticalScrollBar().setUnitIncrement(16);
-                gui.abas.addTab("  ⚡  Assistente Pro  ", scrollPainelPro);
+                gui.abas.addTab("Assistente Pro", scrollPainelPro);
             } else {
                 JPanel painelBloqueado = new JPanel(new BorderLayout());
                 painelBloqueado.setBackground(theme.corPainelAlt);
@@ -204,7 +204,7 @@ class GuiPanelBuilder {
                 lblBloqueado.setForeground(theme.corTextoSuave);
                 lblBloqueado.setFont(AppTheme.FONTE_ROTULO);
                 painelBloqueado.add(lblBloqueado, BorderLayout.CENTER);
-                gui.abas.addTab("  ⚡  Assistente Pro  ", painelBloqueado);
+                gui.abas.addTab("Assistente Pro", painelBloqueado);
                 int indicePro = gui.abas.getTabCount() - 1;
                 gui.abas.setEnabledAt(indicePro, false);
                 gui.abas.setToolTipTextAt(indicePro, "Upgrade para Premium");

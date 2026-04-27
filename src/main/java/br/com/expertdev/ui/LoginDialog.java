@@ -43,7 +43,7 @@ public class LoginDialog extends JDialog {
     private JLabel lblTrial;
 
     public LoginDialog(Window owner, AuthService authService, ExpertDevConfig config) {
-        super(owner, "Acesso Expert Dev 2.5.0-BETA", ModalityType.APPLICATION_MODAL);
+        super(owner, "Acesso Expert Dev 2.6.0-BETA", ModalityType.APPLICATION_MODAL);
         this.authService = authService;
         this.config = config;
         construir();

@@ -13,9 +13,9 @@ public class ExpertDevTabsBuilder {
                             TabFactory uploadTab,
                             TabFactory historicoTab,
                             TabFactory performanceTab) {
-        abas.addTab("  🌐  Via URLs  ", urlsTab.create());
-        abas.addTab("  📄  Upload Word  ", uploadTab.create());
-        abas.addTab("  📋  Histórico  ", historicoTab.create());
-        abas.addTab("  📊  Performance & ROI  ", performanceTab.create());
+        abas.addTab("Via URLs", urlsTab.create());
+        abas.addTab("Upload Word", uploadTab.create());
+        abas.addTab("Historico", historicoTab.create());
+        abas.addTab("Performance & ROI", performanceTab.create());
     }
 }

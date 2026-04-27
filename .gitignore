@@ -7,6 +7,7 @@
 # Local runtime artifacts
 /cache_imagens/
 *.log
+/expertdev.properties
 
 # Claude Code
 .claude/

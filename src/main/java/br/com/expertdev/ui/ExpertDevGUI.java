@@ -85,7 +85,7 @@ public class ExpertDevGUI extends JFrame {
     }
 
     private void configurarJanela() {
-        setTitle("Expert Dev — Gerador de Contexto para IA");
+        setTitle("Expert Dev 2.6.0-BETA — Gerador de Contexto para IA");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         setSize(1100, 780);
         setMinimumSize(new Dimension(900, 650));
@@ -105,7 +105,7 @@ public class ExpertDevGUI extends JFrame {
         });
     }
 
-    private void construirInterface() {
+    protected void construirInterface() {
         setLayout(new BorderLayout(0, 0));
         add(panelBuilder.criarCabecalho(), BorderLayout.NORTH);
         add(panelBuilder.criarCorpo(), BorderLayout.CENTER);
@@ -216,32 +216,34 @@ public class ExpertDevGUI extends JFrame {
     }
 
     public static void lancar() {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {
-        }
+        br.com.expertdev.ui.theme.ExpertDevLaf.install();
 
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 ExpertDevConfig config = ExpertDevConfig.carregar();
                 if (!config.isAuthEnabled()) {
-                    new ExpertDevGUI(new AuthSession("Local", "", LicenseStatus.PREMIUM, 0));
+                    new MainFrame(new AuthSession("Local", "", LicenseStatus.PREMIUM, 0));
                     return;
                 }
 
                 AuthService authService = new AuthService();
-                LoginDialog loginDialog = new LoginDialog(null, authService, config);
-                loginDialog.setVisible(true);
-                AuthSession session = loginDialog.getSession();
-                if (session == null || session.getLicenseStatus() == LicenseStatus.EXPIRED) {
-                    JOptionPane.showMessageDialog(null,
-                            "Sem acesso valido. Encerrando o Expert Dev.",
-                            "Acesso",
-                            JOptionPane.WARNING_MESSAGE);
-                    System.exit(0);
-                    return;
-                }
-                new ExpertDevGUI(session);
+                LoginFrame loginFrame = new LoginFrame(authService, config);
+                loginFrame.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosed(java.awt.event.WindowEvent e) {
+                        AuthSession session = loginFrame.getSession();
+                        if (session == null || session.getLicenseStatus() == LicenseStatus.EXPIRED) {
+                            JOptionPane.showMessageDialog(null,
+                                    "Sem acesso valido. Encerrando o Expert Dev.",
+                                    "Acesso",
+                                    JOptionPane.WARNING_MESSAGE);
+                            System.exit(0);
+                            return;
+                        }
+                        new MainFrame(session);
+                    }
+                });
+                loginFrame.setVisible(true);
             }
         });
     }

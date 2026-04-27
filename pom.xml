@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>br.com.expertdev</groupId>
     <artifactId>expert-dev</artifactId>
-    <version>2.5.0-BETA</version>
+    <version>2.6.0-BETA</version>
     <name>Expert Dev</name>
     <description>Extrator de contexto e gerador de prompts para IA</description>
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.c2ompiler.source>1.8</maven.c2ompiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <corp.repo.url>https://repo.corp.local/repository/maven-public/</corp.repo.url>
@@ -56,9 +56,54 @@
             <artifactId>jfreechart</artifactId>
             <version>1.0.19</version>
         </dependency>
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>3.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf-extras</artifactId>
+            <version>3.2.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.miglayout</groupId>
+            <artifactId>miglayout-swing</artifactId>
+            <version>5.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.miglayout</groupId>
+            <artifactId>miglayout-core</artifactId>
+            <version>5.3</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce-bundled-fonts</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireFilesExist>
+                                    <files>
+                                        <file>${project.basedir}/src/main/resources/fonts/IBMPlexSans-Variable.ttf</file>
+                                        <file>${project.basedir}/src/main/resources/fonts/IBMPlexMono-Regular.ttf</file>
+                                        <file>${project.basedir}/src/main/resources/fonts/IBMPlexMono-Medium.ttf</file>
+                                    </files>
+                                </requireFilesExist>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

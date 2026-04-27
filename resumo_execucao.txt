@@ -1,18 +1,20 @@
 Resumo da execução - Expert Dev 2.5.0-BETA
 ==================================================
 
-Início: 2026-04-25 21:23:01
-Fim: 2026-04-25 21:23:06
+Início: 2026-04-27 12:34:16
+Fim: 2026-04-27 12:34:19
 
 Totais:
- - URLs recebidas: 1
- - URLs com sucesso: 1
+ - URLs recebidas: 3
+ - URLs com sucesso: 3
  - URLs com falha: 0
- - Imagens únicas coletadas: 0
- - Tempo total (s): 4
+ - Imagens únicas coletadas: 5
+ - Tempo total (s): 2
 
 URLs processadas com sucesso:
- - https://github.com/professorisidro/IoT_library_examples/blob/master/README.md
+ - upload://SIPCS_API_Quarkus_Catalogo_Servico.doc
+ - upload://SIPCS_Canais_UC_Disponibiliza_Informacao_Mensagem_Digital.doc
+ - upload://SIPCS_Especificacao_Suplementar.doc
 
 URLs com falha:
  - Nenhuma
