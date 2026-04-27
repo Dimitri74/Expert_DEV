@@ -18,6 +18,8 @@ public class ModeCardPanel extends JPanel {
     private static final int ARC     = 16;     // border-radius
     private static final int PAD_X   = 24;
     private static final int PAD_TOP = 28;
+    private static final int LOGO_BOX_W = 96;
+    private static final int LOGO_BOX_H = 80;
 
     private final ImageIcon cardLogo;
     private final String    title;
@@ -153,30 +155,39 @@ public class ModeCardPanel extends JPanel {
     private void paintContent(Graphics2D g2, int w, int h) {
         int y = PAD_TOP;
 
-        // ── Ícone 72×72 ────────────────────────────────────────────────────
-        int iconSize = 72;
-        int iconX    = (w - iconSize) / 2;
+        // ── Área de logo ───────────────────────────────────────────────────
+        int iconX = (w - LOGO_BOX_W) / 2;
 
         if (cardLogo != null) {
-            // Clipa a imagem ao rounded-rect do contêiner, preenchendo-o inteiro
-            Shape oldClip = g2.getClip();
-            java.awt.geom.RoundRectangle2D iconClip =
-                new java.awt.geom.RoundRectangle2D.Float(iconX, y, iconSize, iconSize, 24, 24);
-            g2.setClip(iconClip);
-            g2.drawImage(cardLogo.getImage(), iconX, y, iconSize, iconSize, null);
-            g2.setClip(oldClip);
-            // Borda sutil sobre a imagem
+            g2.setColor(new Color(0xF8FAFD));
+            g2.fillRoundRect(iconX, y, LOGO_BOX_W, LOGO_BOX_H, 22, 22);
+
+            int iw = Math.max(1, cardLogo.getIconWidth());
+            int ih = Math.max(1, cardLogo.getIconHeight());
+            double scale = Math.min((LOGO_BOX_W - 14) / (double) iw, (LOGO_BOX_H - 14) / (double) ih);
+            int drawW = Math.max(1, (int) Math.round(iw * scale));
+            int drawH = Math.max(1, (int) Math.round(ih * scale));
+            int drawX = iconX + (LOGO_BOX_W - drawW) / 2;
+            int drawY = y + (LOGO_BOX_H - drawH) / 2;
+
+            Object interpolation = g2.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            g2.drawImage(cardLogo.getImage(), drawX, drawY, drawW, drawH, null);
+            if (interpolation != null) {
+                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interpolation);
+            }
+
             g2.setColor(ExpertDevTheme.BORDER);
             g2.setStroke(new BasicStroke(1f));
-            g2.drawRoundRect(iconX, y, iconSize - 1, iconSize - 1, 24, 24);
+            g2.drawRoundRect(iconX, y, LOGO_BOX_W - 1, LOGO_BOX_H - 1, 22, 22);
         } else {
             // Contêiner gradiente roxo (experimental)
             GradientPaint iconGrad = new GradientPaint(
                 iconX, y, new Color(0xF5F0FF),
-                iconX + iconSize, y + iconSize, new Color(0xDDD6FE)
+                iconX + 72, y + 72, new Color(0xDDD6FE)
             );
             g2.setPaint(iconGrad);
-            g2.fillRoundRect(iconX, y, iconSize, iconSize, 12 * 2, 12 * 2);
+            g2.fillRoundRect(iconX + 12, y + 4, 72, 72, 12 * 2, 12 * 2);
             g2.setPaint(null);
 
             // Emoji foguete
@@ -186,10 +197,10 @@ public class ModeCardPanel extends JPanel {
             String rocket = "\uD83D\uDE80";
             FontMetrics efm = g2.getFontMetrics();
             g2.drawString(rocket,
-                iconX + (iconSize - efm.stringWidth(rocket)) / 2,
-                y     + (iconSize - efm.getHeight()) / 2 + efm.getAscent());
+                iconX + 12 + (72 - efm.stringWidth(rocket)) / 2,
+                y + 4 + (72 - efm.getHeight()) / 2 + efm.getAscent());
         }
-        y += iconSize + 14;
+        y += LOGO_BOX_H + 14;
 
         // ── Título ─────────────────────────────────────────────────────────
         Font titleFont = ExpertDevTheme.FONT_BOLD.deriveFont(Font.BOLD, 17f);

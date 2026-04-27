@@ -96,8 +96,8 @@ public class ModeSelectorFrame extends JFrame {
 
         // Card IBM-GID (ativo)
         ModeCardPanel ibmCard = new ModeCardPanel(
-            loadScaledIcon("/icons/logo_ibm.png", 72, 72),
-            "Padr\u00e3o IBM-GID",
+            loadScaledIcon("/icons/logo_ibm.png", -1, 88),
+            "Padr\u00e3o GID",
             "Extra\u00e7\u00e3o de regras de neg\u00f3cio seguindo\nrigorosamente o padr\u00e3o IBM GID.",
             new String[]{
                 "Padr\u00e3o IBM-GID completo",
@@ -105,7 +105,7 @@ public class ModeSelectorFrame extends JFrame {
                 "Suporte a Confluence e SharePoint",
                 "Exporta\u00e7\u00e3o para Word e PDF"
             },
-            "Entrar no modo IBM-GID \u2192",
+            "Entrar no modo GID \u2192",
             ExpertDevTheme.BRAND_BLUE,
             true,
             "Est\u00e1vel",
@@ -169,20 +169,26 @@ public class ModeSelectorFrame extends JFrame {
      * Se w=-1, calcula proporcional a partir de h; se h=-1, a partir de w.
      */
     public static ImageIcon loadScaledIcon(String path, int w, int h) {
-        InputStream is = null;
+        if (path == null || path.trim().isEmpty()) return null;
+
+        String normalizedPath = path.startsWith("/") ? path.substring(1) : path;
+
         try {
-            is = ModeSelectorFrame.class.getResourceAsStream(path);
-            if (is == null) return null;
-            java.awt.image.BufferedImage raw = ImageIO.read(is);
+            java.net.URL resource = ModeSelectorFrame.class.getResource(path);
+            if (resource == null) {
+                resource = ModeSelectorFrame.class.getClassLoader().getResource(normalizedPath);
+            }
+            if (resource == null) return null;
+
+            java.awt.image.BufferedImage raw = ImageIO.read(resource);
             if (raw == null) return null;
-            int fw = w > 0 ? w : (int) (raw.getWidth()  * ((double) h / raw.getHeight()));
+
+            int fw = w > 0 ? w : (int) (raw.getWidth() * ((double) h / raw.getHeight()));
             int fh = h > 0 ? h : (int) (raw.getHeight() * ((double) w / raw.getWidth()));
             Image scaled = raw.getScaledInstance(fw, fh, Image.SCALE_SMOOTH);
             return new ImageIcon(scaled);
         } catch (Exception e) {
             return null;
-        } finally {
-            if (is != null) try { is.close(); } catch (Exception ignored) {}
         }
     }
 
