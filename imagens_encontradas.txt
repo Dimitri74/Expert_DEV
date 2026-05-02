@@ -1,10 +1,4 @@
 
---- Imagens encontradas na página: upload://SIPCS_Msg_Sistema.doc ---
-Imagem: embedded://SIPCS_Msg_Sistema.doc/1-1c01b.emf
-   Descrição: 1c01b.emf
-Imagem: embedded://SIPCS_Msg_Sistema.doc/2-1cc69.emf
-   Descrição: 1cc69.emf
-
 --- Imagens encontradas na página: upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc ---
 Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/1-a8f.png
    Descrição: a8f.png
@@ -26,9 +20,3 @@ Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digit
    Descrição: 1c93b4.emf
 Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/10-1ca2fd.png
    Descrição: 1ca2fd.png
-
---- Imagens encontradas na página: upload://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc ---
-Imagem: embedded://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc/1-512d.png
-   Descrição: 512d.png
-Imagem: embedded://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc/2-5a72.emf
-   Descrição: 5a72.emf

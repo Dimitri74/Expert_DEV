@@ -1,217 +1,205 @@
 Você é um desenvolvedor sênior capaz de atuar com Java, Angular, JavaScript e outras tecnologias modernas.
 
 Perfil de resposta:
-- Negocial (visao de negocio, priorizacao, impacto e riscos).
+- Tecnico (detalhamento de implementacao, contratos e testes).
 
 Objetivo:
 Analisar o contexto extraido e transformar os requisitos em um plano de implementacao tecnico acionavel.
 
 Resumo intermediario do contexto:
-- Caracteres de regras refinadas: 13197
-- Caracteres de referencias visuais: 1896
+- Caracteres de regras refinadas: 8692
+- Caracteres de referencias visuais: 1324
 - Principais blocos por relevancia:
-- [score 4] O objetivo deste documento é detalhar os campos e regras das interfaces relacionadas ao caso de uso “Mantém Parâmetro de Mensagem Digital”.
-- [score 4] 5.	Requisitos Especiais	8
-- [score 3] 5.1.	Nível de Segurança	8
-- [score 1] - Os dados obrigatórios foram informados;
-- [score 1] - Título de mensagem digital inexistente;
-- [score 1] - Número do final da faixa informado é maior ou igual que valor do número inicial da faixa;
+- [score 11] O objetivo deste documento é detalhar os campos e regras das interfaces relacionadas ao caso de uso “Mantém Parâmetro de Mensagem Digital”.
+- [score 7] REF1.	Especificação de caso de uso Mantém Parâmetro de Mensagem Digital
+- [score 7] Este documento define todos os cenários do caso de uso Mantém Parâmetro de Mensagem Digital.
+- [score 4] URL: upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc
+- [score 4] Observação: Importado do arquivo Word: SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc | Arquivo recebido: SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc | Formato DOC legado detectado. | Tentando detectar LibreOffice em: soffice | Tentando detectar LibreOffice em: C:\Program Files\LibreOffice\program\soffice.exe | Tentando detectar LibreOffice em: C:\Program Files (x86)\LibreOffice\program\soffice.exe | LibreOffice indisponivel nos caminhos avaliados. | Fallback direto para parser DOC habilitado.
+- [score 4] Mantém Parâmetro de Mensagem Digital
 - Objetivo: converter contexto bruto em plano tecnico executavel com perguntas objetivas para lacunas.
 
 Contexto consolidado (regras e requisitos):
-
-URL: upload://SIPCS_Msg_Sistema.doc
-
-Observação: Importado do arquivo Word: SIPCS_Msg_Sistema.doc | Arquivo recebido: SIPCS_Msg_Sistema.doc | Formato DOC legado detectado. | Tentando detectar LibreOffice em: soffice | Tentando detectar LibreOffice em: C:\Program Files\LibreOffice\program\soffice.exe | Tentando detectar LibreOffice em: C:\Program Files (x86)\LibreOffice\program\soffice.exe | LibreOffice indisponivel nos caminhos avaliados. | Fallback direto para parser DOC habilitado.
-
-[MSG_SISTEMA detectado]
-RTC: 1111
-Nenhum codigo MA/MN/MH foi encontrado no historico para esse RTC.
-Trecho inicial (fallback compacto):
-
-SIPCS – Sistema de Processamento de Cartões e Serviços
-Mensagens do Sistema
-Versão 29.2
-Histórico de Revisões
-Data	Versão	Descrição	Autor
-01/06/2013	1.0	Criação do artefato.	Indra Brasil
-02/04/2014		Inclusão da MA029.
-03/04/2014		Inclusão das mensagens MA065, MA066 e MA067.
-08/03/2014		Inclusão da mensagem MA068.
-10/04/2014		Inclusão da mensagem MA069.
-17/06/2014		Inclusão MN083, MA074 e MA075.	Indra Brasil
-26/06/2014		Inclusão das mensagens MN084 a MN107.	Indra Brasil
-02/07/2014		Inclusão das mensagens MN045, MN046, MN048, MN049, MN052, MN053 e MN054.	Indra Brasil
-27/01/2015		Inclusão das mensagens MN112 e MN113.	Indra Brasil
-23/06/2015		Inclusão da mensagem MN114.	Indra Brasil
-23/07/2015		Inclusão da mensagem MA086.	Indra Brasil
-03/11/2015		Inclusão das mensagens MA088 à MA099.	Indra Brasil
-10/11/2015		Inclusão das mensagens MA100, MA101 e MN115.	Indra Brasil
-07//01/2016	1.0	Inclusão da mensagem MN136.	Indra Brasil
-08/01/2016	1.0	Atualização da MA047 de <Conta Cartao ou Cartao> para <Nome do campo>.	Indra Brasil
-18/01/2016	1.0	Inclusão da mensagem MA113.	Indra Brasil
-19/01/2016	1.0	Inclusão da mensagem MA114.	Indra Brasil
-19/01/2016	1.0	Inclusão da mensagem MA115.	Indra Brasil
-03/03/2016	1.0	Inclusão da mensagem MA116.	Indra Brasil
-19/07/2016	1.0	Inclusão da mensagem MN140.Inclusão da mensagem MN141.Inclusão da mensagem MN142.	Indra Brasil
-29/07/2016	1.0	Inclusão da mensagem MA119.	Indra Brasil
-01/08/2016	1.0	Ajuste de descrição das mensagens MN074 e MN075.	Indra Brasil
-18/08/2016	1.0	Atualizações no artefato para a demanda de cobrança registrada.Inclusão de MA120 e MA121.	Indra Brasil
-21/09/2016	1.0	Inclusão da mensagem MN143.	Indra Brasil
-27/09/2016	1.0	Inclusão da mensagem MN144.	Indra Brasil
-28/09/2016	1.0	Inclusão da mensagem MA123.	Indra Brasil
-03/11/2016	1.0	Inclusão da mensagem MN146.	Indra Brasil
-08/11/2016	1.0	Atualizações para a demanda RTC 1496689 – Padrão NSGD:Inclusão das mensagens MN147 e MN148.	Indra Brasil
-13/11/2016	1.0	Atualizações para a demanda RTC 1483293 – Cobrança Registrada SIGCB:Criação de MA126.	Indra Brasil
-28/11/2016	1.0	Atualizações para a demanda RTC 1655693 – Bandeira JCB Autorização:Criação de mensagem MA127.	Indra Brasil
-05/12/2016	1.0	Atualizações para a demanda RTC 1479088 – Bandeira JCB:Criação de mensagem MA128.Criação de mensagem MA129.Criação de mensagem MA130.Criação de mensagem MA131.Criação de mensagem MA132.	Indra Brasil
-13/12/2016	1.0	RTC 1655693 – Mantém Boletim de Proteção:Criação da MA134.	Indra Brasil
-15/12/2016	1.0	RTC1478088 – Painel de monitoração	CAIXA
-15/12/2016	1.0	Atualização para a demanda BR201604828 RTC1507063 – DIGITAL PAY:Criação das mensagens MN149 e MN150.	Indra Brasil
-29/12/2016	1.1	Atualização para a demanda 1659010 – Cartão Executivo:Inclusão das mensagens MN150, MN151, MN152, MN153, MN154, MN155, MN156, MN157, MA138 e MA139.	Indra Brasil
-05/01/2017	1.1	Atualização conforme validação do gestor para a demanda de finalização do contrato #312 – SIIBC PJ:Ajuste de descrição das mensagens MN068, MN070, MN076 e MN077.Criação das mensagens MN158, MN159, MN160, MA140 e MA141.	Indra Brasil
-16/01/2017	1.1	RTC 1507064 – Digital Pay:Criação das mensagens MA143 e MA144.	Indra Brasil
-17/01/2017	1.1	Criação das mensagens MN162, MN163, MN164, MN165 e MA145.	Indra Brasil
-23/01/2016	1.1	RTC1685406 – New Elo:Criação da mensagem MN166.	Indra Brasil
-16/01/2017	1.1	RTC 1507064 – Digital Pay:Criação das mensagens MA146 e MA147.	Indra Brasil
-20/01/2017	1.1	RTC 1540398:Criação das mensagens MN167 e MN168.	Indra Brasil
-01/02/2017	1.1	Alteração do artefato para atendimento a demanda RTC 1640042 – Registrar Usuário que comandou ação:Inclusão da mensagem MN169.	Indra Brasil
-10/02/2017	1.1	Atualização para a demanda RTC 1540398 – Taxas Máximas:Ajuste de descrição da mensagem MN168.	Indra Brasil
-10/02/2017	1.1	RTC 1507064 – Digital Pay:Criação da mensagem MN177.Criação das mensagens MA148, MA149, MA150 e MA151.	Indra Brasil
-16/02/2017	1.1	Atualização para a demanda RTC 1721569 – Reversão de Saldo Enquadrado:Criação da MN171, MN172, MN173, MN174, MN175 e MN176.	Indra Brasil
-22/02/2017	1.1	Atualização para a demanda RTC1568741 SMS ONLINE:Criação da MA152, MA153 e MA154.	Indra Brasil
-23/02/2017	1.1	Atualização para atendimento da demanda RTC 1702020:Inclusão da mensagem MN178 e MA155.	Indra Brasil
-24/02/2017	1.1	Atualização para atendimento da demanda RTC1590592 – Cobrança Bancária SIGCB:Inclusão das mensagens MA156, MA157 e MA158.	Indra Brasil
-10/03/2017	1.1	Atualização para atendimento a demanda RTC 1758393 Encarte Fatura:Inclusão da mensagem MN179.	Indra Brasil
-13/03/2017	1.1	Atualização para atendimento a demanda RTC1702020 – Alteração de produto:Inclusão das mensagens MA160 e 161.Alteração do texto MA155.	Indra Brasil
-14/03/2017	1.1	Atualização para atendimento a demanda RTC1537855 – Restritivo URA:Inclusão da mensagem MN180.	Indra Brasil
-22/03/2017	1.1	Atualização para atendimento a demanda RTC1507064 – Digital Pay:Inclusão da mensagem MA163.	Indra Brasil
-24/03/2017	1
-
-[... conteudo truncado para reduzir ruido ...]
 
 URL: upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc
 
 Observação: Importado do arquivo Word: SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc | Arquivo recebido: SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc | Formato DOC legado detectado. | Tentando detectar LibreOffice em: soffice | Tentando detectar LibreOffice em: C:\Program Files\LibreOffice\program\soffice.exe | Tentando detectar LibreOffice em: C:\Program Files (x86)\LibreOffice\program\soffice.exe | LibreOffice indisponivel nos caminhos avaliados. | Fallback direto para parser DOC habilitado.
 
+Descrição da Interface do Caso de Uso	Página          3 / 1
+Data Emissão22/04/2026
+Sistema<SIGLA>	Subsistema<SIGLA>	Módulo<SIGLA>
+Projeto<SIGLA> - <Nome do projeto>	Código<SIMDP>
+SIPCS – Sistema de Processamento de Cartões e Serviços
+Descrição da Interface do Caso de Uso
 Mantém Parâmetro de Mensagem Digital
+Versão 1.0
+Histórico de Revisões
+Data	Versão	Descrição	Autor
+09/04/2026	1.0	Especificação inicial do artefato em atendimento ao RTC 24823240 - Super App - Mini App Cartões Onda 2 - Inclusão de Parametrização de Mensagens para Uso dos Canais.	Indra
+Sumário
+TOC \o "1-2" \h \z 1.	Objetivo	4
+2.	Detalhamento da apresentação	4
 2.1.	Interface Consulta Parâmetro Mensagem Digital	5
 2.2.	Interface Apresenta Resultado da Consulta Parâmetro Mensagem Digital	6
 2.3.	Interface Detalha Parâmetro de Mensagem Digital	9
 2.4.	Interface Inclui Parâmetro Mensagem Digital	11
 2.5.	Interface Altera Parâmetro Mensagem Digital	14
 2.6.	Interface Exclui Parâmetro Mensagem Digital	17
+3.	Referências	19
+1.	Objetivo
 O objetivo deste documento é detalhar os campos e regras das interfaces relacionadas ao caso de uso “Mantém Parâmetro de Mensagem Digital”.
+2.	Detalhamento da apresentação
 O acesso a esta funcionalidade se dá através do menu: Parâmetros >> Mensagens Digitais.
 2.1.	Interface Consulta Parâmetro Mensagem Digital
 2.1.1.	Campos
+	Estímulo
+-	Descrição: Permite selecionar o estímulo para a consulta da mensagem digital;
+-	Formato: Alfanumérico;
 -	Nome do campo na interface: “Estímulo”;
+-	Máscara: Não se aplica;
+-	Tamanho: 30;
+-	Valores possíveis: Não se aplica;
+-	Regras de interface:
 -	Campo editável;
 -	Campo não obrigatório;
 -	Campo do tipo caixa de seleção.
+Dados do rodapé:
+	Usuário autenticado na aplicação
+-	Descrição: Apresenta a identificação do usuário que está autenticado na aplicação;
 -	Nome do campo na interface: “Usuário”;
+-	Tamanho: 10;
+-	Valores possíveis: Conforme dados obtidos do SIPCS;
 -	Campo não editável.
+2.1.2.	Opções
+	Desfazer
 -	Descrição: Quando acionada, limpa os campos de consulta.
+	Consultar
 -	Descrição: Quando acionada, apresenta a interface “2.2 - Interface Apresenta Resultado da Consulta Parâmetro Mensagem Digital”.
+	Incluir Novo Registro
 -	Descrição: Quando acionada, apresenta a interface “2.44 - Interface Inclui Parâmetro Mensagem Digital”.
+2.1.3.	Regras de Apresentação
+-	Não se aplica.
 2.2.	Interface Apresenta Resultado da Consulta Parâmetro Mensagem Digital
 2.2.1.	Campos
 Os campos dos filtros de consulta e do rodapé são os mesmos descritos em 2.1.1.
 Os demais campos da interface estão abaixo:
+Resultado da Consulta:
+	Quantidade de registros encontrados
+-	Descrição: Apresenta o número de registros encontrados para a pesquisa;
 -	Nome do campo na interface: “XXX Registro(s) encontrado(s)”, onde XXX representa o número de registros encontrados;
+-	Tamanho: 03;
+-	Descrição: Apresenta o estímulo cadastrado;
 -	Campo não editável;
 -	Campo permite acesso à interface “2.3 - Interface Detalha Parâmetro de Mensagem Digital”.
+	Título da Mensagem
+-	Descrição: Apresenta o título da mensagem digital cadastrada;
 -	Nome do campo na interface: “Título da Mensagem”;
--...
-
-URL: upload://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc
-
-Observação: Importado do arquivo Word: SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc | Arquivo recebido: SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc | Formato DOC legado detectado. | Tentando detectar LibreOffice em: soffice | Tentando detectar LibreOffice em: C:\Program Files\LibreOffice\program\soffice.exe | Tentando detectar LibreOffice em: C:\Program Files (x86)\LibreOffice\program\soffice.exe | LibreOffice indisponivel nos caminhos avaliados. | Fallback direto para parser DOC habilitado.
-
-___________________________________________________________________
-Especificação de Caso de Uso
-Versão 1.0
-09/04/2026	1.0	Especificação inicial do artefato em atendimento ao RTC 24823240 - Super App - Mini App Cartões Onda 2 - Inclusão de Parametrização de Mensagens para Uso dos Canais.	Indra
-Sumário
-TOC \o "1-2" \h \z \u 1.	Descrição	4
-2.	Atores	4
-2.1.	Configurador do Sistema	4
-3.	Pré-Condições	4
-4.	Fluxo de Eventos	4
-4.1.	Fluxo Básico – Consulta Parâmetro de Mensagem Digital	4
-4.2.	Fluxos Alternativos	4
-4.3.	Fluxos de Exceção	7
-5.	Requisitos Especiais	8
-5.1.	Nível de Segurança	8
-5.2.	Disponibilidade em Ambiente	8
-5.3.	Registro de transação da operação	8
-6.	Ponto de Extensão	8
-7.	Pós-Condições	8
-8.	Informações Complementares	8
-8.1.	Dados para Registro de Auditoria	8
-8.2.	Dados para Registro de Mensagem Digital	8
-9.	Referências	8
-1.	Descrição
-Este caso de uso permite ao Configurador do Sistema consultar, incluir, alterar e excluir a parametrização das mensagens digitais.
-2.	Atores
-Nesta seção estão listados os atores relacionados ao caso de uso. As descrições dos atores devem ser consultadas no Diagrama de Caso de Uso.
-2.1.	Configurador do Sistema
-3.	Pré-Condições
-Não se aplica.
-4.	Fluxo de Eventos
-Este caso de uso se inicia quando o Configurador do Sistema solicita a manutenção das informações de parâmetros de mensagem digital.
-4.1.	Fluxo Básico – Consulta Parâmetro de Mensagem Digital
-4.1.1.	O Configurador do Sistema solicita consultar parâmetro de mensagem digital.
-4.1.2.	O sistema apresenta os dados de consulta do parâmetro de mensagem digital.
-Os dados apresentados estão descritos no item 2.1 do artefato referenciado em REF3.
-4.1.3.	O Configurador do Sistema informa os dados e solicita a consulta. FA2
-4.1.4.	O sistema verifica que existe registro de parâmetro de mensagem digital. FE1
-4.1.5.	O sistema apresenta a lista de parâmetro de mensagem digital conforme dados da consulta.
-Os dados apresentados estão descritos no item 2.2 do artefato referenciado em REF3.
-4.1.6.	O Configurador do Sistema solicita finalizar a consulta do parâmetro de mensagem Digital. FA1 FA2
-4.1.7.	Finaliza caso de uso.
-4.2.	Fluxos Alternativos
-FA1.	Detalhamento de Parâmetro de Mensagem Digital
-No passo 4.1.6 do fluxo básico, caso o Configurador do Sistema decida detalhar uma mensagem digital, o sistema deve executar os seguintes passos:
-1.	O Configurador do Sistema seleciona um parâmetro de mensagem digital para detalhamento.
-1.	O sistema apresenta o detalhamento do parâmetro de mensagem digital selecionado.
-Os dados apresentados estão descritos no item 2.3 do artefato referenciado em REF3.
-1.	O Configurador do Sistema solicita finalizar a consulta do parâmetro de mensagem. FA3 FA4
-2.	Finaliza caso de uso.
-FA2.	Inclui Parâmetro de Mensagem Digital
-No passo 4.1.3 ou no passo 4.1.6 do fluxo básico, caso o Configurador do Sistema decida incluir um parâmetro de mensagem digital, o sistema deve executar os seguintes passos:
-1.	O sistema apresenta os dados para inclusão do parâmetro de mensagem digital.
-Os dados apresentados estão descritos no item 2.4 do artefato referenciado em REF3.
-2.	O Configurador do Sistema informa os dados para inclusão e confirma a operação.
-3.	O sistema apresenta a mensagem. MA100
-4.	O Configurador do Sistema confirma a inclusão do parâmetro de mensagem digital. FA5
-5.	O sistema valida os dados informados. FE2 FE3 FE4 FE5
-O sistema verifica que:
-- Os dados obrigatórios foram informados;
-- Título de mensagem digital inexistente;
-- Número do final da faixa informado é maior ou igual que valor do número inicial da faixa;
-- Número inicial da faixa informado é menor ou igual que valor do número final da faixa;
-6.	O sistema registra a inclusão do parâmetro de mensagem digital.
-Os dados registrados de auditoria estão descritos 8.1.
-Os dados registrados de inclusão da mensagem digital estão descritos em 8.2.
-7.	O sistema apresenta a mensagem. MA005
-8.	Finaliza caso de uso.
-FA3.	Altera Parâmetro de Mensagem Digital
-No passo 3 do FA1, caso o Configurador do Sistema decida alterar um parâmetro de mensagem, o sistema deve executar os seguintes passos:
-1.	O sistema apresenta os dados para alteração do parâmetro de mensagem digital.
-Os dados apresentados estão descritos no item 2.5 do artefato referenciado em REF3.
-2.	O Configurador do Sistema informa os dados para alteração e confirma a operação.
-4.	O Configurador do Sistema confirma a alteração do parâmetro de mensagem digital. FA5
-O configurador do sistema deve colocar a situação como Ativa, caso a mesma esteja inativa.
-- Número do final da faixa informado é maior ou igual que valor do númer
+-	Tamanho: 50;
+	Situação
+-	Descrição: Apresenta a situação da mensagem cadastrada;
+-	Nome do campo na interface: “Situação”;
+Paginação:
+	Paginação (Página Anterior)
+-	Descrição: Apresenta a página anterior do resultado da consulta;
+-	Nome do campo na interface: “<<”;
+-	Tamanho: Não se aplica;
+-	O campo permite acesso à interface anterior do resultado da consulta.
+	Número da Página
+-	Descrição: Apresenta os números das páginas;
+-	Nome do campo na interface: “XX”, onde XX representa o número da página do resultado da consulta;
+-	Tamanho: 02;
+	Paginação (Próxima Página)
+-	Descrição: Apresenta a próxima página do resultado da consulta;
+-	Nome do campo na interface: “>>”;
+-	O campo permite acesso à próxima página do resultado da consulta.
+2.2.2.	Opções
+	 As opções “Consultar”, “Desfazer” e “Incluir Novo Registro” são as mesmas descritas em 2.1.2.
+2.2.3.	Regras de apresentação
+-	A lista de resultados é apresentada ordenada de forma alfabética pelo campo “Estímulo”.
+-	O sistema deve paginar a lista quando a pesquisa retornar como resultado mais de 5 registros.
+-	O campo “Paginação (Página Anterior)” é apresentado somente a partir da segunda página de resultados da consulta.
+-	O campo “Paginação (Próxima Página)” é apresentado caso haja mais de uma página para o resultado da pesquisa.
+2.3.	Interface Detalha Parâmetro de Mensagem Digital
+2.3.1.	Campos
+O campo do rodapé é o mesmo descrito em 2.1.1.
+-	Nome do campo na interface: “Estímulo*”;
+	Quantidade de dias de atraso (De)
+-	Descrição: Apresenta a quantidade de dias de atraso de (igual ou maior);
+-	Formato: Numérico;
+-	Nome do campo na interface: “De (igual ou maior)*”;
+-	Máscara: 999;
+-	Tamanho: 3;
+	Quantidade de dias de atraso (Até)
+-	Descrição: Apresenta a quantidade de dias de atraso até (menor ou igual);
+-	Nome do campo na interface: “Até (menor ou igual)*;
+-	Nome do campo na interface: “Situação*”;
+	Data Situação
+-	Descrição: Apresenta a data da situação da mensagem cadastrada;
+-	Formato: Data;
+-	Nome do campo na interface: “Data Situação*”;
+-	Máscara: DD/MM/AAAA;
+-	Valores possíveis: Conforme dados obtidos no SIPCS;
+-	Nome do campo na interface: “Título da Mensagem*”;
+	Mensagem
+-	Descrição: Apresenta o texto da mensagem digital cadastrada;
+-	Nome do campo na interface: “Texto da Mensagem*”;
+-	Tamanho: 245;
+2.3.2.	Opções
+	Voltar
+	A opção “Desfazer” é a mesma descrita em 2.1.2.
+	Alterar
+-	Descrição: Quando acionada, apresenta a interface “2.5 - Interface Altera Parâmetro Mensagem Digital”.
+	Excluir
+-	Descrição: Quando acionada, apresenta a interface “2.6 - Interface Exclui Parâmetro Mensagem Digital”.
+2.3.3.	Regras de apresentação
+	A opção “Desfazer” deve ser apresentada desabilitada.
+2.4.	Interface Inclui Parâmetro Mensagem Digital
+2.4.1.	Campos
+-	Descrição: Permite informar a quantidade de dias de atraso de (igual ou maior);
+-	Campo obrigatório;
+-	Campo do tipo caixa de texto.
+-	Descrição: Permite informar a quantidade de dias de atraso até (menor ou igual);
+-	Nome do campo na interface: “Até (menor ou igual)*”;
+-	Descrição: Permite informar o título da mensagem digital;
+-	Descrição: Permite informar o texto da mensagem digital;
+2.4.2.	Opções
+-	Descrição: Quando acionada, retorna à interface anterior.
+	 Desfazer
+-	Descrição: Quando acionada, limpa os campos de inclusão.
+	Incluir
+-	Descrição: Quando acionada, registra a inclusão de parâmetro de mensagem digital.
+2.4.3.	Regras de apresentação
+	A opção “Excluir” deve ser apresentada desabilitada.
+2.5.	Interface Altera Parâmetro Mensagem Digital
+2.5.1.	Campos
+-	Descrição: Apresenta o estímulo da mensagem digital;
+-	Descrição: Permite selecionar a situação da mensagem digital.
+	Data da Situação
+-	Descrição: Apresenta a data da situação da mensagem digital;
+-	Tamanho:10;
+-	Descrição: Permite alterar o título da mensagem digital;
+-	Descrição: Permite alterar o texto da mensagem digital;
+2.5.2.	Opções
+-	Descrição: Quando acionada, limpa os campos.
+	Salvar
+-	Descrição: Quando acionada, registra a alteração das informações de mensagem digital.
+2.5.3.	Regras de apresentação
+	O campo “Situação” será permitido apenas selecionar a opção “Ativo”, caso esteja “Inativo”.
+2.6.	Interface Exclui Parâmetro Mensagem Digital
+2.6.1.	Campos
+2.6.2.	Opções
+-	Descrição: Quando acionada, registra a exclusão das informações de mensagem digital.
+2.6.3.	Regras de apresentação
+	A opção “Alterar” deve ser apresentada desabilitada.
+	O campo “Situação” será permitido apenas selecionar a opção “Inativo”, caso esteja “Ativo”.
+3.	Referências
+REF1.	Especificação de caso de uso Mantém Parâmetro de Mensagem Digital
+Este documento define todos os cenários do caso de uso Mantém Parâmetro de Mensagem Digital.
+REF2.	Glossário
+Este documento define os termos utilizados nos processos da área negocial do Projeto SIPCS, cujo entendimento é essencial ao desenvolvimento do projeto.
+Modelo V02 – PPDS
+Elaborado porIndra	ArquivoSIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc
 
 Referências visuais encontradas:
-
---- Imagens encontradas na página: upload://SIPCS_Msg_Sistema.doc ---
-Imagem: embedded://SIPCS_Msg_Sistema.doc/1-1c01b.emf
-Descrição: 1c01b.emf
-Imagem: embedded://SIPCS_Msg_Sistema.doc/2-1cc69.emf
-Descrição: 1cc69.emf
 
 --- Imagens encontradas na página: upload://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc ---
 Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/1-a8f.png
@@ -235,19 +223,12 @@ Descrição: 1c93b4.emf
 Imagem: embedded://SIPCS_Parametro_Integracao_DI_Mantem_Parametro_Mensagem_Digital.doc/10-1ca2fd.png
 Descrição: 1ca2fd.png
 
---- Imagens encontradas na página: upload://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc ---
-Imagem: embedded://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc/1-512d.png
-Descrição: 512d.png
-Imagem: embedded://SIPCS_Parametro_Integracao_UC_Mantem_Parametro_Mensagem_Digital.doc/2-5a72.emf
-Descrição: 5a72.emf
-
 Restrições obrigatórias:
 - Manter aderencia ao contexto extraido.
 - Evitar assumir requisitos nao citados sem sinalizar lacuna.
 - Priorizar objetividade, ordem de implementacao e testes.
 
 Lacunas e pontos para confirmação:
-- Confirmar requisitos de autenticacao/autorizacao.
 - Confirmar persistencia e banco de dados esperados.
 
 Diretrizes obrigatórias de implementação:
@@ -277,4 +258,4 @@ Formato obrigatório da resposta:
 3. Proponha testes unitários aderentes às tecnologias e versões detectadas.
 4. Faça perguntas objetivas apenas onde houver lacunas reais.
 5. Não invente stack, dependências ou decisões ausentes no contexto.
-6. Use linguagem estrategica e orientada ao negocio, pronta para execução.
+6. Use linguagem objetiva e tecnica, pronta para execução.

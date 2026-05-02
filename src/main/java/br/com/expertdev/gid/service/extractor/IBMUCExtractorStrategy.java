@@ -36,10 +36,12 @@ public class IBMUCExtractorStrategy extends AbstractIBMExtractorStrategy {
             if (l.contains("objetivo") && (out.getObjetivo() == null || out.getObjetivo().isEmpty())) {
                 out.setObjetivo(IBMExtractionTextHelper.aposSeparador(linha));
             }
-            if (l.contains("pre-cond") && (out.getPreCondicao() == null || out.getPreCondicao().isEmpty())) {
+            if ((l.contains("pre-cond") || l.contains("pré-cond") || l.contains("pre condic") || l.contains("pré condic"))
+                    && (out.getPreCondicao() == null || out.getPreCondicao().isEmpty())) {
                 out.setPreCondicao(IBMExtractionTextHelper.aposSeparador(linha));
             }
-            if (l.contains("pos-cond") && (out.getPosCondicao() == null || out.getPosCondicao().isEmpty())) {
+            if ((l.contains("pos-cond") || l.contains("pós-cond") || l.contains("pos condic") || l.contains("pós condic"))
+                    && (out.getPosCondicao() == null || out.getPosCondicao().isEmpty())) {
                 out.setPosCondicao(IBMExtractionTextHelper.aposSeparador(linha));
             }
             if (l.contains("ator")) {
@@ -53,15 +55,15 @@ public class IBMUCExtractorStrategy extends AbstractIBMExtractorStrategy {
                 regras.add(regra);
             }
 
-            if (l.contains("fluxo basico")) {
+            if (l.contains("fluxo basico") || l.contains("fluxo b\u00e1sico") || (l.contains("fluxo") && l.contains("fb "))) {
                 fluxoAtual = novoFluxo("Fluxo Basico", IBMTipoFluxo.FB, fluxos);
                 continue;
             }
-            if (l.contains("fluxo alternativo")) {
+            if (l.contains("fluxo alternativo") || (l.contains("fluxo") && l.contains("fa "))) {
                 fluxoAtual = novoFluxo("Fluxo Alternativo", IBMTipoFluxo.FA, fluxos);
                 continue;
             }
-            if (l.contains("fluxo de exce") || l.contains("fluxo exce") || l.contains("fe ")) {
+            if (l.contains("fluxo de exce") || l.contains("fluxo exce") || (l.contains("fluxo") && l.contains("fe "))) {
                 fluxoAtual = novoFluxo("Fluxo Excecao", IBMTipoFluxo.FE, fluxos);
                 continue;
             }

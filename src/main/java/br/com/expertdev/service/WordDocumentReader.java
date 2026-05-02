@@ -137,7 +137,7 @@ public class WordDocumentReader {
                 }
             }
 
-            String textoFiltrado = normalizarTextoWord(texto.toString(), arquivo.getName(), !imagens.isEmpty());
+            String textoFiltrado = normalizarTextoWord(texto.toString());
             resultado.setTextoExtraido(textoFiltrado);
             resultado.setImagens(imagens);
             resultado.setSucesso(true);
@@ -151,7 +151,7 @@ public class WordDocumentReader {
 
             String texto = extractor.getText();
             List<ImagemInfo> imagens = extrairImagensDocLegado(doc, "upload://" + arquivo.getName());
-            String textoFiltrado = normalizarTextoWord(texto == null ? "" : texto, arquivo.getName(), !imagens.isEmpty());
+            String textoFiltrado = normalizarTextoWord(texto == null ? "" : texto);
             resultado.setTextoExtraido(textoFiltrado);
             resultado.setImagens(imagens);
             resultado.setSucesso(true);
@@ -241,20 +241,16 @@ public class WordDocumentReader {
         return "embedded://" + base + "/" + indice + "-" + nome;
     }
 
-    private String normalizarTextoWord(String textoBruto, String nomeArquivo, boolean possuiImagens) {
+    private String normalizarTextoWord(String textoBruto) {
         if (textoBruto == null || textoBruto.trim().isEmpty()) {
             return "";
         }
         String[] linhas = textoBruto.replace("\r", "").split("\n");
         StringBuilder saida = new StringBuilder();
-        boolean di = isDocumentoDi(nomeArquivo, textoBruto);
 
         for (String original : linhas) {
             String linha = original == null ? "" : original.trim();
             if (linha.isEmpty() || deveDescartarLinha(linha)) {
-                continue;
-            }
-            if (di && !isLinhaRelevanteDi(linha)) {
                 continue;
             }
             if (saida.length() > 0) {
@@ -263,20 +259,7 @@ public class WordDocumentReader {
             saida.append(linha);
         }
 
-        if (di && possuiImagens && saida.length() > 1800) {
-            return saida.substring(0, 1800) + "...";
-        }
         return saida.toString();
-    }
-
-    private boolean isDocumentoDi(String nomeArquivo, String textoBruto) {
-        String nome = nomeArquivo == null ? "" : nomeArquivo.toLowerCase(Locale.ROOT);
-        String texto = textoBruto == null ? "" : textoBruto.toLowerCase(Locale.ROOT);
-        return nome.contains("integracao_di")
-                || nome.contains("_di_")
-                || texto.contains("documento de interface")
-                || texto.contains("integração di")
-                || texto.contains("integracao di");
     }
 
     private boolean deveDescartarLinha(String linha) {
@@ -291,27 +274,11 @@ public class WordDocumentReader {
                 || lower.contains("rodape")
                 || lower.contains("cabecalho")
                 || lower.contains("footer-odd")
-                || lower.contains("bjbjh!h!");
-    }
-
-    private boolean isLinhaRelevanteDi(String linha) {
-        String lower = linha.toLowerCase(Locale.ROOT);
-        return lower.contains("tela")
-                || lower.contains("campo")
-                || lower.contains("label")
-                || lower.contains("botao")
-                || lower.contains("botão")
-                || lower.contains("front")
-                || lower.contains("parametro")
-                || lower.contains("parâmetro")
-                || lower.contains("pre-cond")
-                || lower.contains("pos-cond")
-                || lower.contains("servico")
-                || lower.contains("serviço")
-                || lower.contains("json")
-                || lower.contains("endpoint")
-                || lower.contains("request")
-                || lower.contains("response");
+                || lower.contains("bjbjh!h!")
+                || lower.contains("msip_label_")
+                || lower.contains("dlpmanual")
+                || lower.contains("taxkeyword")
+                || lower.contains("compliancepolicy");
     }
 }
 

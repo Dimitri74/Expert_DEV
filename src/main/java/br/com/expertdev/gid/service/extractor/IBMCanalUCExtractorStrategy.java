@@ -54,15 +54,15 @@ public class IBMCanalUCExtractorStrategy extends AbstractIBMExtractorStrategy {
                 regras.add(regra);
             }
 
-            if (l.contains("fluxo basico")) {
+            if (l.contains("fluxo basico") || l.contains("fluxo b\u00e1sico") || (l.contains("fluxo") && l.contains("fb "))) {
                 fluxoAtual = novoFluxo("Fluxo Basico", IBMTipoFluxo.FB, fluxos);
                 continue;
             }
-            if (l.contains("fluxo alternativo")) {
+            if (l.contains("fluxo alternativo") || (l.contains("fluxo") && l.contains("fa "))) {
                 fluxoAtual = novoFluxo("Fluxo Alternativo", IBMTipoFluxo.FA, fluxos);
                 continue;
             }
-            if (l.contains("fluxo de exce") || l.contains("fluxo exce")) {
+            if (l.contains("fluxo de exce") || l.contains("fluxo exce") || (l.contains("fluxo") && l.contains("fe "))) {
                 fluxoAtual = novoFluxo("Fluxo Excecao", IBMTipoFluxo.FE, fluxos);
                 continue;
             }

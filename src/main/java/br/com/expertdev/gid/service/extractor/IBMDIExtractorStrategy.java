@@ -98,11 +98,6 @@ public class IBMDIExtractorStrategy extends AbstractIBMExtractorStrategy {
     private boolean detectarTipoInterface(List<String> linhas) {
         for (String linha : linhas) {
             if (SECAO_INTERFACE.matcher(linha).matches()) return true;
-            String l = linha.toLowerCase(Locale.ROOT);
-            if (l.contains("interface") && (l.contains("consulta") || l.contains("inclui")
-                    || l.contains("altera") || l.contains("exclui") || l.contains("detalha"))) {
-                return true;
-            }
         }
         return false;
     }
@@ -271,10 +266,12 @@ public class IBMDIExtractorStrategy extends AbstractIBMExtractorStrategy {
                     && (out.getNomeCasoUso() == null || out.getNomeCasoUso().isEmpty())) {
                 out.setNomeCasoUso(IBMExtractionTextHelper.aposSeparador(linha));
             }
-            if (l.contains("pre-cond") && (out.getPreCondicao() == null || out.getPreCondicao().isEmpty())) {
+            if ((l.contains("pre-cond") || l.contains("pré-cond") || l.contains("pre condic") || l.contains("pré condic"))
+                    && (out.getPreCondicao() == null || out.getPreCondicao().isEmpty())) {
                 out.setPreCondicao(IBMExtractionTextHelper.aposSeparador(linha));
             }
-            if (l.contains("pos-cond") && (out.getPosCondicao() == null || out.getPosCondicao().isEmpty())) {
+            if ((l.contains("pos-cond") || l.contains("pós-cond") || l.contains("pos condic") || l.contains("pós condic"))
+                    && (out.getPosCondicao() == null || out.getPosCondicao().isEmpty())) {
                 out.setPosCondicao(IBMExtractionTextHelper.aposSeparador(linha));
             }
 
@@ -289,9 +286,15 @@ public class IBMDIExtractorStrategy extends AbstractIBMExtractorStrategy {
                 }
             }
 
-            if (l.contains("fluxo basico")) { fluxoAtual = novoFluxo("Fluxo Basico", IBMTipoFluxo.FB, fluxos); continue; }
-            if (l.contains("fluxo alternativo")) { fluxoAtual = novoFluxo("Fluxo Alternativo", IBMTipoFluxo.FA, fluxos); continue; }
-            if (l.contains("fluxo de exce") || l.contains("fluxo exce")) { fluxoAtual = novoFluxo("Fluxo Excecao", IBMTipoFluxo.FE, fluxos); continue; }
+            if (l.contains("fluxo basico") || l.contains("fluxo b\u00e1sico") || (l.contains("fluxo") && l.contains("fb "))) {
+                fluxoAtual = novoFluxo("Fluxo Basico", IBMTipoFluxo.FB, fluxos); continue;
+            }
+            if (l.contains("fluxo alternativo") || (l.contains("fluxo") && l.contains("fa "))) {
+                fluxoAtual = novoFluxo("Fluxo Alternativo", IBMTipoFluxo.FA, fluxos); continue;
+            }
+            if (l.contains("fluxo de exce") || l.contains("fluxo exce") || (l.contains("fluxo") && l.contains("fe "))) {
+                fluxoAtual = novoFluxo("Fluxo Excecao", IBMTipoFluxo.FE, fluxos); continue;
+            }
             if (fluxoAtual != null && l.matches("^([0-9]+[.)-].*|[a-z][.)-].*)")) {
                 fluxoAtual.getPassos().add(linha);
             }

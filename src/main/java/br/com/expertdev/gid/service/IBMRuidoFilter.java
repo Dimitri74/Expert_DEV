@@ -21,7 +21,7 @@ public class IBMRuidoFilter {
             Pattern.compile("(?i).*(summaryinformation|documentsummaryinformation).*"),
             Pattern.compile("(?i).*(cabecalho|rodape|footer-odd|numero de pagina).*"),
             Pattern.compile("(?i).*(historico de revisao|confidencial).*"),
-            Pattern.compile("(?i).*(oj qj|\\bcj\\b|\\bmh\\b|\\bsh\\b|\\bth\\b|\\baj\\b).*"),
+            Pattern.compile("(?i).*(oj qj|\\bcj\\b|\\bsh\\b|\\bth\\b|\\baj\\b).*"),
             Pattern.compile("(?i).*bjbjh!h!.*")
     };
 
